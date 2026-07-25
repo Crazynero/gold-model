@@ -1,7 +1,8 @@
 """
 数据源多级fallback模块
-yfinance → 新浪美股 → 东方财富 → FRED → 代理因子 五层降级，逐ticker独立处理
+yfinance → 新浪美股 → 东方财富 → 腾讯外汇 → FRED → 代理因子 六层降级，逐ticker独立处理
 （解决中国IP被Yahoo限流问题：美股ETF/个股走新浪日K，VIX走FRED；
+ 外汇/美元指数走腾讯（真DXY、T+0；FRED外汇序列发布滞后约一周且DTWEXBGS≠ICE DXY）；
  yfinance连续限流2次后熔断跳过；东财限流敏感需节流）
 """
 import io
@@ -59,6 +60,14 @@ FRED_ALTERNATIVES = {
     'EUR=X':   'DEXUSEU',  # 欧元/美元
     'JPY=X':   'DEXJPUS',  # 美元/日元（FRED是反向标价）
     'BTC-USD': 'CBBTCUSD', # 比特币
+}
+
+# ── 腾讯外汇映射（wh=外汇；T+0当日数据，1400条≈5.5年，无key无明显限流）──
+# 腾讯美股K线接口实测只返回最近1日数据，不可用；外汇接口正常
+TENCENT_FOREX = {
+    'DX-Y.NYB': 'whDINIW',   # 美元指数（真·ICE DXY，优于FRED的DTWEXBGS贸易加权指数）
+    'EUR=X':    'whEURUSD',  # 欧元/美元（与Yahoo EUR=X同向：1欧元兑多少美元）
+    'JPY=X':    'whUSDJPY',  # 美元/日元（与Yahoo JPY=X同向：1美元兑多少日元）
 }
 
 # ── 东财替代（美股ETF/个股；secid market：107=Arca 105=Nasdaq 106=NYSE）──
@@ -199,6 +208,30 @@ def _fetch_from_fred(series_id, period='5y', retries=2):
     return s
 
 
+def _fetch_from_tencent_forex(ticker, period='5y'):
+    """腾讯外汇日K（proxy.finance.qq.com，需浏览器UA）：行格式 [date, open, close, high, low, vol]"""
+    symbol = TENCENT_FOREX.get(ticker)
+    if not symbol:
+        return None
+    try:
+        url = ('https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get'
+               f'?param={symbol},day,,,1400,qfq')
+        r = requests.get(url, timeout=15, headers={'User-Agent': 'Mozilla/5.0'})
+        d = r.json().get('data', {}).get(symbol, {})
+        klines = d.get('qfqday') or d.get('day') or []
+        rows = [(k[0], float(k[2])) for k in klines if len(k) >= 3]
+        if len(rows) < 100:
+            return None
+        s = pd.Series(dict(rows), name=ticker)
+        s.index = pd.to_datetime(s.index)
+        s = s.sort_index()
+        if period == '5y':
+            s = s[s.index > pd.Timestamp.now() - pd.Timedelta(days=5 * 365)]
+        return s if len(s) > 100 else None
+    except Exception:
+        return None
+
+
 def fetch_ticker_with_fallback(ticker, name, period='5y', verbose=True):
     """
     逐层fallback获取ticker数据
@@ -246,7 +279,16 @@ def fetch_ticker_with_fallback(ticker, name, period='5y', verbose=True):
             if verbose:
                 print(f"  ⚠️ {name}({ticker}) 东财失败: {e}")
 
-    # Level 4: FRED替代
+    # Level 4: 腾讯外汇（美元指数/EUR/JPY；T+0且是真DXY，优先于FRED外汇）
+    if ticker in TENCENT_FOREX:
+        s = _fetch_from_tencent_forex(ticker, period)
+        if s is not None:
+            if verbose:
+                print(f"  🔄 {name}({ticker}) {len(s)}行 [腾讯:{TENCENT_FOREX[ticker]}]")
+            s.name = name
+            return s
+
+    # Level 5: FRED替代
     if ticker in FRED_ALTERNATIVES:
         fred_id = FRED_ALTERNATIVES[ticker]
         try:
@@ -260,7 +302,7 @@ def fetch_ticker_with_fallback(ticker, name, period='5y', verbose=True):
             if verbose:
                 print(f"  ⚠️ {name}({ticker}) FRED({fred_id})失败: {e}")
     
-    # Level 5: 代理因子fallback（用相关ETF/品种替代）
+    # Level 6: 代理因子fallback（用相关ETF/品种替代）
     if ticker in PROXY_FALLBACK:
         proxy_ticker, scale = PROXY_FALLBACK[ticker]
         try:
