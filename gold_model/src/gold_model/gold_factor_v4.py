@@ -1801,7 +1801,7 @@ ws8.freeze_panes = 'C5'
 
 # 保存
 output_path = str(REPORTS_DIR / '黄金多因子分析报告_V4.xlsx')
-wb.properties.creator = '莫比乌斯'
+wb.properties.creator = 'gold_model'
 wb.properties.title = '黄金价格预测V4.0'
 wb.save(output_path)
 print(f"\n✅ Excel报告已保存: {output_path}")

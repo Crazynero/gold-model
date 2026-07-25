@@ -529,7 +529,7 @@ BODY_PDF = f'{OUTPUT_DIR}/body.pdf'
 doc = SimpleDocTemplate(BODY_PDF, pagesize=A4,
     leftMargin=MARGIN_L, rightMargin=MARGIN_R,
     topMargin=MARGIN_T, bottomMargin=MARGIN_B,
-    title='黄金ETF+期货组合仓位管理方案', author='Möbius')
+    title='黄金ETF+期货组合仓位管理方案', author='gold_model')
 
 doc.build(story)
 print(f"Body PDF generated: {BODY_PDF}")

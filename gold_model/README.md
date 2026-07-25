@@ -58,11 +58,10 @@ python3 -m gold_model.execution_plan.merge_pdf         # 合并封面+正文 →
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e .     # 首次：主管道依赖装进 .venv
-cp scripts/com.goldmodel.daily-signal.plist ~/Library/LaunchAgents/
-launchctl load -w ~/Library/LaunchAgents/com.goldmodel.daily-signal.plist   # 周二~六 22:30
+bash scripts/install_launchd.sh                          # 注入项目路径并加载（周二~六 22:30）
 ```
 
-日志在 `logs/`（按天滚动）。卸载：`launchctl unload -w ~/Library/LaunchAgents/com.goldmodel.daily-signal.plist`。
+日志在 `logs/`（按天滚动）。卸载：`bash scripts/install_launchd.sh --uninstall`。
 
 ## 约定
 
