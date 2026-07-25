@@ -1,7 +1,8 @@
 """
 数据源多级fallback模块
-yfinance → 新浪美股 → 东方财富 → 腾讯外汇 → CBOE → FRED → 代理因子 七层降级，逐ticker独立处理
+yfinance → 新浪美股 → 东方财富 → 新浪期货 → 腾讯外汇 → CBOE → FRED → 代理因子 八层降级，逐ticker独立处理
 （解决中国IP被Yahoo限流问题：美股ETF/个股走新浪日K，VIX走FRED；
+ COMEX金/铜走新浪期货（真期货价，不再依赖ETF代理）；
  外汇/美元指数走腾讯（真DXY、T+0；FRED外汇序列发布滞后约一周且DTWEXBGS≠ICE DXY）；
  波动率指数走CBOE官方CSV（T+0，VIX9D唯一来源）；
  yfinance连续限流2次后熔断跳过；东财限流敏感需节流）
@@ -76,6 +77,13 @@ CBOE_INDICES = {
     '^VIX':   'VIX',
     '^VIX9D': 'VIX9D',
     '^GVZ':   'GVZ',
+}
+
+# ── 新浪全球期货（COMEX金/铜真期货价，T+0，10年历史；Yahoo长期不可用时金价/铜价的首选源）──
+# 映射: ticker → (新浪symbol, 单位缩放)。GC报USD/盎司与Yahoo同单位；HG新浪报美分/磅需×0.01
+SINA_FUTURES = {
+    'GC=F': ('GC', 1.0),    # 纽约金期货（替代 GLD×10.75 代理，消除ETF费率拖累）
+    'HG=F': ('HG', 0.01),   # 纽约铜期货（替代 CPER×1.0 代理，真实期货价位）
 }
 
 # ── 东财替代（美股ETF/个股；secid market：107=Arca 105=Nasdaq 106=NYSE）──
@@ -172,8 +180,8 @@ def _fetch_from_sina(ticker, period='5y'):
 # ── 代理因子fallback（yfinance ticker失败时用其他yfinance ticker替代）──
 # Stooq全站JS验证无法直接抓取，改用ETF/相关品种作为代理
 PROXY_FALLBACK = {
-    'GC=F':    ('GLD', 10.75),    # 黄金期货 → GLD ETF（GLD≈0.093盎司金价，期货≈GLD×10.75）
-    'HG=F':    ('CPER', 1.0),     # 铜期货 → 铜ETF（方向一致）
+    'GC=F':    ('GLD', 10.75),    # 黄金期货 → GLD ETF（最终兜底；正常走新浪期货真价）
+    'HG=F':    ('CPER', 1.0),     # 铜期货 → 铜ETF（最终兜底；正常走新浪期货真价）
     '^GVZ':    ('^VIX', 0.5),     # 黄金VIX → VIX（相关性高，波动幅度调小）
     # 注意：^VIX9D 不可用 ^VIX 代理——下游"VIX期限结构"=VIX/VIX9D 会变成常数（零方差死特征）；
     # 该品种已由 CBOE 官方 CSV 覆盖，无需代理
@@ -264,6 +272,29 @@ def _fetch_from_cboe(ticker, period='5y'):
         return None
 
 
+def _fetch_from_sina_futures(ticker, period='5y'):
+    """新浪全球期货日K：返回 [{'date','open','high','low','close',...}]，T+0"""
+    m = SINA_FUTURES.get(ticker)
+    if not m:
+        return None
+    symbol, scale = m
+    try:
+        url = ('https://stock2.finance.sina.com.cn/futures/api/jsonp_v2.php/'
+               f'var=/GlobalFuturesService.getGlobalFuturesDailyKLine?symbol={symbol}')
+        r = requests.get(url, timeout=15, headers={'Referer': 'https://finance.sina.com.cn/'})
+        t = r.text
+        j = json.loads(t[t.index('(') + 1:t.rindex(')')])
+        if not j:
+            return None
+        s = pd.Series({pd.Timestamp(k['date']): float(k['close']) * scale for k in j}, name=ticker)
+        s = s.sort_index()
+        if period == '5y':
+            s = s[s.index > pd.Timestamp.now() - pd.Timedelta(days=5 * 365)]
+        return s if len(s) > 100 else None
+    except Exception:
+        return None
+
+
 def fetch_ticker_with_fallback(ticker, name, period='5y', verbose=True):
     """
     逐层fallback获取ticker数据
@@ -311,7 +342,17 @@ def fetch_ticker_with_fallback(ticker, name, period='5y', verbose=True):
             if verbose:
                 print(f"  ⚠️ {name}({ticker}) 东财失败: {e}")
 
-    # Level 4: 腾讯外汇（美元指数/EUR/JPY；T+0且是真DXY，优先于FRED外汇）
+    # Level 4: 新浪全球期货（COMEX金/铜真期货价，优先于代理因子）
+    if ticker in SINA_FUTURES:
+        s = _fetch_from_sina_futures(ticker, period)
+        if s is not None:
+            if verbose:
+                sym, _ = SINA_FUTURES[ticker]
+                print(f"  🔄 {name}({ticker}) {len(s)}行 [新浪期货:{sym}]")
+            s.name = name
+            return s
+
+    # Level 5: 腾讯外汇（美元指数/EUR/JPY；T+0且是真DXY，优先于FRED外汇）
     if ticker in TENCENT_FOREX:
         s = _fetch_from_tencent_forex(ticker, period)
         if s is not None:
@@ -320,7 +361,7 @@ def fetch_ticker_with_fallback(ticker, name, period='5y', verbose=True):
             s.name = name
             return s
 
-    # Level 5: CBOE官方（VIX/VIX9D/GVZ，T+0，优先于FRED滞后1天的替代列）
+    # Level 6: CBOE官方（VIX/VIX9D/GVZ，T+0，优先于FRED滞后1天的替代列）
     if ticker in CBOE_INDICES:
         s = _fetch_from_cboe(ticker, period)
         if s is not None:
@@ -329,7 +370,7 @@ def fetch_ticker_with_fallback(ticker, name, period='5y', verbose=True):
             s.name = name
             return s
 
-    # Level 6: FRED替代
+    # Level 7: FRED替代
     if ticker in FRED_ALTERNATIVES:
         fred_id = FRED_ALTERNATIVES[ticker]
         try:
@@ -343,7 +384,7 @@ def fetch_ticker_with_fallback(ticker, name, period='5y', verbose=True):
             if verbose:
                 print(f"  ⚠️ {name}({ticker}) FRED({fred_id})失败: {e}")
     
-    # Level 7: 代理因子fallback（用相关ETF/品种替代）
+    # Level 8: 代理因子fallback（用相关ETF/品种替代；GC=F/HG=F已有新浪期货真价，此处仅兜底）
     if ticker in PROXY_FALLBACK:
         proxy_ticker, scale = PROXY_FALLBACK[ticker]
         try:
