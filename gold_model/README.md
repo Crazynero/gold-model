@@ -21,7 +21,7 @@ gold_model/
 ├── src/gold_model/            # Python 包
 │   ├── paths.py               # 统一路径配置（所有模块的路径入口）
 │   ├── gold_factor_v4.py      # 主管道：采集→建模→图表→JSON输出
-│   ├── data_fetcher.py        # 多源数据 fallback（yfinance→新浪→东财→腾讯外汇→FRED→代理因子）
+│   ├── data_fetcher.py        # 多源数据 fallback（yfinance→新浪→东财→腾讯外汇→CBOE→FRED→代理因子）
 │   ├── fomc_calendar.py       # FOMC 议息日历（多级fallback+缓存）
 │   ├── cpi_calendar.py        # CPI 发布日历（多级fallback+缓存）
 │   ├── signal_alert.py        # 异常信号检测（Regime切换/仓位变化/概率穿越）

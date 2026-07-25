@@ -1,8 +1,9 @@
 """
 数据源多级fallback模块
-yfinance → 新浪美股 → 东方财富 → 腾讯外汇 → FRED → 代理因子 六层降级，逐ticker独立处理
+yfinance → 新浪美股 → 东方财富 → 腾讯外汇 → CBOE → FRED → 代理因子 七层降级，逐ticker独立处理
 （解决中国IP被Yahoo限流问题：美股ETF/个股走新浪日K，VIX走FRED；
  外汇/美元指数走腾讯（真DXY、T+0；FRED外汇序列发布滞后约一周且DTWEXBGS≠ICE DXY）；
+ 波动率指数走CBOE官方CSV（T+0，VIX9D唯一来源）；
  yfinance连续限流2次后熔断跳过；东财限流敏感需节流）
 """
 import io
@@ -68,6 +69,13 @@ TENCENT_FOREX = {
     'DX-Y.NYB': 'whDINIW',   # 美元指数（真·ICE DXY，优于FRED的DTWEXBGS贸易加权指数）
     'EUR=X':    'whEURUSD',  # 欧元/美元（与Yahoo EUR=X同向：1欧元兑多少美元）
     'JPY=X':    'whUSDJPY',  # 美元/日元（与Yahoo JPY=X同向：1美元兑多少日元）
+}
+
+# ── CBOE官方指数CSV（T+0当日收盘，VIX9D唯一可用源；新浪不覆盖指数、FRED的VIXCLS/GVZCLS滞后1天）──
+CBOE_INDICES = {
+    '^VIX':   'VIX',
+    '^VIX9D': 'VIX9D',
+    '^GVZ':   'GVZ',
 }
 
 # ── 东财替代（美股ETF/个股；secid market：107=Arca 105=Nasdaq 106=NYSE）──
@@ -167,7 +175,8 @@ PROXY_FALLBACK = {
     'GC=F':    ('GLD', 10.75),    # 黄金期货 → GLD ETF（GLD≈0.093盎司金价，期货≈GLD×10.75）
     'HG=F':    ('CPER', 1.0),     # 铜期货 → 铜ETF（方向一致）
     '^GVZ':    ('^VIX', 0.5),     # 黄金VIX → VIX（相关性高，波动幅度调小）
-    # 注意：^VIX9D 不可用 ^VIX 代理——下游"VIX期限结构"=VIX/VIX9D 会变成常数（零方差死特征），宁可缺失
+    # 注意：^VIX9D 不可用 ^VIX 代理——下游"VIX期限结构"=VIX/VIX9D 会变成常数（零方差死特征）；
+    # 该品种已由 CBOE 官方 CSV 覆盖，无需代理
 }
 
 
@@ -232,6 +241,29 @@ def _fetch_from_tencent_forex(ticker, period='5y'):
         return None
 
 
+def _fetch_from_cboe(ticker, period='5y'):
+    """CBOE官方历史CSV：Date,Open,High,Low,Close（GVZ仅Close），T+0"""
+    symbol = CBOE_INDICES.get(ticker)
+    if not symbol:
+        return None
+    try:
+        url = f'https://cdn.cboe.com/api/global/us_indices/daily_prices/{symbol}_History.csv'
+        r = requests.get(url, timeout=15, headers={'User-Agent': 'Mozilla/5.0'})
+        if r.status_code != 200:
+            return None
+        df = pd.read_csv(io.StringIO(r.text))
+        df.columns = [c.strip().lower() for c in df.columns]
+        df['date'] = pd.to_datetime(df['date'], format='%m/%d/%Y')
+        value_col = 'close' if 'close' in df.columns else df.columns[1]  # GVZ等只有 DATE,<SYMBOL> 两列
+        s = pd.Series(df[value_col].astype(float).values, index=df['date'], name=ticker)
+        s = s.sort_index()
+        if period == '5y':
+            s = s[s.index > pd.Timestamp.now() - pd.Timedelta(days=5 * 365)]
+        return s if len(s) > 100 else None
+    except Exception:
+        return None
+
+
 def fetch_ticker_with_fallback(ticker, name, period='5y', verbose=True):
     """
     逐层fallback获取ticker数据
@@ -288,7 +320,16 @@ def fetch_ticker_with_fallback(ticker, name, period='5y', verbose=True):
             s.name = name
             return s
 
-    # Level 5: FRED替代
+    # Level 5: CBOE官方（VIX/VIX9D/GVZ，T+0，优先于FRED滞后1天的替代列）
+    if ticker in CBOE_INDICES:
+        s = _fetch_from_cboe(ticker, period)
+        if s is not None:
+            if verbose:
+                print(f"  🔄 {name}({ticker}) {len(s)}行 [CBOE:{CBOE_INDICES[ticker]}]")
+            s.name = name
+            return s
+
+    # Level 6: FRED替代
     if ticker in FRED_ALTERNATIVES:
         fred_id = FRED_ALTERNATIVES[ticker]
         try:
@@ -302,7 +343,7 @@ def fetch_ticker_with_fallback(ticker, name, period='5y', verbose=True):
             if verbose:
                 print(f"  ⚠️ {name}({ticker}) FRED({fred_id})失败: {e}")
     
-    # Level 6: 代理因子fallback（用相关ETF/品种替代）
+    # Level 7: 代理因子fallback（用相关ETF/品种替代）
     if ticker in PROXY_FALLBACK:
         proxy_ticker, scale = PROXY_FALLBACK[ticker]
         try:
