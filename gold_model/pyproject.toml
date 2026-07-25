@@ -25,6 +25,7 @@ dependencies = [
 
 [project.optional-dependencies]
 pdf = ["playwright"]  # generate_cover.py 需要
+dev = ["pytest"]      # tests/ 冒烟测试
 
 [project.scripts]
 gold-dashboard = "gold_model.web_server:main"

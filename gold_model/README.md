@@ -7,6 +7,8 @@
 ```bash
 cd gold_model
 pip install -e .          # 或 pip install -e ".[pdf]"（含封面渲染 playwright）
+# macOS 前置：brew install libomp（xgboost/lightgbm 依赖）
+# 中国大陆网络建议加镜像：-i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 不安装也可用 `PYTHONPATH=src` 直接运行下文所有 `python3 -m ...` 命令。
@@ -19,7 +21,7 @@ gold_model/
 ├── src/gold_model/            # Python 包
 │   ├── paths.py               # 统一路径配置（所有模块的路径入口）
 │   ├── gold_factor_v4.py      # 主管道：采集→建模→图表→JSON输出
-│   ├── data_fetcher.py        # 多源数据 fallback（yfinance→FRED→代理因子）
+│   ├── data_fetcher.py        # 多源数据 fallback（yfinance→新浪→东财→FRED→代理因子）
 │   ├── fomc_calendar.py       # FOMC 议息日历（多级fallback+缓存）
 │   ├── cpi_calendar.py        # CPI 发布日历（多级fallback+缓存）
 │   ├── signal_alert.py        # 异常信号检测（Regime切换/仓位变化/概率穿越）
@@ -62,6 +64,13 @@ bash scripts/install_launchd.sh                          # 注入项目路径并
 ```
 
 日志在 `logs/`（按天滚动）。卸载：`bash scripts/install_launchd.sh --uninstall`。
+
+## 冒烟测试
+
+```bash
+pip install -e ".[dev]"                                   # 含 pytest
+PYTHONPATH=src .venv/bin/python3 -m pytest tests/ -q      # 8 个用例：paths/日历/JSON契约/采集链
+```
 
 ## 约定
 
