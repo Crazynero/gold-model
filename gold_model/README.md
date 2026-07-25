@@ -37,7 +37,7 @@ gold_model/
 ├── web/                       # 前端 Dashboard（index.html + JSON 数据）
 ├── data/                      # 缓存与状态（fomc_cache / cpi_cache / drift_history / signal_alert_state）
 ├── outputs/                   # 生成物（charts_v4 / execution_plan / reports）
-└── docs/
+└── docs/                      # 预测逻辑流程.md（核心知识文件）/ 功能点与问题清单.md / DASHBOARD_DESIGN.md
 ```
 
 ## 常用命令
