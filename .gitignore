@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.venv/
+
+# 生成物（可随时重建）
+gold_model/outputs/
+gold_model/logs/
+
+# 隐私/个人记忆文件（不入库）
+USER.md
+agent_bak/
+
+# 运行状态（每天变化，不制造噪音）
+gold_model/data/
+
+# Agent 记忆文件（本地专用，不入库）
+AGENTS.md
+SOUL.md
+IDENTITY.md
+TOOLS.md

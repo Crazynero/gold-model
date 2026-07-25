@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gold-model"
+version = "4.2.0"
+description = "黄金多因子预测模型 V4 — 数据采集 → ML建模 → 信号告警 → Dashboard/报告"
+requires-python = ">=3.10"
+dependencies = [
+    "pandas",
+    "numpy",
+    "scipy",
+    "scikit-learn",
+    "xgboost",
+    "lightgbm",
+    "yfinance",
+    "requests",
+    "beautifulsoup4",
+    "matplotlib",
+    "reportlab",
+    "pypdf",
+    "openpyxl",
+]
+
+[project.optional-dependencies]
+pdf = ["playwright"]  # generate_cover.py 需要
+
+[project.scripts]
+gold-dashboard = "gold_model.web_server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"gold_model.execution_plan" = ["assets/*.html"]

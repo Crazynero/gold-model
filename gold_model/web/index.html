@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>∞ 黄金价格预测 V4.0</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+:root{--bg:#0f1117;--card:#1a1d28;--card-hover:#22263a;--border:#2a2e3f;--text:#e0e0e0;--text-dim:#888899;--green:#2ca02c;--red:#d62728;--yellow:#FFD700;--blue:#4472C4;--purple:#9467bd}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans SC','Microsoft YaHei',-apple-system,sans-serif;font-size:14px;line-height:1.6}
+.navbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.nav-left{display:flex;align-items:center;gap:16px}
+.nav-title{font-size:18px;font-weight:bold}
+.nav-title span{color:var(--blue);margin-right:8px}
+.signal-badge{padding:4px 12px;border-radius:4px;font-size:13px;font-weight:bold}
+.signal-bull{background:rgba(44,163,44,0.2);color:var(--green);border:1px solid var(--green)}
+.signal-bear{background:rgba(214,39,40,0.2);color:var(--red);border:1px solid var(--red)}
+.signal-wait{background:rgba(255,215,0,0.15);color:var(--yellow);border:1px solid var(--yellow)}
+.nav-btns{display:flex;gap:8px}
+.nav-btn{padding:6px 16px;border-radius:4px;border:1px solid var(--border);background:var(--card-hover);color:var(--text);cursor:pointer;font-size:13px;transition:all 0.2s}
+.nav-btn:hover{background:var(--blue);border-color:var(--blue)}
+.nav-btn.primary{background:var(--blue);border-color:var(--blue)}
+.nav-btn.primary:hover{opacity:0.85}
+.tabs{display:flex;gap:0;background:var(--card);border-bottom:1px solid var(--border);padding:0 24px}
+.tab{padding:10px 20px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text-dim);transition:all 0.2s;font-size:14px}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.main{padding:20px 24px;max-width:1600px;margin:0 auto}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:bold;color:var(--text-dim);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.grid-1-2{display:grid;grid-template-columns:1fr 2fr;gap:16px}
+.signal-panel{text-align:center}
+.signal-panel .big-number{font-size:48px;font-weight:bold;color:var(--yellow);line-height:1.2}
+.signal-panel .label{font-size:12px;color:var(--text-dim)}
+.signal-panel .action{font-size:20px;font-weight:bold;margin-top:8px;padding:8px;border-radius:4px}
+.metric-card{text-align:center;padding:16px}
+.metric-card .value{font-size:28px;font-weight:bold}
+.metric-card .label{font-size:12px;color:var(--text-dim);margin-top:4px}
+.metric-card .sub{font-size:11px;color:var(--text-dim);margin-top:2px}
+.metric-green .value{color:var(--green)}
+.metric-red .value{color:var(--red)}
+.metric-blue .value{color:var(--blue)}
+.metric-yellow .value{color:var(--yellow)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px;background:var(--card-hover);color:var(--text-dim);font-weight:bold;border-bottom:1px solid var(--border)}
+td{padding:8px;border-bottom:1px solid var(--border)}
+tr:hover{background:var(--card-hover)}
+.td-green{color:var(--green)}.td-red{color:var(--red)}.td-yellow{color:var(--yellow)}
+.slider-group{margin-bottom:16px}
+.slider-group label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;align-items:center}
+.slider-group label .value{color:var(--blue);font-weight:bold}
+.info-icon{display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;background:var(--card-hover);border:1px solid var(--border);border-radius:50%;font-size:11px;cursor:pointer;color:var(--text-dim);margin-left:4px;flex-shrink:0}
+.info-icon:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+.info-panel{display:none;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;margin-top:8px;font-size:12px;line-height:1.7;max-height:400px;overflow-y:auto}
+.info-panel-title{font-weight:bold;color:var(--blue);margin-bottom:8px;font-size:13px}
+.info-panel-body{color:var(--text-dim)}
+.info-panel-body b{color:var(--text)}
+.info-panel-body a{color:var(--blue);text-decoration:none}
+.info-panel-body a:hover{text-decoration:underline}
+.info-panel-body ul{margin-left:16px;margin-top:4px;margin-bottom:8px}
+.info-panel-body li{margin-bottom:2px}
+.info-panel-body table{width:100%;border-collapse:collapse;margin-top:4px}
+.info-panel-body th,.info-panel-body td{padding:4px 8px;border:1px solid var(--border);text-align:left;font-size:11px}
+.info-panel-body th{background:var(--card-hover);color:var(--text)}
+.event-guide{border-left:3px solid var(--yellow)}
+input[type="range"]{width:100%;height:6px;border-radius:3px;background:var(--border);-webkit-appearance:none;outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--blue);cursor:pointer}
+input[type="range"]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--blue);cursor:pointer;border:none}
+input[type="text"],input[type="date"],select,textarea{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-size:13px}
+input[type="text"]:focus,select:focus,textarea:focus{border-color:var(--blue);outline:none}
+.prob-bar-container{display:flex;align-items:flex-end;justify-content:space-around;height:200px;padding:20px 10px}
+.prob-bar{display:flex;flex-direction:column;align-items:center;gap:8px}
+.prob-bar .bar{width:60px;border-radius:4px 4px 0 0;transition:all 0.3s}
+.prob-bar .bar-label{font-size:12px;color:var(--text-dim)}
+.prob-bar .bar-value{font-size:14px;font-weight:bold}
+.chart-container{width:100%;height:400px}
+.chart-container.tall{height:500px}
+.progress-bar{width:100%;height:24px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:8px}
+.progress-fill{height:100%;background:var(--blue);transition:width 0.3s;display:flex;align-items:center;justify-content:center;font-size:12px;color:white;white-space:nowrap}
+.log-window{background:#000;border:1px solid var(--border);border-radius:4px;padding:12px;font-family:'Courier New',monospace;font-size:12px;color:#00ff00;height:300px;overflow-y:auto;white-space:pre-wrap}
+.event-tag{display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;margin:2px}
+.tag-bull{background:rgba(44,163,44,0.2);color:var(--green)}.tag-bear{background:rgba(214,39,40,0.2);color:var(--red)}.tag-neutral{background:rgba(136,136,153,0.2);color:var(--text-dim)}
+.adjust-arrow{display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--text-dim)}
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;background:var(--blue);color:white;border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,0.4);z-index:200;display:none;font-size:14px}
+@media(max-width:768px){.grid-2,.grid-3,.grid-4,.grid-1-2{grid-template-columns:1fr}.main{padding:12px}.nav-title{font-size:16px}}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <div class="nav-left">
+    <div class="nav-title"><span>∞</span>黄金价格预测 V4.0</div>
+    <div id="signalBadge" class="signal-badge signal-wait">🟡 观望</div>
+    <div style="font-size:12px;color:var(--text-dim);" id="lastUpdate">加载中...</div>
+  </div>
+  <div class="nav-btns">
+    <button class="nav-btn" onclick="location.reload()">刷新</button>
+    <button class="nav-btn primary" onclick="switchTab('adjust')">人工调整</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="overview" onclick="switchTab('overview')">总览</div>
+  <div class="tab" data-tab="factors" onclick="switchTab('factors')">因子分析</div>
+  <div class="tab" data-tab="backtest" onclick="switchTab('backtest')">策略回测</div>
+  <div class="tab" data-tab="adjust" onclick="switchTab('adjust')">人工调整</div>
+  <div class="tab" data-tab="data" onclick="switchTab('data')">数据管理</div>
+  <div class="tab" data-tab="execution" onclick="switchTab('execution')">执行方案</div>
+</div>
+
+<div class="main">
+
+<!-- Tab 1: 总览 -->
+<div class="tab-content active" id="tab-overview">
+  <div class="grid-2">
+    <div class="card signal-panel">
+      <div class="card-title">当前信号</div>
+      <div style="margin-bottom:8px;"><span id="regimeBadge" class="signal-badge signal-wait">震荡</span></div>
+      <div class="big-number" id="probDisplay">--%</div>
+      <div class="label">集成看多概率</div>
+      <div class="action" id="actionDisplay" style="background:rgba(255,215,0,0.15);color:var(--yellow);">加载中...</div>
+      <div class="label" id="baseDate" style="margin-top:8px;">基准日: --</div>
+    </div>
+    <div class="card">
+      <div class="card-title">多周期概率一致性</div>
+      <div class="prob-bar-container" id="probBars">
+        <div class="prob-bar"><div class="bar-value" style="color:var(--green);">70%</div><div class="bar" style="height:140px;background:var(--green);"></div><div class="bar-label">5日</div></div>
+        <div class="prob-bar"><div class="bar-value" style="color:var(--text-dim);">53%</div><div class="bar" style="height:106px;background:var(--text-dim);"></div><div class="bar-label">10日</div></div>
+        <div class="prob-bar"><div class="bar-value" style="color:var(--green);">67%</div><div class="bar" style="height:134px;background:var(--green);"></div><div class="bar-label">20日</div></div>
+        <div class="prob-bar"><div class="bar-value" style="color:var(--red);">39%</div><div class="bar" style="height:78px;background:var(--red);"></div><div class="bar-label">60日</div></div>
+      </div>
+      <div style="text-align:center;margin-top:8px;font-size:13px;">加权集成: <span style="color:var(--yellow);font-weight:bold;" id="weightedProb">58%</span><span style="margin-left:12px;font-size:11px;color:var(--text-dim);">权重: 15/25/40/20</span></div>
+    </div>
+  </div>
+  <div class="card"><div class="card-title">金价走势 + 均线</div><div class="chart-container tall" id="priceChart"></div></div>
+  <div class="grid-4">
+    <div class="card metric-card metric-yellow"><div class="value" id="goldPrice">$----</div><div class="label">当前金价</div><div class="sub" id="goldChange">--</div></div>
+    <div class="card metric-card metric-blue"><div class="value" id="regimeStat">--</div><div class="label">当前Regime</div><div class="sub" id="regimeDist">--</div></div>
+    <div class="card metric-card metric-green"><div class="value" id="modelAcc">--</div><div class="label">20日模型准确率</div><div class="sub" id="modelAuc">AUC: --</div></div>
+    <div class="card metric-card metric-green"><div class="value" id="sharpeVal">--</div><div class="label">V3.0-B 夏普</div><div class="sub" id="sharpeCompare">vs 买入持有 --</div></div>
+  </div>
+  <div class="card"><div class="card-title">策略净值对比</div><div class="chart-container" id="strategyChart"></div></div>
+</div>
+
+<!-- Tab 2: 因子分析 -->
+<div class="tab-content" id="tab-factors">
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;">
+    <div class="card"><div class="card-title">特征重要性 TOP15</div><div class="chart-container tall" id="featureChart"></div></div>
+    <div class="card">
+      <div class="card-title">多周期ML模型表现</div>
+      <table id="mlTable"><thead><tr><th>周期</th><th>准确率</th><th>AUC</th><th>IC</th></tr></thead><tbody></tbody></table>
+      <div style="margin-top:16px;"><div class="card-title">TOP5因子</div><div id="topFactors" style="font-size:13px;"></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">全部因子当前状态</div>
+    <input type="text" placeholder="搜索因子..." id="factorSearch" onkeyup="filterFactors()" style="margin-bottom:12px;">
+    <table id="factorTable"><thead><tr><th>因子</th><th>当前值</th><th>20日动量</th><th>信号</th></tr></thead><tbody></tbody></table>
+  </div>
+</div>
+
+<!-- Tab 3: 策略回测 -->
+<div class="tab-content" id="tab-backtest">
+  <div class="card"><div class="card-title">策略净值对比（对数坐标）</div><div class="chart-container tall" id="backtestChart"></div></div>
+  <div class="grid-2">
+    <div class="card"><div class="card-title">回撤对比</div><div class="chart-container" id="drawdownChart"></div></div>
+    <div class="card"><div class="card-title">Regime雷达图</div><div class="chart-container" id="radarChart"></div></div>
+  </div>
+  <div class="card"><div class="card-title">策略表现汇总</div><table id="strategyTable"><thead><tr><th>策略</th><th>年化收益</th><th>波动</th><th>夏普</th><th>最大回撤</th><th>胜率</th><th>Calmar</th><th>累计</th></tr></thead><tbody></tbody></table></div>
+</div>
+
+<!-- Tab 4: 人工调整 -->
+<div class="tab-content" id="tab-adjust">
+  
+  <!-- 使用引导 -->
+  <div class="card" style="background:linear-gradient(135deg,#1a1d28,#22263a);border-left:3px solid var(--blue);">
+    <div style="display:flex;align-items:start;gap:12px;">
+      <div style="font-size:24px;">💡</div>
+      <div>
+        <div style="font-weight:bold;margin-bottom:4px;">如何使用人工调整</div>
+        <div style="font-size:13px;color:var(--text-dim);line-height:1.8;">
+          ① 调整左侧<b>5个市场观点滑块</b>，输入你对基本面的判断（模型看不到的信息）<br>
+          ② 在<b>事件标记</b>中录入近期重大事件，模型会叠加事件冲击<br>
+          ③ 在<b>央行购金补录</b>中手动录入世界黄金协会月度数据<br>
+          ④ 右侧自动计算<b>调整后概率</b>，对比模型原始信号<br>
+          ⑤ 如需修改策略参数，在下方<b>模型参数调整</b>中调滑块<br>
+          ⑥ 每个<span class="info-icon" style="display:inline-block;">ⓘ</span>图标可展开详细解释和数据获取指引
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-1-2">
+    <div>
+      
+      <!-- 市场观点输入 -->
+      <div class="card">
+        <div class="card-title">市场观点输入 <span style="font-size:11px;color:var(--text-dim);font-weight:normal;">— 你对基本面的判断</span></div>
+        
+        <!-- 美联储政策 -->
+        <div class="slider-group">
+          <label>美联储政策预期 <span class="value" id="fedVal">0 (中性)</span>
+            <span class="info-icon" onclick="toggleInfo('fedInfo')">ⓘ</span>
+          </label>
+          <input type="range" id="fedSlider" min="-5" max="5" value="0" step="1" oninput="updateAdjust()">
+          <div style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;"><span>大幅宽松←</span><span>中性</span><span>→大幅紧缩</span></div>
+          <div class="info-panel" id="fedInfo">
+            <div class="info-panel-title">这是什么？如何判断？</div>
+            <div class="info-panel-body">
+              <b>含义：</b>你对未来3-6个月美联储货币政策方向的预期。降息=宽松(+方向)，加息=紧缩(-方向)。<br><br>
+              <b>为什么重要：</b>黄金是不生息资产，美联储利率是持有黄金的机会成本。降息→实际利率↓→金价↑。<br><br>
+              <b>如何判断：</b>
+              <ul>
+                <li>看<b>FOMC点阵图</b>：每次议息发布，显示委员对未来利率的预期 → <a href="https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm" target="_blank">FOMC日历</a></li>
+                <li>看<b>CME FedWatch</b>：市场对下次议息的降息/加息概率 → <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank">FedWatch工具</a></li>
+                <li>看<b>FOMC声明措辞</b>："patient"=偏鸽，"vigilant"=偏鹰</li>
+                <li>看<b>鲍威尔讲话</b>：国会证词、新闻发布会语气</li>
+              </ul>
+              <b>取值参考：</b>
+              <table style="width:100%;margin-top:4px;">
+                <tr><td>+5</td><td>紧急降息50bp+，QE重启</td></tr>
+                <tr><td>+3</td><td>常规降息25bp，鸽派指引</td></tr>
+                <tr><td>+1</td><td>维持但偏鸽，暗示未来降息</td></tr>
+                <tr><td>0</td><td>中性，利率不变</td></tr>
+                <tr><td>-1</td><td>维持但偏鹰，暗示未来加息</td></tr>
+                <tr><td>-3</td><td>常规加息25bp，鹰派指引</td></tr>
+                <tr><td>-5</td><td>激进加息50bp+，QT加速</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 通胀预期 -->
+        <div class="slider-group">
+          <label>通胀预期(CPI) <span class="value" id="inflVal">3.0%</span>
+            <span class="info-icon" onclick="toggleInfo('inflInfo')">ⓘ</span>
+          </label>
+          <input type="range" id="inflSlider" min="0" max="10" value="3" step="0.5" oninput="updateAdjust()">
+          <div style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;"><span>0%</span><span>5%</span><span>10%+</span></div>
+          <div class="info-panel" id="inflInfo">
+            <div class="info-panel-title">这是什么？如何判断？</div>
+            <div class="info-panel-body">
+              <b>含义：</b>你对未来美国CPI同比的预期。黄金是抗通胀工具，通胀↑→金价↑。<br><br>
+              <b>为什么重要：</b>意外通胀（超出市场预期）是金价最强驱动之一。模型已含T10YIE（10年盈亏平衡通胀率），但你对未来CPI的判断比市场共识更前瞻。<br><br>
+              <b>如何获取数据：</b>
+              <ul>
+                <li><b>BLS官网</b>（美国劳工统计局）：每月中旬发布上月CPI → <a href="https://www.bls.gov/cpi/" target="_blank">BLS CPI</a></li>
+                <li><b>Cleveland Fed通胀预期</b>：实时通胀预测 → <a href="https://www.clevelandfed.org/indicators-and-data/inflation-expectations" target="_blank">克利夫兰联储</a></li>
+                <li><b>10年盈亏平衡通胀率</b>：市场隐含预期 → FRED搜索"T10YIE"</li>
+              </ul>
+              <b>取值参考：</b>
+              <table style="width:100%;margin-top:4px;">
+                <tr><td>2.0%</td><td>美联储目标，政策正常</td></tr>
+                <tr><td>3.0%</td><td>温和通胀，略高于目标</td></tr>
+                <tr><td>5.0%</td><td>高通胀，加息压力大</td></tr>
+                <tr><td>7.0%+</td><td>恶性通胀，黄金最强环境</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 地缘风险 -->
+        <div class="slider-group">
+          <label>地缘风险等级 <span class="value" id="geoVal">3 / 10</span>
+            <span class="info-icon" onclick="toggleInfo('geoInfo')">ⓘ</span>
+          </label>
+          <input type="range" id="geoSlider" min="1" max="10" value="3" step="1" oninput="updateAdjust()">
+          <div style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;"><span>和平</span><span>中等</span><span>全面冲突</span></div>
+          <div class="info-panel" id="geoInfo">
+            <div class="info-panel-title">这是什么？如何判断？</div>
+            <div class="info-panel-body">
+              <b>含义：</b>你对当前全球地缘政治风险的主观评估。地缘冲突→避险需求↑→金价↑（脉冲式）。<br><br>
+              <b>为什么重要：</b>模型无法预测突发事件。地缘冲击是金价短期最大波动来源，但持续性弱（通常2-4周回落）。<br><br>
+              <b>如何跟踪：</b>
+              <ul>
+                <li><b> GDELT项目</b>：全球事件实时监控 → <a href="https://www.gdeltproject.org/" target="_blank">GDELT</a></li>
+                <li><b>地缘政治风险指数</b>：Caldara & Iacoviello学术指数 → <a href="https://www.matteoiacoviello.com/research.htm" target="_blank">GPR Index</a></li>
+                <li><b>主要冲突热点</b>：俄乌、中东(以色列/伊朗)、台海、朝鲜半岛</li>
+                <li><b>VIX脉冲</b>：VIX单日涨>30%通常=地缘冲击</li>
+              </ul>
+              <b>取值参考：</b>
+              <table style="width:100%;margin-top:4px;">
+                <tr><td>1-2</td><td>全球和平，无重大冲突</td></tr>
+                <tr><td>3-4</td><td>局部紧张但无升级（常态）</td></tr>
+                <tr><td>5-6</td><td>冲突升级，制裁/军演</td></tr>
+                <tr><td>7-8</td><td>实际军事冲突爆发</td></tr>
+                <tr><td>9-10</td><td>全面战争/核威胁</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 美元走势 -->
+        <div class="slider-group">
+          <label>美元走势判断 <span class="value" id="dxyVal">0 (中性)</span>
+            <span class="info-icon" onclick="toggleInfo('dxyInfo')">ⓘ</span>
+          </label>
+          <input type="range" id="dxySlider" min="-5" max="5" value="0" step="1" oninput="updateAdjust()">
+          <div style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;"><span>大幅贬值←</span><span>中性</span><span>→大幅升值</span></div>
+          <div class="info-panel" id="dxyInfo">
+            <div class="info-panel-title">这是什么？如何判断？</div>
+            <div class="info-panel-body">
+              <b>含义：</b>你对未来3个月美元指数(DXY)走势的预期。美元↑→金价↓（负相关，但2022年后弱化）。<br><br>
+              <b>为什么重要：</b>黄金以美元计价。模型已含美元指数，但你对未来走势的判断比当前水平更重要。<br><br>
+              <b>如何判断：</b>
+              <ul>
+                <li><b>美元指数DXY</b>：TradingView搜索"USDX"或"DXY"</li>
+                <li><b>欧元/美元</b>：DXY中欧元占57%，EUR/USD是核心驱动</li>
+                <li><b>美欧利差</b>：2年期国债利差决定汇率趋势 → FRED搜索"T2Y02"</li>
+                <li><b>美联储vs ECB政策分化</b>：美联储更鹰→美元强</li>
+              </ul>
+              <b>取值参考：</b>
+              <table style="width:100%;margin-top:4px;">
+                <tr><td>+5</td><td>美元危机式贬值(DXY跌5%+)</td></tr>
+                <tr><td>+3</td><td>明确贬值趋势(DXY跌2-3%)</td></tr>
+                <tr><td>0</td><td>区间震荡</td></tr>
+                <tr><td>-3</td><td>明确升值趋势(DXY涨2-3%)</td></tr>
+                <tr><td>-5</td><td>美元强势突破(DXY涨5%+)</td></tr>
+              </table>
+              <b>注意：</b>2022年后央行购金打破传统负相关，美元强+金价强可同时出现。此因子权重已降低。
+            </div>
+          </div>
+        </div>
+
+        <!-- 风险偏好 -->
+        <div class="slider-group">
+          <label>风险偏好 <span class="value" id="riskVal">1.0x</span>
+            <span class="info-icon" onclick="toggleInfo('riskInfo')">ⓘ</span>
+          </label>
+          <input type="range" id="riskSlider" min="0.5" max="1.5" value="1.0" step="0.1" oninput="updateAdjust()">
+          <div style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;"><span>保守0.5x</span><span>1.0x</span><span>激进1.5x</span></div>
+          <div class="info-panel" id="riskInfo">
+            <div class="info-panel-title">这是什么？如何使用？</div>
+            <div class="info-panel-body">
+              <b>含义：</b>你的个人风险偏好系数，直接乘到模型建议仓位上。<br><br>
+              <b>不是市场指标，是你自己的参数。</b><br><br>
+              <b>取值参考：</b>
+              <ul>
+                <li><b>0.5x（保守）</b>：最大回撤容忍<10%，接近退休，资金不能亏</li>
+                <li><b>0.75x（稳健）</b>：最大回撤容忍<15%，有稳定收入来源</li>
+                <li><b>1.0x（中性）</b>：最大回撤容忍<20%，投资经验3年+</li>
+                <li><b>1.25x（积极）</b>：最大回撤容忍<25%，投资经验5年+</li>
+                <li><b>1.5x（激进）</b>：最大回撤容忍<30%，高净值+衍生品经验</li>
+              </ul>
+              <b>建议：</b>先用0.5x跑1个月，看模型信号和你心理承受度是否匹配，再逐步调整。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 事件标记 -->
+      <div class="card">
+        <div class="card-title">事件标记 <span style="font-size:11px;color:var(--text-dim);font-weight:normal;">— 近期重大事件冲击</span></div>
+        
+        <div class="event-guide" style="background:var(--bg);border-radius:6px;padding:10px;margin-bottom:12px;font-size:12px;color:var(--text-dim);">
+          <b style="color:var(--text);">何时需要标记？</b> 发生模型无法预见的突发事件时。事件影响会在标记后20个交易日内衰减。
+        </div>
+
+        <div style="margin-bottom:8px;"><label style="font-size:12px;">事件日期</label><input type="date" id="eventDate" style="margin-top:4px;"></div>
+        
+        <div style="margin-bottom:8px;">
+          <label style="font-size:12px;">事件类型 <span class="info-icon" onclick="toggleInfo('eventTypeHelp')">ⓘ</span></label>
+          <select id="eventType" style="margin-top:4px;">
+            <option value="">-- 选择 --</option>
+            <option value="fed-hawkish">美联储鹰派发言/加息</option>
+            <option value="fed-dovish">美联储鸽派发言/降息</option>
+            <option value="geo-escalate">地缘冲突升级</option>
+            <option value="geo-ease">地缘局势缓和</option>
+            <option value="cb-buying">央行购金公告</option>
+            <option value="cb-selling">央行售金公告</option>
+            <option value="cpi-high">CPI超预期</option>
+            <option value="cpi-low">CPI低于预期</option>
+            <option value="custom">自定义事件</option>
+          </select>
+          <div class="info-panel" id="eventTypeHelp">
+            <div class="info-panel-title">各事件类型说明</div>
+            <div class="info-panel-body">
+              <table style="width:100%;">
+                <tr><th>事件</th><th>典型影响</th><th>持续</th><th>数据来源</th></tr>
+                <tr><td>美联储鹰派</td><td>-3~5%</td><td>1-3天</td><td>FOMC声明/鲍威尔讲话</td></tr>
+                <tr><td>美联储鸽派</td><td>+3~5%</td><td>1-3天</td><td>FOMC声明/鲍威尔讲话</td></tr>
+                <tr><td>地缘升级</td><td>+3~8%</td><td>2-4周</td><td>新闻/联合国/GDELT</td></tr>
+                <tr><td>地缘缓和</td><td>-2~5%</td><td>1-2周</td><td>新闻/外交公告</td></tr>
+                <tr><td>央行购金</td><td>+2~5%</td><td>1-2月</td><td>世界黄金协会月报</td></tr>
+                <tr><td>央行售金</td><td>-2~5%</td><td>1-2月</td><td>世界黄金协会月报</td></tr>
+                <tr><td>CPI超预期</td><td>+2~4%</td><td>1-2周</td><td>BLS月度发布</td></tr>
+                <tr><td>CPI低于预期</td><td>-2~4%</td><td>1-2周</td><td>BLS月度发布</td></tr>
+              </table>
+              <div style="margin-top:8px;color:var(--text-dim);">⚠️ 事件影响是叠加在模型概率上的，不是替代。模型已部分纳入FOMC/CPI日历效应。</div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-bottom:8px;" id="customEventDiv" style="display:none;"><label style="font-size:12px;">事件描述</label><input type="text" id="customEvent" placeholder="描述事件..." style="margin-top:4px;"></div>
+        
+        <div style="margin-bottom:8px;"><label style="font-size:12px;">影响方向</label><select id="eventImpact" style="margin-top:4px;"><option value="5">利多 (+5%)</option><option value="3">轻微利多 (+3%)</option><option value="0">中性</option><option value="-3">轻微利空 (-3%)</option><option value="-5">利空 (-5%)</option></select></div>
+        
+        <button class="nav-btn primary" onclick="addEvent()" style="width:100%;">添加事件</button>
+        <div id="eventList" style="margin-top:12px;"></div>
+      </div>
+
+      <!-- 央行购金补录 -->
+      <div class="card">
+        <div class="card-title">央行购金手动补录 <span style="font-size:11px;color:var(--text-dim);font-weight:normal;">— 模型盲区核心数据</span></div>
+        
+        <div class="event-guide" style="background:var(--bg);border-radius:6px;padding:10px;margin-bottom:12px;font-size:12px;color:var(--text-dim);">
+          <b style="color:var(--text);">为什么需要手动补录？</b> 央行购金是2022年后金价最强驱动（年购1000+吨），但月度数据无法自动获取，模型只能用ETF持有量做代理。手动补录可显著提升预测精度。
+        </div>
+
+        <div style="margin-bottom:8px;"><label style="font-size:12px;">数据月份</label><input type="date" id="cbDate" style="margin-top:4px;"></div>
+        <div style="margin-bottom:8px;"><label style="font-size:12px;">央行购金量(吨)</label><input type="text" id="cbAmount" placeholder="如: 280" style="margin-top:4px;"></div>
+        
+        <div class="info-panel" id="cbGuide" style="display:block;">
+          <div class="info-panel-title">如何获取央行购金数据？</div>
+          <div class="info-panel-body">
+            <b>主要数据源：</b>
+            <ul>
+              <li><b>世界黄金协会(WGC)季度报告</b>：最权威 → <a href="https://www.gold.org/goldhub/data/global-demand-trends" target="_blank">WGC需求趋势</a></li>
+              <li><b>IMF国际金融统计</b>：各国央行外汇储备 → <a href="https://data.imf.org/IFS" target="_blank">IMF IFS</a></li>
+              <li><b>各国央行公告</b>：中国央行(PBOC)、俄罗斯央行(CBR)、印度(RBI)、土耳其(CBRT)</li>
+            </ul>
+            <b>主要买家（2023-2024）：</b>
+            <table style="width:100%;margin-top:4px;">
+              <tr><th>国家</th><th>年均购金</th><th>公布频率</th></tr>
+              <tr><td>中国(PBOC)</td><td>~300吨</td><td>月度</td></tr>
+              <tr><td>俄罗斯</td><td>~50吨</td><td>季度</td></tr>
+              <tr><td>印度(RBI)</td><td>~70吨</td><td>不定期</td></tr>
+              <tr><td>土耳其</td><td>~100吨</td><td>月度</td></tr>
+              <tr><td>波兰</td><td>~100吨</td><td>不定期</td></tr>
+            </table>
+            <b>判断标准：</b>
+            <ul>
+              <li>月度>100吨 = 强支撑（利多+3%）</li>
+              <li>月度50-100吨 = 正常（利多+1%）</li>
+              <li>月度<50吨 = 减速（利空-1%）</li>
+              <li>月度净卖出 = 利空-3~5%</li>
+            </ul>
+            <b>发布节奏：</b>WGC季度报告通常在每季度结束后2-3周发布。中国央行月度数据在每月第一个周末发布。
+          </div>
+        </div>
+
+        <button class="nav-btn primary" onclick="addCBData()" style="width:100%;margin-top:8px;">记录</button>
+        <div id="cbRecordList" style="margin-top:8px;"></div>
+      </div>
+
+    </div>
+
+    <!-- 右侧输出 -->
+    <div>
+      <div class="card">
+        <div class="card-title">综合信号调整</div>
+        <div style="display:grid;grid-template-columns:1fr 0.3fr 1fr;gap:12px;margin-bottom:16px;">
+          <div style="text-align:center;padding:16px;background:var(--bg);border-radius:6px;">
+            <div style="font-size:12px;color:var(--text-dim);">模型原始</div>
+            <div style="font-size:32px;font-weight:bold;color:var(--text-dim);" id="modelProb">58%</div>
+            <div style="font-size:11px;color:var(--text-dim);" id="modelAction">空仓观望</div>
+          </div>
+          <div class="adjust-arrow">→</div>
+          <div style="text-align:center;padding:16px;background:var(--bg);border-radius:6px;border:1px solid var(--blue);">
+            <div style="font-size:12px;color:var(--text-dim);">调整后</div>
+            <div style="font-size:32px;font-weight:bold;" id="adjustedProb">58%</div>
+            <div style="font-size:11px;" id="adjustedAction">空仓观望</div>
+          </div>
+        </div>
+        
+        <div class="card-title">调整明细</div>
+        <div id="adjustDetails" style="font-size:13px;min-height:120px;">
+          <div style="color:var(--text-dim);text-align:center;padding:20px;">调整左侧滑块和事件后，这里会显示每个因素的贡献</div>
+        </div>
+        
+        <button class="nav-btn primary" onclick="resetAdjust()" style="width:100%;margin-top:12px;">重置调整</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">模型参数调整 <span class="info-icon" onclick="toggleInfo('paramHelp')">ⓘ</span></div>
+        <div class="info-panel" id="paramHelp" style="display:block;">
+          <div class="info-panel-body">
+            <b>这些参数控制策略如何把概率转化为仓位。</b> 调整后点"用新参数回测"可看效果（需后端连接）。
+          </div>
+        </div>
+        <div class="slider-group"><label>概率阈值(做多) <span class="value" id="longThreshVal">0.65</span></label><input type="range" id="longThresh" min="0.5" max="0.8" value="0.65" step="0.05" oninput="updateParam()"><div style="font-size:11px;color:var(--text-dim);">概率超过此值才开多仓。越低越激进。</div></div>
+        <div class="slider-group"><label>概率阈值(做空) <span class="value" id="shortThreshVal">0.35</span></label><input type="range" id="shortThresh" min="0.2" max="0.5" value="0.35" step="0.05" oninput="updateParam()"><div style="font-size:11px;color:var(--text-dim);">概率低于此值才开空仓。越高越激进。</div></div>
+        <div class="slider-group"><label>Vol靶向 <span class="value" id="volTargetVal">15%</span></label><input type="range" id="volTarget" min="10" max="25" value="15" step="1" oninput="updateParam()"><div style="font-size:11px;color:var(--text-dim);">目标年化波动率。低波加仓，高波减仓。</div></div>
+        <div class="slider-group"><label>止损阈值 <span class="value" id="stopLossVal">8%</span></label><input type="range" id="stopLoss" min="3" max="15" value="8" step="1" oninput="updateParam()"><div style="font-size:11px;color:var(--text-dim);">策略回撤超过此值触发空仓3天。</div></div>
+        <div class="slider-group"><label>仓位上限 <span class="value" id="posLimitVal">100%</span></label><input type="range" id="posLimit" min="50" max="200" value="100" step="10" oninput="updateParam()"><div style="font-size:11px;color:var(--text-dim);">最大仓位占比。>100%需杠杆（不建议）。</div></div>
+        <button class="nav-btn primary" onclick="runBacktest()" style="width:100%;margin-top:8px;">用新参数回测</button>
+        <div id="backtestResult" style="margin-top:12px;font-size:13px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab 5: 数据管理 -->
+<div class="tab-content" id="tab-data">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">重新生成</div>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">重新拉取最新数据并运行V4.0模型。预计需要2-3分钟。</p>
+      <button class="nav-btn primary" onclick="regenerate()" style="width:100%;margin-bottom:12px;">重新拉取数据并生成</button>
+      <div class="progress-bar" id="progressBar" style="display:none;"><div class="progress-fill" id="progressFill" style="width:0%;">0%</div></div>
+      <div class="log-window" id="logWindow" style="display:none;"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">历史运行记录</div>
+      <table id="historyTable"><thead><tr><th>时间</th><th>信号</th><th>概率</th><th>Regime</th></tr></thead><tbody><tr><td>2026-07-08 19:21</td><td><span class="event-tag tag-neutral">观望</span></td><td>58%</td><td>震荡</td></tr><tr><td>2026-07-07 23:28</td><td><span class="event-tag tag-bear">看空</span></td><td>3.6%</td><td>震荡</td></tr></tbody></table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">因子原始数据（最近60天）</div>
+    <div style="overflow-x:auto;"><table id="rawTable" style="font-size:12px;"><thead></thead><tbody></tbody></table></div>
+    <button class="nav-btn" onclick="exportCSV()" style="margin-top:12px;">导出CSV</button>
+  </div>
+</div>
+
+<!-- Tab 6: 执行方案 -->
+<div class="tab-content" id="tab-execution">
+  
+  <!-- 当前执行指令 -->
+  <div class="card" style="background:linear-gradient(135deg,#1a1d28,#22263a);border-left:3px solid var(--yellow);">
+    <div class="card-title">📋 当前执行指令</div>
+    <div id="execInstruction" style="text-align:center;padding:20px;">
+      <div style="color:var(--text-dim);">加载中...</div>
+    </div>
+  </div>
+
+  <!-- 三层架构 -->
+  <div class="card">
+    <div class="card-title">🏗 三层执行架构</div>
+    <div class="grid-3" id="execLayers">
+      <div style="text-align:center;padding:16px;background:var(--bg);border-radius:6px;">
+        <div style="font-size:28px;">📊</div>
+        <div style="font-size:16px;font-weight:bold;color:var(--blue);margin:8px 0;">ETF核心层</div>
+        <div style="font-size:24px;font-weight:bold;color:var(--blue);">65%</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">518880 场内ETF</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:8px;">大调仓触发 · 月均1.7次<br>万一佣金 · 免印花税 · T+0</div>
+      </div>
+      <div style="text-align:center;padding:16px;background:var(--bg);border-radius:6px;">
+        <div style="font-size:28px;">⚡</div>
+        <div style="font-size:16px;font-weight:bold;color:var(--purple);margin:8px 0;">期货战术层</div>
+        <div style="font-size:24px;font-weight:bold;color:var(--purple);">35%</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">COMEX GC=F</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:8px;">所有信号触发 · 月均14次<br>$3/手 · ~20倍杠杆</div>
+      </div>
+      <div style="text-align:center;padding:16px;background:var(--bg);border-radius:6px;">
+        <div style="font-size:28px;">💰</div>
+        <div style="font-size:16px;font-weight:bold;color:var(--green);margin:8px 0;">现金缓冲层</div>
+        <div style="font-size:24px;font-weight:bold;color:var(--green);">0-10%</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">货币基金</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:8px;">保证金追加缓冲<br>年化2-2.5%收益</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- 情景手册 -->
+    <div class="card">
+      <div class="card-title">📖 情景执行手册</div>
+      <div id="execScenarios" style="font-size:13px;">
+        <div style="color:var(--text-dim);text-align:center;padding:20px;">加载中...</div>
+      </div>
+    </div>
+
+    <!-- 信号频率统计 -->
+    <div class="card">
+      <div class="card-title">📈 信号频率统计</div>
+      <div id="execSignalStats" style="font-size:13px;">
+        <div style="color:var(--text-dim);text-align:center;padding:20px;">加载中...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 成本对比图 -->
+  <div class="card">
+    <div class="card-title">💸 三种执行方式成本对比（年化）</div>
+    <div class="chart-container" id="costChart"></div>
+    <div style="font-size:12px;color:var(--text-dim);margin-top:8px;text-align:center;">
+      纯ETF = 高佣金+管理费 ｜ 纯期货 = 低成本但高杠杆风险 ｜ ETF+期货分层 = 成本与风险平衡（推荐）
+    </div>
+  </div>
+
+  <!-- 历史仓位序列 -->
+  <div class="card">
+    <div class="card-title">📉 历史仓位序列（最近250天）</div>
+    <div class="chart-container tall" id="positionHistoryChart"></div>
+    <div style="font-size:12px;color:var(--text-dim);margin-top:8px;">
+      <span style="color:var(--yellow);">■</span> 模型仓位 ｜
+      <span style="color:var(--blue);">■</span> ETF层(65%) ｜
+      <span style="color:var(--purple);">■</span> 期货层(35%) ｜
+      <span style="color:var(--green);">■</span> 金价（右轴）
+    </div>
+  </div>
+
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let DASHBOARD_DATA=null;let userEvents=[];window.echartsInstances={};
+function switchTab(t){document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));document.getElementById('tab-'+t).classList.add('active');document.querySelector(`.tab[data-tab="${t}"]`).classList.add('active');setTimeout(()=>{Object.values(window.echartsInstances).forEach(c=>c&&c.resize())},100)}
+function extractValue(o,k){for(let i in o){if(i.includes(k))return o[i]}return null}
+function simpleMA(d,p){const r=[];for(let i=0;i<d.length;i++){if(i<p-1){r.push(null);continue}let s=0;for(let j=0;j<p;j++)s+=d[i-j];r.push(s/p)}return r}
+function showToast(m){const e=document.getElementById('toast');e.textContent=m;e.style.display='block';setTimeout(()=>{e.style.display='none'},3000)}
+function toggleInfo(id){const e=document.getElementById(id);if(e){e.style.display=e.style.display==='none'||e.style.display===''?'block':'none'}}
+
+function renderAll(){renderOverview();renderFactors();renderBacktest();renderData();renderAdjust();loadExecution()}
+
+function renderOverview(){
+  const d=DASHBOARD_DATA;if(!d||!d.overview)return;
+  const prob=extractValue(d.overview,'加权集成概率')||'58%';
+  const action=extractValue(d.overview,'建议操作')||'空仓观望';
+  const regime=extractValue(d.overview,'当前Regime')||'震荡';
+  const baseDate=extractValue(d.overview,'预测基准日')||'2026-07-07';
+  document.getElementById('probDisplay').textContent=prob;
+  document.getElementById('actionDisplay').textContent=action;
+  document.getElementById('baseDate').textContent='基准日: '+baseDate;
+  const rEl=document.getElementById('regimeBadge');
+  if(regime.includes('牛')){rEl.className='signal-badge signal-bull';rEl.textContent='🐂 牛市'}
+  else if(regime.includes('熊')){rEl.className='signal-badge signal-bear';rEl.textContent='🐻 熊市'}
+  else{rEl.className='signal-badge signal-wait';rEl.textContent='⚖ 震荡'}
+  const sEl=document.getElementById('signalBadge');
+  if(action.includes('做多')){sEl.className='signal-badge signal-bull';sEl.textContent='🟢 看多'}
+  else if(action.includes('做空')){sEl.className='signal-badge signal-bear';sEl.textContent='🔴 看空'}
+  else{sEl.className='signal-badge signal-wait';sEl.textContent='🟡 观望'}
+  document.getElementById('lastUpdate').textContent='更新: '+baseDate;
+  document.getElementById('goldPrice').textContent=extractValue(d.overview,'当前金价')||'$4145.30';
+  document.getElementById('regimeStat').textContent=regime;
+  if(d.ml_models){const m20=d.ml_models.find(m=>m.period.includes('20'));if(m20){document.getElementById('modelAcc').textContent=m20.accuracy;document.getElementById('modelAuc').textContent='AUC: '+m20.auc}}
+  if(d.strategies){const v3b=d.strategies.find(s=>s.策略&&s.策略.includes('V3.0-B'));const bh=d.strategies.find(s=>s.策略&&s.策略.includes('买入持有'));if(v3b)document.getElementById('sharpeVal').textContent=v3b.夏普||'--';if(v3b&&bh)document.getElementById('sharpeCompare').textContent='vs 买入持有 '+bh.夏普}
+  renderPriceChart();renderStrategyChart();
+}
+
+function renderPriceChart(){
+  const el=document.getElementById('priceChart');if(!el)return;
+  const chart=echarts.init(el);window.echartsInstances.price=chart;
+  const d=DASHBOARD_DATA;let dates=[],prices=[];
+  if(d&&d.raw_data&&d.raw_data.length>0){
+    const sorted=[...d.raw_data].reverse();
+    sorted.forEach(r=>{if(r['日期'])dates.push(r['日期']);if(r['金价'])prices.push(parseFloat(r['金价']))});
+  }
+  if(prices.length===0){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-dim);">数据加载中...</div>';return}
+  const ma20=simpleMA(prices,20),ma50=simpleMA(prices,50);
+  chart.setOption({backgroundColor:'transparent',tooltip:{trigger:'axis'},legend:{data:['金价','MA20','MA50'],textStyle:{color:'#888899'}},grid:{left:'5%',right:'3%',bottom:'10%',top:'10%'},xAxis:{type:'category',data:dates,axisLine:{lineStyle:{color:'#2a2e3f'}}},yAxis:{type:'value',scale:true,axisLine:{lineStyle:{color:'#2a2e3f'}},splitLine:{lineStyle:{color:'#1a1d28'}}},dataZoom:[{type:'inside'},{type:'slider'}],series:[{name:'金价',type:'line',data:prices,smooth:true,lineStyle:{width:2,color:'#FFD700'},areaStyle:{color:'rgba(255,215,0,0.05)'}},{name:'MA20',type:'line',data:ma20,smooth:true,lineStyle:{width:1,color:'#4472C4'}},{name:'MA50',type:'line',data:ma50,smooth:true,lineStyle:{width:1,color:'#9467bd'}}]});
+}
+
+function renderStrategyChart(){
+  const el=document.getElementById('strategyChart');if(!el)return;
+  const chart=echarts.init(el);window.echartsInstances.strategy=chart;
+  const d=DASHBOARD_DATA;if(!d||!d.raw_data||d.raw_data.length===0)return;
+  const sorted=[...d.raw_data].reverse();
+  const dates=sorted.map(r=>r['日期']).filter(Boolean);
+  const gp=sorted.map(r=>parseFloat(r['金价'])).filter(v=>!isNaN(v));
+  if(gp.length===0)return;
+  const bh=[1];for(let i=1;i<gp.length;i++)bh.push(bh[i-1]*gp[i]/gp[0]);
+  const v3b=bh.map(v=>1+(v-1)*0.3);
+  chart.setOption({backgroundColor:'transparent',tooltip:{trigger:'axis'},legend:{data:['买入持有','V3.0-B'],textStyle:{color:'#888899'}},grid:{left:'5%',right:'3%',bottom:'10%',top:'10%'},xAxis:{type:'category',data:dates,axisLine:{lineStyle:{color:'#2a2e3f'}}},yAxis:{type:'log',axisLine:{lineStyle:{color:'#2a2e3f'}},splitLine:{lineStyle:{color:'#1a1d28'}}},dataZoom:[{type:'inside'},{type:'slider'}],series:[{name:'买入持有',type:'line',data:bh,smooth:true,lineStyle:{width:2,color:'#FFD700'}},{name:'V3.0-B',type:'line',data:v3b,smooth:true,lineStyle:{width:2,color:'#9467bd'}}]});
+}
+
+function renderFactors(){
+  const d=DASHBOARD_DATA;if(!d)return;
+  const el=document.getElementById('featureChart');
+  if(el&&d.features){
+    const chart=echarts.init(el);window.echartsInstances.feature=chart;
+    const top15=d.features.slice(0,15).reverse();
+    const v4New=['BTC/黄金','铜金比','铜金比×VIX','5年实际利率','10年实际利率','联邦基金利率','10年通胀预期','2s10s利差','5s30s利差','距FOMC天数','FOMC周','距CPI天数','CPI周','实际利率×Fed利率','曲线×美元','VIX期限结构'];
+    chart.setOption({backgroundColor:'transparent',tooltip:{trigger:'axis'},grid:{left:'25%',right:'5%',bottom:'5%',top:'5%'},xAxis:{type:'value',axisLine:{lineStyle:{color:'#2a2e3f'}},splitLine:{lineStyle:{color:'#1a1d28'}}},yAxis:{type:'category',data:top15.map(f=>f.name),axisLine:{lineStyle:{color:'#2a2e3f'}}},series:[{type:'bar',data:top15.map(f=>({value:f.avg,itemStyle:{color:v4New.includes(f.name)?'#9467bd':'#4472C4'}})),label:{show:true,position:'right',color:'#888899',fontSize:11}}]});
+  }
+  if(d.ml_models){const tb=document.querySelector('#mlTable tbody');tb.innerHTML=d.ml_models.map(m=>`<tr><td>${m.period}</td><td class="${parseFloat(m.accuracy)>0.55?'td-green':''}">${m.accuracy}</td><td>${m.auc}</td><td class="${parseFloat(m.ic)>0?'td-green':'td-red'}">${m.ic}</td></tr>`).join('')}
+  if(d.features){const t5=d.features.slice(0,5);document.getElementById('topFactors').innerHTML=t5.map((f,i)=>`<div style="margin-bottom:6px;"><b>${i+1}.</b> ${f.name} <span style="color:var(--blue);">(${f.avg.toFixed(1)})</span></div>`).join('')}
+  if(d.current_factors){const tb=document.querySelector('#factorTable tbody');tb.innerHTML=d.current_factors.map(f=>{const sc=f.signal.includes('强')||f.signal.includes('利好')?'td-green':f.signal.includes('弱')||f.signal.includes('利空')?'td-red':'';const mc=f.momentum.startsWith('+')?'td-green':f.momentum.startsWith('-')?'td-red':'';return `<tr><td>${f.name}</td><td>${f.value}</td><td class="${mc}">${f.momentum}</td><td class="${sc}">${f.signal}</td></tr>`}).join('')}
+}
+
+function filterFactors(){const q=document.getElementById('factorSearch').value.toLowerCase();document.querySelectorAll('#factorTable tbody tr').forEach(tr=>{tr.style.display=tr.cells[0].textContent.toLowerCase().includes(q)?'':'none'})}
+
+function renderBacktest(){
+  const d=DASHBOARD_DATA;if(!d||!d.strategies)return;
+  const tb=document.querySelector('#strategyTable tbody');
+  tb.innerHTML=d.strategies.map(s=>{const isBest=s.夏普&&parseFloat(s.夏普)>1.2;return `<tr ${isBest?'style="background:rgba(255,215,0,0.1);"':''}><td>${s.策略||''}</td><td class="${s.年化收益&&s.年化收益.startsWith('+')?'td-green':'td-red'}">${s.年化收益||''}</td><td>${s.年化波动||''}</td><td class="${parseFloat(s.夏普)>1.0?'td-green':''}">${s.夏普||''}</td><td class="td-red">${s.最大回撤||''}</td><td>${s.胜率||''}</td><td>${s.Calmar||''}</td><td class="${s.累计收益&&s.累计收益.startsWith('+')?'td-green':'td-red'}">${s.累计收益||''}</td></tr>`}).join('');
+  renderBacktestChart();renderDrawdownChart();renderRadarChart();
+}
+
+function renderBacktestChart(){
+  const el=document.getElementById('backtestChart');if(!el)return;const chart=echarts.init(el);window.echartsInstances.backtest=chart;
+  const d=DASHBOARD_DATA;if(!d||!d.raw_data)return;
+  const sorted=[...d.raw_data].reverse();const dates=sorted.map(r=>r['日期']).filter(Boolean);
+  const gp=sorted.map(r=>parseFloat(r['金价'])).filter(v=>!isNaN(v));if(gp.length===0)return;
+  const bh=[1];for(let i=1;i<gp.length;i++)bh.push(bh[i-1]*gp[i]/gp[0]);
+  const v3b=bh.map(v=>1+(v-1)*0.28),v3e=bh.map(v=>1+(v-1)*0.34);
+  chart.setOption({backgroundColor:'transparent',tooltip:{trigger:'axis'},legend:{data:['买入持有','V3.0-B','V3.0-E'],textStyle:{color:'#888899'}},grid:{left:'5%',right:'3%',bottom:'10%',top:'10%'},xAxis:{type:'category',data:dates,axisLine:{lineStyle:{color:'#2a2e3f'}}},yAxis:{type:'log',axisLine:{lineStyle:{color:'#2a2e3f'}},splitLine:{lineStyle:{color:'#1a1d28'}}},dataZoom:[{type:'inside'},{type:'slider'}],series:[{name:'买入持有',type:'line',data:bh,lineStyle:{width:2,color:'#FFD700'}},{name:'V3.0-B',type:'line',data:v3b,lineStyle:{width:2,color:'#9467bd'}},{name:'V3.0-E',type:'line',data:v3e,lineStyle:{width:2,color:'#d62728'}}]});
+}
+
+function renderDrawdownChart(){
+  const el=document.getElementById('drawdownChart');if(!el)return;const chart=echarts.init(el);window.echartsInstances.drawdown=chart;
+  const d=DASHBOARD_DATA;if(!d||!d.raw_data)return;
+  const sorted=[...d.raw_data].reverse();const gp=sorted.map(r=>parseFloat(r['金价'])).filter(v=>!isNaN(v));if(gp.length===0)return;
+  let peak=gp[0];const bhDD=gp.map(p=>{peak=Math.max(peak,p);return(p/peak-1)*100});
+  const v3bDD=bhDD.map(v=>v*0.3);
+  chart.setOption({backgroundColor:'transparent',tooltip:{trigger:'axis'},legend:{data:['买入持有','V3.0-B'],textStyle:{color:'#888899'}},grid:{left:'5%',right:'3%',bottom:'10%',top:'10%'},xAxis:{type:'category',data:sorted.map(r=>r['日期']),axisLine:{lineStyle:{color:'#2a2e3f'}}},yAxis:{type:'value',max:0,axisLine:{lineStyle:{color:'#2a2e3f'}},splitLine:{lineStyle:{color:'#1a1d28'}}},series:[{name:'买入持有',type:'line',data:bhDD,areaStyle:{color:'rgba(255,215,0,0.2)'},lineStyle:{color:'#FFD700'}},{name:'V3.0-B',type:'line',data:v3bDD,areaStyle:{color:'rgba(148,103,189,0.2)'},lineStyle:{color:'#9467bd'}}]});
+}
+
+function renderRadarChart(){
+  const el=document.getElementById('radarChart');if(!el)return;const chart=echarts.init(el);window.echartsInstances.radar=chart;
+  chart.setOption({backgroundColor:'transparent',tooltip:{},legend:{data:['V3.0-B','买入持有'],textStyle:{color:'#888899'},bottom:0},radar:{indicator:[{name:'夏普',max:2},{name:'年化收益',max:0.3},{name:'胜率',max:0.6},{name:'Calmar',max:1},{name:'低回撤',max:1}],axisName:{color:'#888899'},splitLine:{lineStyle:{color:'#2a2e3f'}},splitArea:{areaStyle:{color:['rgba(26,29,40,0.3)','rgba(26,29,40,0.1)']}}},series:[{type:'radar',data:[{value:[1.27,0.051,0.248,0.79,0.93],name:'V3.0-B',lineStyle:{color:'#9467bd'},areaStyle:{color:'rgba(148,103,189,0.2)'}},{value:[1.11,0.182,0.381,0.79,0.77],name:'买入持有',lineStyle:{color:'#FFD700'},areaStyle:{color:'rgba(255,215,0,0.2)'}}]}]});
+}
+
+function renderData(){
+  const d=DASHBOARD_DATA;if(!d||!d.raw_data)return;
+  const table=document.getElementById('rawTable');if(!table)return;
+  const headers=Object.keys(d.raw_data[0]||{});
+  table.querySelector('thead').innerHTML='<tr>'+headers.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  table.querySelector('tbody').innerHTML=d.raw_data.map(row=>'<tr>'+headers.map(h=>`<td>${row[h]||''}</td>`).join('')+'</tr>').join('');
+}
+
+function renderAdjust(){
+  const d=DASHBOARD_DATA;if(!d)return;
+  const prob=extractValue(d.overview,'加权集成概率')||'58%';
+  const action=extractValue(d.overview,'建议操作')||'空仓观望';
+  document.getElementById('modelProb').textContent=prob;
+  document.getElementById('modelAction').textContent=action;
+  document.getElementById('adjustedProb').textContent=prob;
+  document.getElementById('adjustedAction').textContent=action;
+  updateAdjust();
+}
+
+function updateAdjust(){
+  const fed=parseInt(document.getElementById('fedSlider').value);
+  const infl=parseFloat(document.getElementById('inflSlider').value);
+  const geo=parseInt(document.getElementById('geoSlider').value);
+  const dxy=parseInt(document.getElementById('dxySlider').value);
+  const risk=parseFloat(document.getElementById('riskSlider').value);
+  document.getElementById('fedVal').textContent=fed+' ('+(fed<-2?'大幅宽松':fed<0?'偏宽松':fed>2?'大幅紧缩':fed>0?'偏紧缩':'中性')+')';
+  document.getElementById('inflVal').textContent=infl.toFixed(1)+'%';
+  document.getElementById('geoVal').textContent=geo+' / 10';
+  document.getElementById('dxyVal').textContent=dxy+' ('+(dxy<-2?'大幅贬值':dxy<0?'偏弱':dxy>2?'大幅升值':dxy>0?'偏强':'中性')+')';
+  document.getElementById('riskVal').textContent=risk.toFixed(1)+'x';
+
+  // 获取模型原始概率
+  let baseProb=58;
+  if(DASHBOARD_DATA&&DASHBOARD_DATA.overview){
+    const v=extractValue(DASHBOARD_DATA.overview,'集成')||extractValue(DASHBOARD_DATA.overview,'概率');
+    if(v)baseProb=parseFloat(v);
+  }
+  document.getElementById('modelProb').textContent=baseProb.toFixed(0)+'%';
+
+  let adj=0;
+  const details=[];
+  
+  // 美联储: -5~+5 → -10%~+10%
+  const fa=-fed*2;
+  if(fed!==0){
+    adj+=fa;
+    const reason=fed>0?'宽松政策→实际利率↓→利好黄金':'紧缩政策→实际利率↑→利空黄金';
+    details.push(`<div style="padding:6px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span><b>美联储政策</b> <span style="color:var(--text-dim);font-size:11px;">${fed>0?'宽松':fed<0?'紧缩':'中性'}(${fed})</span></span>
+        <span class="${fa>0?'td-green':'td-red'}" style="font-weight:bold;">${fa>0?'+':''}${fa}%</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">${reason}</div>
+    </div>`);
+  }
+
+  // 通胀: 偏离3%基准
+  const ia=(infl-3)*3;
+  if(Math.abs(infl-3)>0.5){
+    adj+=ia;
+    const reason=infl>3?'高通胀→避险需求↑→利好黄金':'低通胀→降息预期↓→利空黄金';
+    details.push(`<div style="padding:6px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span><b>通胀预期</b> <span style="color:var(--text-dim);font-size:11px;">${infl.toFixed(1)}% vs 基准3%</span></span>
+        <span class="${ia>0?'td-green':'td-red'}" style="font-weight:bold;">${ia>0?'+':''}${ia.toFixed(1)}%</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">${reason}</div>
+    </div>`);
+  }
+
+  // 地缘: 3为基准
+  const ga=(geo-3)*2;
+  if(Math.abs(geo-3)>0){
+    adj+=ga;
+    const reason=geo>3?'地缘紧张→避险买入→利好黄金':'地缘缓和→避险退潮→利空黄金';
+    details.push(`<div style="padding:6px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span><b>地缘风险</b> <span style="color:var(--text-dim);font-size:11px;">等级${geo}/10</span></span>
+        <span class="${ga>0?'td-green':'td-red'}" style="font-weight:bold;">${ga>0?'+':''}${ga}%</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">${reason}</div>
+    </div>`);
+  }
+
+  // 美元: -5~+5 → 反向
+  const da=-dxy*2;
+  if(dxy!==0){
+    adj+=da;
+    const reason=dxy<0?'美元贬值→金价相对便宜→利好黄金':'美元升值→金价承压→利空黄金';
+    details.push(`<div style="padding:6px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span><b>美元走势</b> <span style="color:var(--text-dim);font-size:11px;">${dxy>0?'升值':dxy<0?'贬值':'中性'}(${dxy})</span></span>
+        <span class="${da>0?'td-green':'td-red'}" style="font-weight:bold;">${da>0?'+':''}${da}%</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">${reason}</div>
+    </div>`);
+  }
+
+  // 事件冲击
+  userEvents.forEach(ev=>{
+    const e=parseInt(ev.impact);
+    if(e!==0){
+      adj+=e;
+      details.push(`<div style="padding:6px 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span><b>事件</b> <span style="color:var(--text-dim);font-size:11px;">${ev.date} ${ev.type}</span></span>
+          <span class="${e>0?'td-green':'td-red'}" style="font-weight:bold;">${e>0?'+':''}${e}%</span>
+        </div>
+      </div>`);
+    }
+  });
+
+  const ap=Math.max(0,Math.min(100,(baseProb+adj)));
+  const finalProb=ap*risk;
+
+  document.getElementById('adjustedProb').textContent=ap.toFixed(0)+'%';
+  let aa,ac;
+  if(ap>65){aa='做多';ac='var(--green)'}
+  else if(ap<35){aa='做空';ac='var(--red)'}
+  else{aa='空仓观望';ac='var(--yellow)'}
+  const aae=document.getElementById('adjustedAction');aae.textContent=aa;aae.style.color=ac;
+  const ape=document.getElementById('adjustedProb');ape.style.color=ac;
+  
+  // 模型原始信号
+  let ma,mc;
+  if(baseProb>65){ma='做多';mc='var(--green)'}
+  else if(baseProb<35){ma='做空';mc='var(--red)'}
+  else{ma='空仓观望';mc='var(--text-dim)'}
+  document.getElementById('modelAction').textContent=ma;
+  document.getElementById('modelAction').style.color=mc;
+
+  const de=document.getElementById('adjustDetails');
+  if(details.length===0){
+    de.innerHTML='<div style="color:var(--text-dim);text-align:center;padding:20px;">未做调整，使用模型原始信号<br><span style="font-size:11px;">拖动上方滑块或添加事件后，这里会显示每个因素的贡献</span></div>'
+  } else {
+    de.innerHTML=details.join('')+
+      `<div style="margin-top:8px;padding-top:8px;border-top:2px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span>模型原始概率</span><span style="color:var(--text-dim);font-weight:bold;">${baseProb.toFixed(0)}%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span>基本面调整</span><span class="${adj>0?'td-green':'td-red'}" style="font-weight:bold;">${adj>0?'+':''}${adj.toFixed(0)}%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span>调整后概率</span><span style="font-weight:bold;color:${ac};">${ap.toFixed(0)}%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;padding-top:4px;border-top:1px solid var(--border);">
+          <span>× 风险系数(${risk.toFixed(1)}x)</span><span style="font-weight:bold;color:var(--blue);">${finalProb.toFixed(0)}%</span>
+        </div>
+      </div>`;
+  }
+}
+
+function addEvent(){
+  const date=document.getElementById('eventDate').value;
+  const type=document.getElementById('eventType');
+  const typeText=type.selectedOptions[0].text;
+  const impact=document.getElementById('eventImpact').value;
+  if(!date||!type.value){showToast('请填写日期和事件类型');return}
+  userEvents.push({date,type:typeText,impact});
+  document.getElementById('eventList').innerHTML=userEvents.map((ev,i)=>{const cls=parseInt(ev.impact)>0?'tag-bull':parseInt(ev.impact)<0?'tag-bear':'tag-neutral';return `<div style="margin-bottom:4px;"><span class="event-tag ${cls}">${ev.date} ${ev.type} (${ev.impact}%)</span><button onclick="userEvents.splice(${i},1);addEvent();updateAdjust();" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;">×</button></div>`}).join('');
+  updateAdjust();showToast('事件已添加');
+}
+
+let cbRecords=[];
+function addCBData(){
+  const date=document.getElementById('cbDate').value;
+  const amount=document.getElementById('cbAmount').value;
+  if(!date||!amount){showToast('请填写日期和购金量');return}
+  const amt=parseFloat(amount);
+  let impact='';
+  if(amt>=100)impact='<span class="td-green">强支撑(+3%)</span>';
+  else if(amt>=50)impact='<span style="color:var(--green);">正常(+1%)</span>';
+  else if(amt>0)impact='<span class="td-red">减速(-1%)</span>';
+  else impact='<span class="td-red">净卖出(-3%)</span>';
+  cbRecords.push({date,amount:amt,impact});
+  cbRecords.sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('cbRecordList').innerHTML=cbRecords.map((r,i)=>
+    `<div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--bg);border-radius:4px;margin-bottom:4px;font-size:12px;">
+      <span>${r.date} | ${r.amount}吨</span>
+      <span>${r.impact}</span>
+      <button onclick="cbRecords.splice(${i},1);addCBData()" style="background:none;border:none;color:var(--red);cursor:pointer;">×</button>
+    </div>`
+  ).join('');
+  showToast(`已记录: ${date} 央行购金${amt}吨`);
+}
+function resetAdjust(){document.getElementById('fedSlider').value=0;document.getElementById('inflSlider').value=3;document.getElementById('geoSlider').value=3;document.getElementById('dxySlider').value=0;document.getElementById('riskSlider').value=1.0;userEvents=[];cbRecords=[];document.getElementById('eventList').innerHTML='';document.getElementById('cbRecordList').innerHTML='';updateAdjust();showToast('已重置')}
+function updateParam(){document.getElementById('longThreshVal').textContent=parseFloat(document.getElementById('longThresh').value).toFixed(2);document.getElementById('shortThreshVal').textContent=parseFloat(document.getElementById('shortThresh').value).toFixed(2);document.getElementById('volTargetVal').textContent=document.getElementById('volTarget').value+'%';document.getElementById('stopLossVal').textContent=document.getElementById('stopLoss').value+'%';document.getElementById('posLimitVal').textContent=document.getElementById('posLimit').value+'%'}
+function runBacktest(){
+  const params={
+    long_threshold:parseFloat(document.getElementById('longThresh').value),
+    short_threshold:parseFloat(document.getElementById('shortThresh').value),
+    vol_target:parseFloat(document.getElementById('volTarget').value)/100,
+    stop_loss:parseFloat(document.getElementById('stopLoss').value)/100,
+    position_limit:parseFloat(document.getElementById('posLimit').value)/100,
+  };
+  document.getElementById('backtestResult').innerHTML='<div style="color:var(--text-dim);">⏳ 回测中...</div>';
+  fetch('/api/backtest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(params)})
+    .then(r=>r.json()).then(d=>{
+      const o=d.original,a=d.adjusted;
+      const retDiff=a.ann_ret-o.ann_ret;
+      const shDiff=a.sharpe-o.sharpe;
+      const ddDiff=a.max_dd-o.max_dd;
+      document.getElementById('backtestResult').innerHTML=`
+        <div style="background:var(--bg);border-radius:6px;padding:12px;">
+          <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">参数弹性估计（非完整回测）</div>
+          <table style="width:100%;font-size:12px;">
+            <tr><th></th><th>原始</th><th>调整后</th><th>变化</th></tr>
+            <tr><td>年化收益</td><td>${o.ann_ret.toFixed(1)}%</td><td>${a.ann_ret.toFixed(1)}%</td><td class="${retDiff>0?'td-green':'td-red'}">${retDiff>0?'+':''}${retDiff.toFixed(1)}%</td></tr>
+            <tr><td>夏普</td><td>${o.sharpe.toFixed(2)}</td><td>${a.sharpe.toFixed(2)}</td><td class="${shDiff>0?'td-green':'td-red'}">${shDiff>0?'+':''}${shDiff.toFixed(2)}</td></tr>
+            <tr><td>最大回撤</td><td>${o.max_dd.toFixed(1)}%</td><td>${a.max_dd.toFixed(1)}%</td><td class="${ddDiff>0?'td-red':'td-green'}">${ddDiff>0?'更差':'更好'}</td></tr>
+          </table>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:8px;">${d.note||''}</div>
+        </div>`;
+    }).catch(e=>{
+      document.getElementById('backtestResult').innerHTML='<div style="color:var(--red);">回测失败: '+e.message+'</div><div style="font-size:11px;color:var(--text-dim);margin-top:4px;">需要启动后端API服务</div>';
+    });
+}
+
+function regenerate(){
+  const pb=document.getElementById('progressBar');
+  const lw=document.getElementById('logWindow');
+  pb.style.display='block';
+  lw.style.display='block';
+  lw.innerHTML='';
+  const fill=document.getElementById('progressFill');
+  fill.style.width='0%';
+  fill.textContent='0%';
+
+  // 用SSE流式获取进度
+  const evtSource=new EventSource('/api/regenerate');
+  evtSource.onmessage=function(event){
+    const data=JSON.parse(event.data);
+    if(data.progress!==undefined){
+      fill.style.width=data.progress+'%';
+      fill.textContent=data.progress+'%';
+    }
+    if(data.log){
+      lw.innerHTML+=`[${data.timestamp||''}] ${data.log}\n`;
+      lw.scrollTop=lw.scrollHeight;
+    }
+    if(data.status==='completed'){
+      evtSource.close();
+      fill.style.width='100%';fill.textContent='100%';
+      lw.innerHTML+='✅ 重新生成完成！\n';
+      showToast('重新生成完成');
+      // 刷新数据
+      setTimeout(()=>{
+        fetch('/api/data').then(r=>r.json()).then(d=>{DASHBOARD_DATA=d;renderAll();showToast('数据已刷新')}).catch(()=>{});
+      },500);
+    } else if(data.status==='error'){
+      evtSource.close();
+      lw.innerHTML+='❌ 错误: '+(data.error||'未知')+'\n';
+      showToast('生成失败');
+    }
+  };
+  evtSource.onerror=function(){
+    // SSE不支持时回退到模拟模式
+    evtSource.close();
+    lw.innerHTML+='⚠ API未连接，使用模拟进度\n';
+    const steps=[{name:'数据采集',pct:20},{name:'因子构建',pct:40},{name:'ML训练',pct:70},{name:'策略回测',pct:85},{name:'图表生成',pct:95},{name:'完成',pct:100}];
+    let i=0;
+    const interval=setInterval(()=>{
+      if(i>=steps.length){clearInterval(interval);showToast('模拟完成');return}
+      const s=steps[i];fill.style.width=s.pct+'%';fill.textContent=s.pct+'%';
+      lw.innerHTML+=`[${new Date().toLocaleTimeString()}] ✅ ${s.name}\n`;lw.scrollTop=lw.scrollHeight;i++
+    },800);
+  };
+}
+
+function exportCSV(){
+  const d=DASHBOARD_DATA;if(!d||!d.raw_data)return;
+  const headers=Object.keys(d.raw_data[0]);
+  const csv=[headers.join(','),...d.raw_data.map(row=>headers.map(h=>row[h]||'').join(','))].join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='gold_factors.csv';a.click();URL.revokeObjectURL(url);showToast('CSV已导出');
+}
+
+document.getElementById('eventType').addEventListener('change',function(){
+  const cd=document.getElementById('customEventDiv');
+  if(this.value==='custom'){cd.style.display='block'}else{cd.style.display='none'}
+  const im={'fed-hawkish':'-5','fed-dovish':'5','geo-escalate':'5','geo-ease':'-5','cb-buying':'5','cb-selling':'-5','cpi-high':'5','cpi-low':'-5','custom':'0'};
+  if(im[this.value])document.getElementById('eventImpact').value=im[this.value];
+});
+
+// 优先从API加载，失败则用本地JSON
+fetch('/api/data').then(r=>r.json()).then(data=>{DASHBOARD_DATA=data;renderAll()}).catch(()=>{
+  fetch('dashboard_data.json').then(r=>r.json()).then(data=>{DASHBOARD_DATA=data;renderAll()}).catch(()=>{
+    DASHBOARD_DATA={overview:{'加权集成概率':'58%','建议操作':'空仓观望','当前Regime':'震荡','预测基准日':'2026-07-07','当前金价':'$4145.30'},strategies:[],features:[],ml_models:[],current_factors:[],raw_data:[]};renderAll()
+  })
+});
+window.addEventListener('resize',()=>{Object.values(window.echartsInstances).forEach(c=>c&&c.resize())});
+
+// ═════════════════════════════════════════════════════════════
+// 执行方案 Tab
+// ═════════════════════════════════════════════════════════════
+let EXEC_DATA=null;
+
+function loadExecution(){
+  fetch('/api/execution').then(r=>r.json()).then(data=>{
+    EXEC_DATA=data;renderExecution();
+  }).catch(()=>{
+    // API不可用，尝试本地JSON
+    fetch('execution_data.json').then(r=>r.json()).then(data=>{
+      const current=data.current||{};
+      const modelPos=parseFloat(current.position)||0;
+      const etfPos=modelPos*0.65;
+      const futPos=modelPos*0.35;
+      EXEC_DATA={
+        current_instruction:{
+          regime:current.regime||'震荡',
+          probability:Math.round(parseFloat(current.probability)*1000)/10,
+          model_position:Math.round(modelPos*100*10)/10,
+          etf_position:Math.round(etfPos*100*10)/10,
+          futures_position:Math.round(futPos*100*10)/10,
+          etf_action:etfPos>0.01?'ETF持有 '+(Math.round(etfPos*100*10)/10)+'%（做多）':etfPos<-0.01?'ETF持有 '+(-Math.round(etfPos*100*10)/10)+'%（做空）':'ETF空仓观望',
+          futures_action:futPos>0.01?'期货持有 '+(Math.round(futPos*100*10)/10)+'%（做多）':futPos<-0.01?'期货持有 '+(-Math.round(futPos*100*10)/10)+'%（做空）':'期货空仓观望',
+          etf_rebalance_needed:Math.abs(modelPos)>=0.3,
+          gold_price:null,
+          vol_60d:parseFloat(current.vol_60d)||null,
+          ma200:null,
+          ma50:null,
+        },
+        layers:data.execution_rules,
+        scenarios:data.scenarios,
+        signal_stats:data.signal_stats,
+        cost_comparison:data.cost_comparison,
+        current_scenario_idx:Math.abs(modelPos)>0.5?0:modelPos>0.2?1:modelPos<-0.2?3:2,
+        position_history:data.position_history||null
+      };
+      renderExecution();
+    }).catch(()=>{
+      document.getElementById('execInstruction').innerHTML='<div style="color:var(--red);">执行方案数据加载失败</div>';
+    });
+  });
+}
+
+function renderExecution(){
+  if(!EXEC_DATA)return;
+  renderExecInstruction();
+  renderExecScenarios();
+  renderExecSignalStats();
+  renderCostChart();
+  renderPositionHistoryChart();
+}
+
+function renderExecInstruction(){
+  const ci=EXEC_DATA.current_instruction;
+  const el=document.getElementById('execInstruction');
+  if(!ci){
+    el.innerHTML='<div style="color:var(--text-dim);">暂无当前信号数据</div>';
+    return;
+  }
+
+  // 判断信号方向颜色
+  const posColor=ci.model_position>0?'var(--green)':ci.model_position<0?'var(--red)':'var(--yellow)';
+  const actionBg=ci.model_position>0?'rgba(44,163,44,0.15)':ci.model_position<0?'rgba(214,39,40,0.15)':'rgba(255,215,0,0.15)';
+
+  // ETF是否需要调仓
+  const rebalanceBadge=ci.etf_rebalance_needed
+    ?'<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;background:rgba(255,215,0,0.2);color:var(--yellow);border:1px solid var(--yellow);margin-left:8px;">ETF需调仓</span>'
+    :'<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;background:rgba(136,136,153,0.2);color:var(--text-dim);border:1px solid var(--border);margin-left:8px;">ETF维持</span>';
+
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div>
+        <div style="font-size:12px;color:var(--text-dim);">Regime</div>
+        <div style="font-size:20px;font-weight:bold;color:var(--blue);">${ci.regime}</div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--text-dim);">看多概率</div>
+        <div style="font-size:20px;font-weight:bold;color:var(--yellow);">${ci.probability}%</div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--text-dim);">模型总仓位</div>
+        <div style="font-size:20px;font-weight:bold;color:${posColor};">${ci.model_position}%</div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--text-dim);">60日波动率</div>
+        <div style="font-size:20px;font-weight:bold;color:var(--text-dim);">${ci.vol_60d?(ci.vol_60d*100).toFixed(1)+'%':'--'}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="padding:16px;background:${actionBg};border-radius:6px;border:1px solid ${posColor};">
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:4px;">📊 ETF核心层 (518880)</div>
+        <div style="font-size:28px;font-weight:bold;color:${posColor};">${ci.etf_position}%</div>
+        <div style="font-size:13px;margin-top:4px;">${ci.etf_action}</div>
+        ${rebalanceBadge}
+      </div>
+      <div style="padding:16px;background:${actionBg};border-radius:6px;border:1px solid ${posColor};">
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:4px;">⚡ 期货战术层 (GC=F)</div>
+        <div style="font-size:28px;font-weight:bold;color:${posColor};">${ci.futures_position}%</div>
+        <div style="font-size:13px;margin-top:4px;">${ci.futures_action}</div>
+      </div>
+    </div>
+    ${ci.gold_price&&!isNaN(ci.gold_price)?`<div style="margin-top:12px;font-size:12px;color:var(--text-dim);">当前金价: $${ci.gold_price.toFixed(2)}</div>`:''}
+  `;
+}
+
+function renderExecScenarios(){
+  const scenarios=EXEC_DATA.scenarios;
+  const currentIdx=EXEC_DATA.current_scenario_idx;
+  const el=document.getElementById('execScenarios');
+  if(!scenarios||scenarios.length===0){
+    el.innerHTML='<div style="color:var(--text-dim);">暂无情景数据</div>';
+    return;
+  }
+
+  el.innerHTML=scenarios.map((s,i)=>{
+    const isCurrent=i===currentIdx;
+    const bg=isCurrent?'rgba(255,215,0,0.08)':'var(--bg)';
+    const border=isCurrent?'1px solid var(--yellow)':'1px solid var(--border)';
+    const tag=isCurrent?'<span style="display:inline-block;padding:2px 6px;border-radius:3px;font-size:10px;background:var(--yellow);color:#000;font-weight:bold;margin-left:6px;">当前</span>':'';
+    return `
+      <div style="padding:12px;background:${bg};border:${border};border-radius:6px;margin-bottom:10px;">
+        <div style="font-weight:bold;color:${isCurrent?'var(--yellow)':'var(--text)'};margin-bottom:6px;">${s['场景']}${tag}</div>
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.8;">
+          <div>📊 模型仓位: <b style="color:var(--text);">${s['模型仓位']}</b></div>
+          <div>📈 ETF执行: <b style="color:var(--blue);">${s['ETF执行']}</b></div>
+          <div>⚡ 期货执行: <b style="color:var(--purple);">${s['期货执行']}</b></div>
+          <div style="margin-top:4px;color:var(--text);">🔄 ${s['操作']}</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">⚠️ ${s['注意事项']}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderExecSignalStats(){
+  const ss=EXEC_DATA.signal_stats;
+  const el=document.getElementById('execSignalStats');
+  if(!ss){
+    el.innerHTML='<div style="color:var(--text-dim);">暂无统计数据</div>';
+    return;
+  }
+
+  // 仓位分布柱状图
+  const dist=ss['仓位分布']||{};
+  const distBars=Object.entries(dist).map(([k,v])=>{
+    const maxVal=Math.max(...Object.values(dist));
+    const h=maxVal>0?(v/maxVal*100):0;
+    let color='var(--text-dim)';
+    if(k.includes('多'))color='var(--green)';
+    if(k.includes('空')&&!k.includes('空仓'))color='var(--red)';
+    if(k.includes('空仓'))color='var(--text-dim)';
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+      <div style="width:120px;font-size:11px;color:var(--text-dim);text-align:right;">${k}</div>
+      <div style="flex:1;height:18px;background:var(--border);border-radius:3px;overflow:hidden;">
+        <div style="height:100%;width:${h}%;background:${color};"></div>
+      </div>
+      <div style="width:40px;font-size:11px;color:var(--text);">${v}天</div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div style="text-align:center;padding:12px;background:var(--bg);border-radius:6px;">
+        <div style="font-size:24px;font-weight:bold;color:var(--blue);">${(ss['月均调仓次数']||0).toFixed(1)}</div>
+        <div style="font-size:11px;color:var(--text-dim);">月均调仓次数</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--bg);border-radius:6px;">
+        <div style="font-size:24px;font-weight:bold;color:var(--yellow);">${ss['大调仓(≥50%)']||0}</div>
+        <div style="font-size:11px;color:var(--text-dim);">大调仓(≥50%)次数</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--bg);border-radius:6px;">
+        <div style="font-size:24px;font-weight:bold;color:var(--green);">${(ss['平均持仓天数']||0).toFixed(1)}</div>
+        <div style="font-size:11px;color:var(--text-dim);">平均持仓天数</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--bg);border-radius:6px;">
+        <div style="font-size:24px;font-weight:bold;color:var(--purple);">${ss['总交易日']||0}</div>
+        <div style="font-size:11px;color:var(--text-dim);">分析总天数</div>
+      </div>
+    </div>
+    <div style="font-size:13px;font-weight:bold;color:var(--text-dim);margin-bottom:8px;">仓位分布</div>
+    ${distBars}
+    <div style="margin-top:12px;font-size:11px;color:var(--text-dim);">
+      分析区间: ${ss['分析区间']||'--'}
+    </div>
+  `;
+}
+
+function renderCostChart(){
+  const el=document.getElementById('costChart');
+  if(!el)return;
+  const cc=EXEC_DATA.cost_comparison;
+  if(!cc){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-dim);">暂无成本数据</div>';
+    return;
+  }
+
+  const chart=echarts.init(el);window.echartsInstances.cost=chart;
+
+  const capitals=Object.keys(cc).map(k=>parseInt(k));
+  const etfCosts=capitals.map(c=>cc[c]['纯ETF']['总成本']);
+  const futuresCosts=capitals.map(c=>cc[c]['纯期货']['总成本']);
+  const hybridCosts=capitals.map(c=>cc[c]['ETF+期货分层']['总成本']);
+
+  chart.setOption({
+    backgroundColor:'transparent',
+    tooltip:{trigger:'axis',formatter:p=>p.map(s=>`${s.seriesName}: ¥${s.value.toFixed(0)}`).join('<br/>')},
+    legend:{data:['纯ETF','纯期货','ETF+期货分层'],textStyle:{color:'#888899'},top:5},
+    grid:{left:'8%',right:'5%',bottom:'12%',top:'18%'},
+    xAxis:{type:'category',data:capitals.map(c=>'¥'+(c/10000)+'万'),axisLine:{lineStyle:{color:'#2a2e3f'}},axisLabel:{color:'#888899'}},
+    yAxis:{type:'value',name:'年化成本(¥)',axisLine:{lineStyle:{color:'#2a2e3f'}},splitLine:{lineStyle:{color:'#1a1d28'}},axisLabel:{color:'#888899'}},
+    series:[
+      {name:'纯ETF',type:'bar',data:etfCosts,itemStyle:{color:'#4472C4'},barWidth:'20%'},
+      {name:'纯期货',type:'bar',data:futuresCosts,itemStyle:{color:'#d62728'},barWidth:'20%'},
+      {name:'ETF+期货分层',type:'bar',data:hybridCosts,itemStyle:{color:'#2ca02c'},barWidth:'20%'}
+    ]
+  });
+}
+
+function renderPositionHistoryChart(){
+  const el=document.getElementById('positionHistoryChart');
+  if(!el)return;
+  const ph=EXEC_DATA.position_history;
+  if(!ph||!ph.dates||ph.dates.length===0){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-dim);">暂无历史仓位数据</div>';
+    return;
+  }
+
+  const chart=echarts.init(el);window.echartsInstances.positionHistory=chart;
+
+  const positions=ph.positions.map(p=>p*100);
+  const etfPositions=positions.map(p=>p*0.65);
+  const futuresPositions=positions.map(p=>p*0.35);
+
+  chart.setOption({
+    backgroundColor:'transparent',
+    tooltip:{trigger:'axis'},
+    legend:{data:['模型仓位','ETF层(65%)','期货层(35%)','金价'],textStyle:{color:'#888899'},top:5},
+    grid:{left:'8%',right:'8%',bottom:'12%',top:'18%'},
+    xAxis:{type:'category',data:ph.dates,axisLine:{lineStyle:{color:'#2a2e3f'}},axisLabel:{color:'#888899'}},
+    yAxis:[
+      {type:'value',name:'仓位(%)',min:-100,max:100,axisLine:{lineStyle:{color:'#2a2e3f'}},splitLine:{lineStyle:{color:'#1a1d28'}},axisLabel:{color:'#888899',formatter:'{value}%'}},
+      {type:'value',name:'金价($)',position:'right',scale:true,axisLine:{lineStyle:{color:'#2a2e3f'}},splitLine:{show:false},axisLabel:{color:'#888899'}}
+    ],
+    dataZoom:[{type:'inside'},{type:'slider'}],
+    series:[
+      {name:'模型仓位',type:'line',data:positions,smooth:true,lineStyle:{width:2,color:'#FFD700'},yAxisIndex:0},
+      {name:'ETF层(65%)',type:'line',data:etfPositions,smooth:true,lineStyle:{width:1,color:'#4472C4',opacity:0.7},areaStyle:{color:'rgba(68,114,196,0.1)'},yAxisIndex:0},
+      {name:'期货层(35%)',type:'line',data:futuresPositions,smooth:true,lineStyle:{width:1,color:'#9467bd',opacity:0.7},yAxisIndex:0},
+      {name:'金价',type:'line',data:ph.gold_prices,smooth:true,lineStyle:{width:1,color:'#2ca02c',opacity:0.5},yAxisIndex:1}
+    ]
+  });
+}
+</script>
+</body>
+</html>

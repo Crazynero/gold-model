@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""统一路径配置 — 所有模块从这里取路径，不再硬编码绝对路径"""
+from pathlib import Path
+
+PACKAGE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = PACKAGE_DIR.parent.parent  # src/gold_model -> 项目根
+
+DATA_DIR = PROJECT_ROOT / 'data'          # 缓存与状态（fomc_cache / drift_history 等）
+WEB_DIR = PROJECT_ROOT / 'web'            # 前端 Dashboard 及其 JSON 数据
+OUTPUTS_DIR = PROJECT_ROOT / 'outputs'    # 所有生成的报告/图表
+CHARTS_DIR = OUTPUTS_DIR / 'charts_v4'
+EXECUTION_PLAN_DIR = OUTPUTS_DIR / 'execution_plan'
+REPORTS_DIR = OUTPUTS_DIR / 'reports'
+
+# 常用文件
+FOMC_CACHE = DATA_DIR / 'fomc_cache.json'
+CPI_CACHE = DATA_DIR / 'cpi_cache.json'
+DRIFT_HISTORY = DATA_DIR / 'drift_history.json'
+SIGNAL_ALERT_STATE = DATA_DIR / 'signal_alert_state.json'
+DASHBOARD_JSON = WEB_DIR / 'dashboard_data.json'
+EXECUTION_JSON = WEB_DIR / 'execution_data.json'
+EXECUTION_LATEST_JSON = OUTPUTS_DIR / 'execution_data_latest.json'
+ANALYSIS_JSON = EXECUTION_PLAN_DIR / 'analysis.json'
+
+ASSETS_DIR = PACKAGE_DIR / 'execution_plan' / 'assets'
+
+
+def ensure_dirs():
+    for d in (DATA_DIR, WEB_DIR, CHARTS_DIR, EXECUTION_PLAN_DIR, REPORTS_DIR):
+        d.mkdir(parents=True, exist_ok=True)

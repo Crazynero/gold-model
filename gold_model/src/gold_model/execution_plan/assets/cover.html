@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700;900&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+@page { size: 794px 1123px; margin: 0; }
+html, body { margin: 0; padding: 0; background: #f3f2f0; font-family: 'Noto Sans SC', sans-serif; }
+.cover {
+  width: 794px; height: 1123px; position: relative;
+  background: #f3f2f0; overflow: hidden;
+}
+/* Decorative lines */
+.line-top { position: absolute; top: 96px; left: 96px; width: 60px; height: 3px; background: #288fb1; }
+.line-bottom { position: absolute; bottom: 96px; right: 96px; width: 120px; height: 1px; background: #7b776f; opacity: 0.4; }
+.accent-block { position: absolute; top: 0; right: 0; width: 200px; height: 8px; background: #288fb1; }
+
+/* Kicker */
+.kicker {
+  position: absolute; top: 130px; left: 96px;
+  font-size: 16px; font-weight: 400; color: #288fb1;
+  letter-spacing: 4px; text-transform: uppercase;
+}
+
+/* Title */
+.title {
+  position: absolute; top: 200px; left: 96px;
+  width: 600px;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 46px; font-weight: 900; color: #1e1d1b;
+  line-height: 1.3; letter-spacing: 2px;
+}
+.title .sub { display: block; font-size: 28px; font-weight: 400; color: #7b776f; margin-top: 12px; letter-spacing: 1px; }
+
+/* Summary */
+.summary {
+  position: absolute; top: 460px; left: 96px;
+  width: 580px;
+  font-size: 16px; font-weight: 300; color: #3a3835;
+  line-height: 1.8; letter-spacing: 0.5px;
+}
+.summary strong { font-weight: 700; color: #288fb1; }
+
+/* Stats grid */
+.stats {
+  position: absolute; top: 640px; left: 96px;
+  display: flex; gap: 48px;
+}
+.stat-item { text-align: left; }
+.stat-num { font-size: 36px; font-weight: 900; color: #288fb1; font-family: 'Noto Serif SC', serif; }
+.stat-label { font-size: 13px; color: #7b776f; margin-top: 4px; letter-spacing: 1px; }
+
+/* Meta */
+.meta {
+  position: absolute; bottom: 120px; left: 96px;
+  font-size: 14px; color: #7b776f; line-height: 1.8; letter-spacing: 0.5px;
+}
+.meta .label { display: inline-block; width: 80px; color: #288fb1; font-weight: 700; }
+
+/* Right side decoration */
+.dot-grid {
+  position: absolute; bottom: 200px; right: 96px;
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+}
+.dot { width: 4px; height: 4px; border-radius: 50%; background: #288fb1; opacity: 0.3; }
+.dot.active { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="cover">
+  <div class="accent-block"></div>
+  <div class="line-top"></div>
+
+  <div class="kicker">GOLD TRADING EXECUTION PLAN</div>
+
+  <div class="title">
+    黄金 ETF + 期货<br>组合仓位管理方案
+    <span class="sub">基于 V4 模型信号频率的最优执行路径设计</span>
+  </div>
+
+  <div class="summary">
+    基于 V4.0 黄金预测模型（41因子 × 多周期集成）的<strong>881次调仓信号</strong>分析，
+    设计 <strong>ETF 底仓 + 期货战术</strong>两层执行架构。
+    ETF 层承载 65% 核心仓位降低交易成本，期货层处理 35% 战术调仓捕捉短期信号，
+    综合 年化成本率 <strong>0.19%</strong>，较纯 ETF 降低 <strong>56%</strong>。
+  </div>
+
+  <div class="stats">
+    <div class="stat-item">
+      <div class="stat-num">881</div>
+      <div class="stat-label">总调仓次数</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">1.5</div>
+      <div class="stat-label">平均持仓天数</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">56%</div>
+      <div class="stat-label">成本节省</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">3层</div>
+      <div class="stat-label">执行架构</div>
+    </div>
+  </div>
+
+  <div class="dot-grid">
+    <div class="dot active"></div><div class="dot active"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot active"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+
+  <div class="meta">
+    <div><span class="label">模型版本</span>V4.0 (41 Factors, Walk-Forward)</div>
+    <div><span class="label">分析区间</span>2022.12 ~ 2026.06</div>
+    <div><span class="label">执行标的</span>518880 (ETF) + GC=F (COMEX期货)</div>
+    <div><span class="label">日期</span>2026-07-13</div>
+  </div>
+
+  <div class="line-bottom"></div>
+</div>
+</body>
+</html>
