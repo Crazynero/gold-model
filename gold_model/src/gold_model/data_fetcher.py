@@ -158,7 +158,7 @@ PROXY_FALLBACK = {
     'GC=F':    ('GLD', 10.75),    # 黄金期货 → GLD ETF（GLD≈0.093盎司金价，期货≈GLD×10.75）
     'HG=F':    ('CPER', 1.0),     # 铜期货 → 铜ETF（方向一致）
     '^GVZ':    ('^VIX', 0.5),     # 黄金VIX → VIX（相关性高，波动幅度调小）
-    '^VIX9D':  ('^VIX', 0.9),     # VIX9D → VIX（高度相关）
+    # 注意：^VIX9D 不可用 ^VIX 代理——下游"VIX期限结构"=VIX/VIX9D 会变成常数（零方差死特征），宁可缺失
 }
 
 
@@ -208,17 +208,19 @@ def fetch_ticker_with_fallback(ticker, name, period='5y', verbose=True):
     if _yf_rate_limit_streak[0] < _YF_CIRCUIT_THRESHOLD:
         try:
             s = _safe_yf_download(ticker, period)
-            _yf_rate_limit_streak[0] = 0
             if s is not None and len(s) > 100:
+                _yf_rate_limit_streak[0] = 0
                 if verbose:
                     print(f"  ✅ {name}({ticker}) {len(s)}行 [yfinance]")
                 s.name = name
                 return s
+            _yf_rate_limit_streak[0] += 1  # 空数据同样计入熔断（Yahoo软拦截常返回空DF）
+            if _yf_rate_limit_streak[0] == _YF_CIRCUIT_THRESHOLD and verbose:
+                print(f"  ⏩ yfinance连续失败（空数据），后续ticker直接走备用源")
         except Exception as e:
-            if 'RateLimit' in type(e).__name__ or 'Too Many Requests' in str(e):
-                _yf_rate_limit_streak[0] += 1
-                if _yf_rate_limit_streak[0] == _YF_CIRCUIT_THRESHOLD and verbose:
-                    print(f"  ⏩ yfinance连续限流，后续ticker直接走备用源")
+            _yf_rate_limit_streak[0] += 1  # 任何异常都计入熔断（DNS失败/429对全ticker同效）
+            if _yf_rate_limit_streak[0] == _YF_CIRCUIT_THRESHOLD and verbose:
+                print(f"  ⏩ yfinance连续失败（{type(e).__name__}），后续ticker直接走备用源")
             if verbose:
                 print(f"  ⚠️ {name}({ticker}) yfinance失败: {type(e).__name__}")
     
