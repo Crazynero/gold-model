@@ -1,5 +1,5 @@
 #!/bin/bash
-# 黄金V5 每日信号检测：主管道 → 信号告警 → macOS 通知
+# 黄金V5 每日信号检测：主管道 → ingest → 刷新前端内联数据 → 信号告警 → macOS 通知
 # 由 launchd 定时调用（周二~六 22:30），也可手动执行
 set -u
 
@@ -23,6 +23,9 @@ export PYTHONPATH="$PROJECT_DIR/src"
 
   "$PY" -m gold_model.ingest_current   # 写入 SQLite 历史库
   echo "ingest退出码: $?"
+
+  "$PY" dashboard-vue3/inject_data.py --refresh   # 单文件成品内联数据刷新为最新
+  echo "inject_refresh退出码: $?"
 
   ALERT_OUT="$("$PY" -m gold_model.signal_alert 2>&1)"
   ALERT_RC=$?
