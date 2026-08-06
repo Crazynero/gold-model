@@ -8,6 +8,10 @@ __pycache__/
 build/
 dist/
 .venv/
+node_modules/
+
+# 移交用的压缩包（体积大、内容已拆入仓库）
+*.zip
 
 # 生成物（可随时重建）
 gold_model/outputs/

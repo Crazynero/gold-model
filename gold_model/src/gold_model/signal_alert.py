@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-黄金V4 异常信号检测器
-检测Regime切换/仓位大幅变化/概率穿越阈值，触发时推送消息
+黄金V5 异常信号检测器
+检测Regime切换/仓位大幅变化/概率穿越阈值/过拟合Holdout验证，触发时推送消息
 
 用法：
   python3 signal_alert.py              # 检测一次
@@ -15,7 +15,7 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
-# 路径设置
+# 路径设置（统一走 paths.py）
 from gold_model.paths import EXECUTION_JSON, DASHBOARD_JSON, SIGNAL_ALERT_STATE
 
 STATE_FILE = SIGNAL_ALERT_STATE  # 上次状态
@@ -172,11 +172,11 @@ def detect_signals(current, prev):
     return alerts, new_state
 
 
-def format_message(alerts, current, dash_overview):
+def format_message(alerts, current, dash_overview, dash_data=None):
     """格式化推送消息"""
     now_str = datetime.now().strftime('%Y-%m-%d %H:%M')
     
-    lines = [f"📊 黄金V4信号告警 ({now_str})"]
+    lines = [f"📊 黄金V5信号告警 ({now_str})"]
     lines.append("=" * 40)
     
     for a in alerts:
@@ -198,6 +198,91 @@ def format_message(alerts, current, dash_overview):
                 lines.append(f"  {key}: {dash_overview[key]}")
         if '建议操作' in dash_overview:
             lines.append(f"  建议: {dash_overview['建议操作']}")
+    
+    # V5.0 Holdout验证摘要
+    if dash_data:
+        v5_section = _format_v5_holdout(dash_data)
+        if v5_section:
+            lines.append("\n" + "=" * 40)
+            lines.append(v5_section)
+    
+    return '\n'.join(lines)
+
+
+def _format_v5_holdout(dash_data):
+    """格式化V5 Holdout验证摘要"""
+    if not dash_data.get('v5_holdout'):
+        return None
+    
+    fc_orig = dash_data.get('v5_original_feature_count', '?')
+    fc_final = dash_data.get('v5_feature_count', '?')
+    
+    lines = ["🔬 V5.0 过拟合验证摘要"]
+    lines.append(f"  特征VIF剔除: {fc_orig}→{fc_final}个")
+    
+    # 找V3.0-E的holdout数据
+    holdout_list = dash_data.get('v5_holdout', [])
+    best_holdout = None
+    bh_holdout = None
+    for h in holdout_list:
+        if h.get('strategy') == 'V3.0-E 多周期集成':
+            best_holdout = h
+        if h.get('strategy') == '买入持有':
+            bh_holdout = h
+    
+    if best_holdout:
+        h_sharpe = best_holdout.get('sharpe', 0)
+        lines.append(f"  Holdout(近6月)夏普: {h_sharpe:.2f}")
+    if bh_holdout:
+        bh_sharpe = bh_holdout.get('sharpe', 0)
+        lines.append(f"  买入持有Holdout夏普: {bh_sharpe:.2f}")
+    
+    # 回归分支
+    reg_list = dash_data.get('v5_regression', [])
+    if reg_list:
+        for r in reg_list:
+            if r.get('horizon') == '20日':
+                lines.append(f"  回归分支: R²={r.get('r2', 0):.3f}, 方向准确率={r.get('dir_acc', '?')}")
+    
+    # 过拟合诊断
+    if best_holdout and bh_holdout:
+        h_sharpe = best_holdout.get('sharpe', 0)
+        bh_sharpe = bh_holdout.get('sharpe', 0)
+        
+        # Full-period夏普从strategies列表取
+        full_sharpe = 0
+        for s in dash_data.get('strategies', []):
+            if s.get('策略') == 'V3.0-E 多周期集成':
+                try:
+                    full_sharpe = float(s.get('夏普', 0))
+                except:
+                    full_sharpe = 0
+                break
+        
+        if full_sharpe > 0 and h_sharpe is not None:
+            decay = (1 - h_sharpe / full_sharpe) * 100
+            lines.append(f"  夏普衰减: {decay:.0f}% (Full {full_sharpe:.2f} → Holdout {h_sharpe:.2f})")
+            
+            if decay > 50:
+                lines.append("")
+                lines.append("  ⚠️ 过拟合诊断（衰减>50%）:")
+                lines.append(f"  原因1: V1→V4在同一5年数据上反复迭代调参，")
+                lines.append(f"         每版看着回测结果加料（数据窥探）")
+                lines.append(f"  原因2: 2020-2025黄金大牛市，'牛市不做空'规则")
+                lines.append(f"         恰好匹配此段历史，非模型泛化能力")
+                lines.append(f"  原因3: 8个策略在同一数据上选最优V3.0-E，")
+                lines.append(f"         '选最优'本身就在看回测结果")
+                lines.append(f"  结论: 实盘夏普预期≈{h_sharpe:.1f}，非回测的{full_sharpe:.1f}")
+                if h_sharpe > bh_sharpe:
+                    lines.append(f"  但Holdout仍跑赢买入持有({bh_sharpe:.1f})，")
+                    lines.append(f"  说明模型有一定OOS价值，只是被夸大了")
+                else:
+                    lines.append(f"  且Holdout跑输买入持有({bh_sharpe:.1f})，")
+                    lines.append(f"  当前模型可能无OOS价值，需重构")
+            elif decay > 30:
+                lines.append(f"  ⚠️ 存在一定过拟合（衰减30-50%）")
+            else:
+                lines.append(f"  ✅ 模型泛化能力良好（衰减<30%）")
     
     return '\n'.join(lines)
 
@@ -224,8 +309,22 @@ def run(dry_run=False):
             '60日看多概率': '32.0%',
             '建议操作': '空仓观望',
         }
+        mock_dash_data = {
+            'v5_original_feature_count': 42,
+            'v5_feature_count': 24,
+            'v5_holdout': [
+                {'strategy': 'V3.0-E 多周期集成', 'sharpe': 0.43, 'ann_ret': '+2.4%', 'max_dd': '-4.2%', 'win_rate': '39.0%'},
+                {'strategy': '买入持有', 'sharpe': -0.71, 'ann_ret': '-21.0%', 'max_dd': '-24.6%', 'win_rate': '49.5%'},
+            ],
+            'v5_regression': [
+                {'horizon': '20日', 'r2': -0.317, 'dir_acc': '61.3%', 'ic': '-0.0276'},
+            ],
+            'strategies': [
+                {'策略': 'V3.0-E 多周期集成', '夏普': '2.53'},
+            ],
+        }
         alerts, _ = detect_signals(mock_current, mock_prev)
-        msg = format_message(alerts, mock_current, mock_overview)
+        msg = format_message(alerts, mock_current, mock_overview, mock_dash_data)
         print(msg)
         return
     
@@ -316,7 +415,7 @@ def run(dry_run=False):
     all_alerts = alerts + drift_alerts + signal_alerts
     
     if all_alerts:
-        msg = format_message(all_alerts, current, dash_overview)
+        msg = format_message(all_alerts, current, dash_overview, dash_data)
         print(msg)
         save_state(new_state)
         return msg
@@ -340,11 +439,16 @@ def run(dry_run=False):
             print(f"[ALERT] 首次运行，状态已记录: Regime={new_state['regime']}, 仓位={new_state['position']:.0%}, 概率={new_state['probability']:.1%}{extra_status}")
         else:
             print(f"[ALERT] 无异常信号。当前: Regime={new_state['regime']}, 仓位={new_state['position']:.0%}, 概率={new_state['probability']:.1%}{extra_status}")
+            # 即使无异常信号，也输出V5 holdout摘要
+            if dash_data:
+                v5_section = _format_v5_holdout(dash_data)
+                if v5_section:
+                    print("\n" + v5_section)
         return None
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='黄金V4异常信号检测')
+    parser = argparse.ArgumentParser(description='黄金V5异常信号检测')
     parser.add_argument('--dry-run', action='store_true', help='用模拟数据测试消息格式')
     args = parser.parse_args()
     

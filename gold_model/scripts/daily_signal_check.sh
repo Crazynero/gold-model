@@ -1,5 +1,5 @@
 #!/bin/bash
-# 黄金V4 每日信号检测：主管道 → 信号告警 → macOS 通知
+# 黄金V5 每日信号检测：主管道 → 信号告警 → macOS 通知
 # 由 launchd 定时调用（周二~六 22:30），也可手动执行
 set -u
 
@@ -18,8 +18,11 @@ export PYTHONPATH="$PROJECT_DIR/src"
 {
   echo "===== $(date '+%F %T') 开始 (python: $PY) ====="
 
-  "$PY" -m gold_model.gold_factor_v4
+  "$PY" -m gold_model.gold_factor_v5
   echo "主管道退出码: $?"
+
+  "$PY" -m gold_model.ingest_current   # 写入 SQLite 历史库
+  echo "ingest退出码: $?"
 
   ALERT_OUT="$("$PY" -m gold_model.signal_alert 2>&1)"
   ALERT_RC=$?
@@ -28,7 +31,7 @@ export PYTHONPATH="$PROJECT_DIR/src"
 
   if [ "$ALERT_RC" -eq 1 ]; then
     DETAIL="$(echo "$ALERT_OUT" | grep -m1 -E '🔴|🟠|🟡' | cut -c1-80)"
-    /usr/bin/osascript -e "display notification \"${DETAIL:-检测到异常信号，详见日志}\" with title \"黄金V4信号告警\" sound name \"Glass\"" || true
+    /usr/bin/osascript -e "display notification \"${DETAIL:-检测到异常信号，详见日志}\" with title \"黄金V5信号告警\" sound name \"Glass\"" || true
   fi
 
   echo "===== $(date '+%F %T') 结束 ====="

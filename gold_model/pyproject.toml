@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gold-model"
-version = "4.2.0"
-description = "黄金多因子预测模型 V4 — 数据采集 → ML建模 → 信号告警 → Dashboard/报告"
+version = "5.0.0"
+description = "黄金多因子预测模型 V5 — 数据采集 → ML建模(VIF剔除+Holdout验证) → 信号告警 → Dashboard/报告"
 requires-python = ">=3.10"
 dependencies = [
     "pandas",
@@ -21,11 +21,14 @@ dependencies = [
     "reportlab",
     "pypdf",
     "openpyxl",
+    "curl_cffi",
+    "statsmodels",
 ]
 
 [project.optional-dependencies]
 pdf = ["playwright"]  # generate_cover.py 需要
 dev = ["pytest"]      # tests/ 冒烟测试
+api = ["fastapi", "uvicorn", "pydantic"]  # api_server.py 后端
 
 [project.scripts]
 gold-dashboard = "gold_model.web_server:main"
