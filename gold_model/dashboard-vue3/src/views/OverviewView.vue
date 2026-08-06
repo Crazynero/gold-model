@@ -1,5 +1,27 @@
 <template>
   <div class="overview-grid">
+    <HudCard title="DECISION CHAIN" meta="WHY THIS ACTION" class="span-2">
+      <div class="chain-row">
+        <div class="chain-step">
+          <div class="chain-label">加权集成概率</div>
+          <div class="chain-value text-acc">{{ prob }}</div>
+          <div class="chain-note">{{ probNum >= 50 ? '信号偏多' : '信号偏空' }}</div>
+        </div>
+        <div class="chain-arrow">→</div>
+        <div class="chain-step">
+          <div class="chain-label">Regime 过滤</div>
+          <div class="chain-value" :style="{ color: regimeColor }">{{ regime }}</div>
+          <div class="chain-note">{{ regimeNote }}</div>
+        </div>
+        <div class="chain-arrow">→</div>
+        <div class="chain-step">
+          <div class="chain-label">最终建议</div>
+          <div class="chain-value text-gold">{{ action }}</div>
+          <div class="chain-note">基准日 {{ baseDate }}</div>
+        </div>
+      </div>
+    </HudCard>
+
     <HudCard title="CURRENT STATE" meta="V5">
       <div class="ov-row"><span>预测基准日</span><b>{{ baseDate }}</b></div>
       <div class="ov-row"><span>当前金价</span><b class="text-gold">{{ goldPrice }}</b></div>
@@ -72,6 +94,13 @@ const regimeColor = computed(() => {
   if (regime.value.includes('牛')) return 'var(--pos)'
   if (regime.value.includes('熊')) return 'var(--neg)'
   return 'var(--warn)'
+})
+
+const probNum = computed(() => parseFloat(String(prob.value).replace('%', '')) || 0)
+const regimeNote = computed(() => {
+  if (regime.value.includes('熊')) return '压制多头信号，禁止开仓'
+  if (regime.value.includes('牛')) return '信号正常放行'
+  return '降仓观察，谨慎跟随'
 })
 
 const mlModels = computed(() => dashboardData.value.ml_models || [])
@@ -178,6 +207,25 @@ function strategyOpt(): EChartsOption {
 .big-prob-c { text-align: center; padding: 10px 0 16px; }
 .big-prob { font-family: var(--mono); font-size: 44px; color: var(--accent); text-shadow: 0 0 16px rgba(0,212,255,0.4); }
 .big-prob-label { font-family: var(--mono); font-size: 10px; color: var(--text-3); margin-top: 4px; letter-spacing: 0.1em; text-transform: uppercase; }
+.chain-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 10px 0 4px;
+  gap: 8px;
+}
+.chain-step { text-align: center; min-width: 160px; }
+.chain-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.chain-value { font-family: var(--mono); font-size: 22px; font-weight: 600; }
+.chain-note { font-size: 11px; color: var(--text-2); margin-top: 4px; }
+.chain-arrow { font-family: var(--mono); font-size: 20px; color: var(--text-dim); }
 
 @media (max-width: 1024px) {
   .overview-grid { grid-template-columns: 1fr; }

@@ -4,6 +4,7 @@ const messages = {
   en: {
     nav: {
       wall: 'Wall', overview: 'Overview', factors: 'Factors', backtest: 'Backtest',
+      backtestHub: 'Backtest Hub',
       compare: 'Compare', versions: 'Versions', walkforward: 'Walk-Forward',
       validation: 'Validation', custombt: 'Signal BT', eventbt: 'Event BT',
       simulator: 'Simulator', attribution: 'Attribution', history: 'History',
@@ -117,6 +118,7 @@ const messages = {
   zh: {
     nav: {
       wall: '监控墙', overview: '总览', factors: '因子分析', backtest: '策略回测',
+      backtestHub: '回测中心',
       compare: '策略对比', versions: '版本对比', walkforward: 'Walk-Forward',
       validation: '过拟合验证', custombt: '信号回测', eventbt: '事件回测',
       simulator: '仓位模拟器', attribution: '资金归因', history: '历史趋势',

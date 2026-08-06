@@ -641,6 +641,18 @@ async def root():
         return FileResponse(idx)
     return {"message": "GOLD COMMAND V6 API", "docs": "/docs"}
 
+@app.get("/{file_path:path}")
+async def static_files(file_path: str):
+    """托管 web/ 下的静态文件（dashboard_data.json、manifest.json、sw.js 等）
+    前端轮询的 JSON 走这里，避免 404 噪音"""
+    if not file_path or file_path.startswith('api/') or file_path == 'ws':
+        raise HTTPException(404, "Not Found")
+    base = WEB_DIR.resolve()
+    candidate = (base / file_path).resolve()
+    if candidate.is_file() and str(candidate).startswith(str(base)):
+        return FileResponse(candidate)
+    raise HTTPException(404, "Not Found")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

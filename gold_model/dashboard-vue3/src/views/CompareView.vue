@@ -45,6 +45,9 @@
           </a-table-column>
         </template>
       </a-table>
+      <div class="period-note">
+        回测区间：近 5 年（{{ periodStart }} ~ {{ periodEnd }}）· 绝对收益未做风险调整，模型优势应看 SHARPE / MAX DD / CALMAR，而非累计收益
+      </div>
     </HudCard>
 
     <HudCard title="MULTI-STRATEGY COMPARE" meta="SELECTED">
@@ -81,7 +84,7 @@ import { useI18n } from 'vue-i18n'
 import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
-import { dashboardData } from '@/composables/useDashboardData'
+import { dashboardData, extractValue } from '@/composables/useDashboardData'
 
 const { t } = useI18n()
 
@@ -94,6 +97,12 @@ const C = {
 const COLORS = [C.accent, C.gold, C.pos, C.purple]
 
 const strategies = computed(() => dashboardData.value.strategies || [])
+const periodEnd = computed(() => extractValue(dashboardData.value.overview, '预测基准日') || '--')
+const periodStart = computed(() => {
+  const m = /^(\d{4})-(\d{2})/.exec(periodEnd.value)
+  if (!m) return '--'
+  return `${parseInt(m[1], 10) - 5}-${m[2]}`
+})
 const selected = ref<string[]>(['V3.0-E 多周期集成', '买入持有', 'V3.0-D +Kelly'])
 const metric = ref<'夏普' | '年化收益' | '最大回撤' | 'Calmar' | '胜率'>('夏普')
 
@@ -223,6 +232,13 @@ watch([selected, metric, strategies], () => {}, { deep: true })
   color: var(--text-3);
   text-align: center;
   padding: 20px 0;
+}
+.period-note {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.6;
 }
 @media (max-width: 1024px) {
   .compare-grid { grid-template-columns: 1fr; }
