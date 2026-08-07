@@ -45,9 +45,9 @@ import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData } from '@/composables/useDashboardData'
 
 const C = {
-  bg: '#04060a', accent: '#00d4ff', pos: '#00ff9c', neg: '#ff3860',
-  gold: '#ffb020', text2: '#8b949e', text3: '#6e7681',
-  border: 'rgba(0,212,255,0.14)', grid: 'rgba(0,212,255,0.05)'
+  bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62',
+  gold: '#d9a648', text2: '#a09d94', text3: '#66635c',
+  border: 'rgba(217, 166, 72,0.14)', grid: 'rgba(217, 166, 72,0.05)'
 }
 
 const topFeatures = computed(() => (dashboardData.value.features || []).slice(0, 12))

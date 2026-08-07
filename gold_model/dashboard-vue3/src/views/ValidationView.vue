@@ -102,8 +102,8 @@ import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData } from '@/composables/useDashboardData'
 
 const C = {
-  bg: '#04060a', accent: '#00d4ff', pos: '#00ff9c', neg: '#ff3860',
-  text2: '#8b949e', text3: '#6e7681', border: 'rgba(0,212,255,0.14)', grid: 'rgba(0,212,255,0.05)'
+  bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62',
+  text2: '#a09d94', text3: '#66635c', border: 'rgba(217, 166, 72,0.14)', grid: 'rgba(217, 166, 72,0.05)'
 }
 
 const v3e = computed(() => dashboardData.value.strategies?.find(s => s.策略 && s.策略.includes('V3.0-E')))
@@ -181,8 +181,8 @@ function compOpt(): EChartsOption {
 .diag-item:last-child { border-bottom: none; }
 .diag-item p { margin: 0; font-size: 12px; color: var(--text-2); line-height: 1.7; }
 .badge { padding: 2px 8px; border-radius: 2px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; flex-shrink: 0; }
-.badge-red { background: rgba(255, 56, 96, 0.1); color: var(--neg); border: 1px solid rgba(255, 56, 96, 0.3); }
-.badge-green { background: rgba(0, 255, 156, 0.1); color: var(--pos); border: 1px solid rgba(0, 255, 156, 0.3); }
+.badge-red { background: rgba(207, 107, 98, 0.1); color: var(--neg); border: 1px solid rgba(207, 107, 98, 0.3); }
+.badge-green { background: rgba(69, 183, 137, 0.1); color: var(--pos); border: 1px solid rgba(69, 183, 137, 0.3); }
 
 @media (max-width: 1024px) {
   .val-grid { grid-template-columns: 1fr; }

@@ -155,7 +155,7 @@ function close() {
   max-width: 90%;
   background: var(--surface);
   border: 1px solid var(--border-strong);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 212, 255, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 30px rgba(217, 166, 72, 0.1);
   font-family: var(--mono);
 }
 .cp-header {

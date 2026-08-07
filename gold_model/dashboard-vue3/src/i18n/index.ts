@@ -8,7 +8,12 @@ const messages = {
       compare: 'Compare', versions: 'Versions', walkforward: 'Walk-Forward',
       validation: 'Validation', custombt: 'Signal BT', eventbt: 'Event BT',
       simulator: 'Simulator', attribution: 'Attribution', history: 'History',
-      tuning: 'Tuning', adjust: 'Adjust', data: 'Data', execution: 'Execution'
+      tuning: 'Tuning', adjust: 'Adjust', data: 'Data', execution: 'Execution',
+      system: 'System'
+    },
+    group: {
+      decision: 'Decision', model: 'Model', data: 'Data', system: 'System',
+      mask: 'Mask', masked: 'Masked', privacyTip: 'Privacy mask (press P)'
     },
     common: {
       online: 'ONLINE', live: 'LIVE', refresh: 'REFRESH', manual: 'MANUAL',
@@ -122,7 +127,8 @@ const messages = {
       compare: '策略对比', versions: '版本对比', walkforward: 'Walk-Forward',
       validation: '过拟合验证', custombt: '信号回测', eventbt: '事件回测',
       simulator: '仓位模拟器', attribution: '资金归因', history: '历史趋势',
-      tuning: '参数调优', adjust: '人工调整', data: '数据管理', execution: '执行方案'
+      tuning: '参数调优', adjust: '人工调整', data: '数据管理', execution: '执行方案',
+      system: '系统状态'
     },
     common: {
       online: 'ONLINE', live: 'LIVE', refresh: 'REFRESH', manual: 'MANUAL',

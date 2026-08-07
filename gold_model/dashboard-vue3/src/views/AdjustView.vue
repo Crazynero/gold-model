@@ -240,7 +240,7 @@ function handleReset() {
   line-height: 1.7;
   padding: 8px 10px;
   border-left: 2px solid var(--warn);
-  background: rgba(255, 184, 0, 0.05);
+  background: rgba(238, 193, 112, 0.05);
   margin-bottom: 10px;
   font-family: var(--mono);
 }

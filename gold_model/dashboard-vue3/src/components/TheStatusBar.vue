@@ -15,7 +15,7 @@
     </div>
     <div class="right">
       <span>REGIME: <b class="text-acc">{{ regime }}</b></span>
-      <span>POSITION: <b class="text-acc">{{ position }}</b></span>
+      <span class="sens">POSITION: <b class="text-acc">{{ position }}</b></span>
       <span>BASE: <b class="text-acc">{{ baseDate }}</b></span>
     </div>
   </div>
@@ -91,10 +91,10 @@ b { color: var(--accent); font-weight: 500; }
   font-size: 9px;
   letter-spacing: 0.1em;
 }
-.src-tag.src-live { color: var(--pos); border-color: rgba(0,255,156,0.3); }
-.src-tag.src-ws { color: var(--accent); border-color: rgba(0,212,255,0.4); }
-.src-tag.src-inline { color: var(--warn); border-color: rgba(255,184,0,0.3); }
-.src-tag.src-off { color: var(--neg); border-color: rgba(255,56,96,0.3); }
+.src-tag.src-live { color: var(--pos); border-color: rgba(69, 183, 137,0.3); }
+.src-tag.src-ws { color: var(--accent); border-color: rgba(217, 166, 72,0.4); }
+.src-tag.src-inline { color: var(--warn); border-color: rgba(238, 193, 112,0.3); }
+.src-tag.src-off { color: var(--neg); border-color: rgba(207, 107, 98,0.3); }
 
 .ws-tag {
   display: inline-flex;

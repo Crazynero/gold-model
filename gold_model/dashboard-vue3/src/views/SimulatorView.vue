@@ -283,7 +283,7 @@ function resetSim() {
 function pathOpt(): EChartsOption {
   if (!result.value) return {}
   const r = result.value
-  const C = { bg: '#04060a', accent: '#00d4ff', pos: '#00ff9c', neg: '#ff3860', warn: '#ffb800', gold: '#ffb020', text3: '#6e7681', border: 'rgba(0,212,255,0.14)', grid: 'rgba(0,212,255,0.05)' }
+  const C = { bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62', warn: '#eec170', gold: '#d9a648', text3: '#66635c', border: 'rgba(217, 166, 72,0.14)', grid: 'rgba(217, 166, 72,0.05)' }
   // 计算分位数曲线
   const D = r.dates.length
   const p5: number[] = [], p25: number[] = [], p50: number[] = [], p75: number[] = [], p95: number[] = []
@@ -298,13 +298,13 @@ function pathOpt(): EChartsOption {
   }
   const series: any[] = [
     // 5-95% 扇形（最外层）
-    { name: '5-95%', type: 'line', data: p5, symbol: 'none', lineStyle: { opacity: 0 }, stack: 'ci', areaStyle: { color: 'rgba(0,212,255,0.05)' } },
-    { name: '95-5%', type: 'line', data: p95.map((v, i) => v - p5[i]), symbol: 'none', lineStyle: { opacity: 0 }, stack: 'ci', areaStyle: { color: 'rgba(0,212,255,0.05)' } },
+    { name: '5-95%', type: 'line', data: p5, symbol: 'none', lineStyle: { opacity: 0 }, stack: 'ci', areaStyle: { color: 'rgba(217, 166, 72,0.05)' } },
+    { name: '95-5%', type: 'line', data: p95.map((v, i) => v - p5[i]), symbol: 'none', lineStyle: { opacity: 0 }, stack: 'ci', areaStyle: { color: 'rgba(217, 166, 72,0.05)' } },
     // 中位数
     { name: '中位数', type: 'line', data: p50, symbol: 'none', lineStyle: { width: 2, color: C.gold } },
     // 25-75% 扇形（内层）
-    { name: '25-75%', type: 'line', data: p25, symbol: 'none', lineStyle: { opacity: 0 }, stack: 'inner', areaStyle: { color: 'rgba(0,212,255,0.12)' } },
-    { name: '75-25%', type: 'line', data: p75.map((v, i) => v - p25[i]), symbol: 'none', lineStyle: { opacity: 0 }, stack: 'inner', areaStyle: { color: 'rgba(0,212,255,0.12)' } },
+    { name: '25-75%', type: 'line', data: p25, symbol: 'none', lineStyle: { opacity: 0 }, stack: 'inner', areaStyle: { color: 'rgba(217, 166, 72,0.12)' } },
+    { name: '75-25%', type: 'line', data: p75.map((v, i) => v - p25[i]), symbol: 'none', lineStyle: { opacity: 0 }, stack: 'inner', areaStyle: { color: 'rgba(217, 166, 72,0.12)' } },
     // 本金线
     { name: '本金', type: 'line', data: Array(D).fill(capital.value), symbol: 'none', lineStyle: { width: 1, color: C.text3, type: 'dashed' } }
   ]
@@ -323,7 +323,7 @@ function pathOpt(): EChartsOption {
 function distOpt(): EChartsOption {
   if (!result.value) return {}
   const r = result.value
-  const C = { bg: '#04060a', accent: '#00d4ff', pos: '#00ff9c', neg: '#ff3860', warn: '#ffb800', gold: '#ffb020', text3: '#6e7681', border: 'rgba(0,212,255,0.14)', grid: 'rgba(0,212,255,0.05)' }
+  const C = { bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62', warn: '#eec170', gold: '#d9a648', text3: '#66635c', border: 'rgba(217, 166, 72,0.14)', grid: 'rgba(217, 166, 72,0.05)' }
   // 分桶
   const finals = r.finalValues
   const min = Math.min(...finals), max = Math.max(...finals)

@@ -85,9 +85,9 @@ import { dashboardData, executionData } from '@/composables/useDashboardData'
 const { t } = useI18n()
 
 const C = {
-  bg: '#04060a', accent: '#00d4ff', pos: '#00ff9c', neg: '#ff3860',
-  warn: '#ffb800', gold: '#ffb020', text2: '#8b949e', text3: '#6e7681',
-  border: 'rgba(0,212,255,0.14)', grid: 'rgba(0,212,255,0.05)'
+  bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62',
+  warn: '#eec170', gold: '#d9a648', text2: '#a09d94', text3: '#66635c',
+  border: 'rgba(217, 166, 72,0.14)', grid: 'rgba(217, 166, 72,0.05)'
 }
 
 const eventTypes = [
@@ -225,7 +225,7 @@ function windowOpt(): EChartsOption {
       data: prices,
       smooth: true,
       lineStyle: { width: 2, color: C.gold },
-      areaStyle: { color: 'rgba(255,176,32,0.1)' },
+      areaStyle: { color: 'rgba(217, 166, 72,0.1)' },
       markPoint: {
         data: [
           { type: 'max', name: 'Max' },
@@ -271,7 +271,7 @@ function windowOpt(): EChartsOption {
   line-height: 1.7;
   padding: 8px 10px;
   border-left: 2px solid var(--pos);
-  background: rgba(0, 255, 156, 0.05);
+  background: rgba(69, 183, 137, 0.05);
   margin-bottom: 10px;
   font-family: var(--mono);
 }

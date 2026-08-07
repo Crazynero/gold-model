@@ -204,21 +204,21 @@ function decompOpt(): EChartsOption {
   if (!metrics.value) return {}
   const m = metrics.value
   return {
-    backgroundColor: '#04060a', animation: false,
+    backgroundColor: '#0e0f11', animation: false,
     tooltip: { trigger: 'axis' },
     grid: { left: '15%', right: '5%', bottom: '10%', top: '10%' },
-    xAxis: { type: 'category', data: ['配置效应', '选股效应', '交互效应', '总 Alpha'], axisLine: { lineStyle: { color: 'rgba(0,212,255,0.14)' } }, axisLabel: { color: '#6e7681', fontSize: 10 } },
-    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#6e7681', formatter: '{value}%' }, splitLine: { lineStyle: { color: 'rgba(0,212,255,0.05)' } } },
+    xAxis: { type: 'category', data: ['配置效应', '选股效应', '交互效应', '总 Alpha'], axisLine: { lineStyle: { color: 'rgba(217, 166, 72,0.14)' } }, axisLabel: { color: '#66635c', fontSize: 10 } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: '{value}%' }, splitLine: { lineStyle: { color: 'rgba(217, 166, 72,0.05)' } } },
     series: [{
       type: 'bar',
       data: [
-        { value: +(m.allocation * 100).toFixed(2), itemStyle: { color: m.allocation >= 0 ? '#00ff9c' : '#ff3860' } },
-        { value: +(m.selection * 100).toFixed(2), itemStyle: { color: m.selection >= 0 ? '#00ff9c' : '#ff3860' } },
-        { value: +(m.interaction * 100).toFixed(2), itemStyle: { color: m.interaction >= 0 ? '#00ff9c' : '#ff3860' } },
-        { value: +(m.alpha * 100).toFixed(2), itemStyle: { color: '#00d4ff' } }
+        { value: +(m.allocation * 100).toFixed(2), itemStyle: { color: m.allocation >= 0 ? '#45b789' : '#cf6b62' } },
+        { value: +(m.selection * 100).toFixed(2), itemStyle: { color: m.selection >= 0 ? '#45b789' : '#cf6b62' } },
+        { value: +(m.interaction * 100).toFixed(2), itemStyle: { color: m.interaction >= 0 ? '#45b789' : '#cf6b62' } },
+        { value: +(m.alpha * 100).toFixed(2), itemStyle: { color: '#d9a648' } }
       ],
       barWidth: '40%',
-      label: { show: true, position: 'top', color: '#8b949e', fontSize: 10, formatter: '{c}%' }
+      label: { show: true, position: 'top', color: '#a09d94', fontSize: 10, formatter: '{c}%' }
     }]
   }
 }
@@ -227,15 +227,15 @@ function regimeOpt(): EChartsOption {
   if (!metrics.value) return {}
   const rd = metrics.value.regimeData
   return {
-    backgroundColor: '#04060a', animation: false,
+    backgroundColor: '#0e0f11', animation: false,
     tooltip: { trigger: 'axis' },
-    legend: { data: ['策略', '买入持有'], textStyle: { color: '#6e7681', fontSize: 10 }, top: 0 },
+    legend: { data: ['策略', '买入持有'], textStyle: { color: '#66635c', fontSize: 10 }, top: 0 },
     grid: { left: '10%', right: '5%', bottom: '10%', top: '15%' },
-    xAxis: { type: 'category', data: ['牛市', '熊市', '震荡'], axisLine: { lineStyle: { color: 'rgba(0,212,255,0.14)' } }, axisLabel: { color: '#6e7681', fontSize: 11 } },
-    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#6e7681', formatter: '{value}%' }, splitLine: { lineStyle: { color: 'rgba(0,212,255,0.05)' } } },
+    xAxis: { type: 'category', data: ['牛市', '熊市', '震荡'], axisLine: { lineStyle: { color: 'rgba(217, 166, 72,0.14)' } }, axisLabel: { color: '#66635c', fontSize: 11 } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: '{value}%' }, splitLine: { lineStyle: { color: 'rgba(217, 166, 72,0.05)' } } },
     series: [
-      { name: '策略', type: 'bar', data: ['牛市', '熊市', '震荡'].map(r => +(rd[r].stratRet * 100).toFixed(2)), itemStyle: { color: '#00d4ff' }, barWidth: '30%' },
-      { name: '买入持有', type: 'bar', data: ['牛市', '熊市', '震荡'].map(r => +(rd[r].bhRet * 100).toFixed(2)), itemStyle: { color: '#8b949e' }, barWidth: '30%' }
+      { name: '策略', type: 'bar', data: ['牛市', '熊市', '震荡'].map(r => +(rd[r].stratRet * 100).toFixed(2)), itemStyle: { color: '#d9a648' }, barWidth: '30%' },
+      { name: '买入持有', type: 'bar', data: ['牛市', '熊市', '震荡'].map(r => +(rd[r].bhRet * 100).toFixed(2)), itemStyle: { color: '#a09d94' }, barWidth: '30%' }
     ]
   }
 }
@@ -265,7 +265,7 @@ function regimeOpt(): EChartsOption {
   line-height: 1.7;
   padding: 8px 10px;
   border-left: 2px solid var(--pos);
-  background: rgba(0, 255, 156, 0.05);
+  background: rgba(69, 183, 137, 0.05);
   margin-bottom: 10px;
   font-family: var(--mono);
 }

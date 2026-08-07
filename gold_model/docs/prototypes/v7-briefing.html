@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>黄金决策晨报 · V7 原型</title>
+<style>
+:root{
+  --bg:#0e0f11; --surface:#16181b; --surface-2:#1c1f23;
+  --border:#272a2f; --border-soft:#1f2226;
+  --gold:#d9a648; --gold-bright:#eec170; --gold-dim:rgba(217,166,72,.12);
+  --text:#ece9e2; --text-2:#a09d94; --text-3:#66635c;
+  --pos:#45b789; --neg:#cf6b62;
+  --mono:'SF Mono','JetBrains Mono',ui-monospace,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:-apple-system,'PingFang SC','Inter',system-ui,sans-serif;
+  font-size:14px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.page{max-width:1180px;margin:0 auto;padding:0 32px 64px}
+
+/* ── 顶栏 ── */
+.topbar{
+  display:flex;align-items:center;gap:24px;
+  padding:14px 0;border-bottom:1px solid var(--border-soft);
+  font-size:12px;color:var(--text-2);
+}
+.brand{color:var(--gold);font-weight:600;letter-spacing:.08em;font-size:13px}
+.navgroups{display:flex;gap:20px;margin-left:8px}
+.navgroups span{color:var(--text-3);cursor:pointer;padding-bottom:3px;border-bottom:2px solid transparent;transition:color .15s}
+.navgroups span:hover{color:var(--text-2)}
+.navgroups span.on{color:var(--gold);border-bottom-color:var(--gold)}
+.hidden{display:none}
+.sens{transition:filter .25s}
+body.privacy .sens{filter:blur(9px);user-select:none;pointer-events:none}
+.priv-toggle{
+  cursor:pointer;background:none;border:1px solid var(--border);border-radius:6px;
+  color:var(--text-3);font-size:11px;font-family:inherit;padding:3px 10px;
+  display:flex;align-items:center;gap:5px;transition:color .15s,border-color .15s;
+}
+.priv-toggle:hover{color:var(--text-2);border-color:var(--text-3)}
+body.privacy .priv-toggle{color:var(--gold);border-color:rgba(217,166,72,.4)}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.health{display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.dot.warn{background:var(--gold)}
+.dot.live{background:var(--pos)}
+
+/* ── Hero 决策卡 ── */
+.hero{
+  margin-top:28px;padding:26px 30px 22px;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+}
+.hero-top{display:flex;justify-content:space-between;gap:48px;flex-wrap:wrap}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--text-3);text-transform:uppercase}
+.eyebrow b{color:var(--text-2);font-weight:500}
+.decision{
+  font-size:26px;font-weight:600;line-height:1.2;letter-spacing:.01em;
+  margin:6px 0 16px;color:var(--text);
+}
+.chain{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:14px}
+.chain .step{display:flex;flex-direction:column;gap:2px}
+.chain .step .k{font-size:11px;color:var(--text-3);letter-spacing:.06em}
+.chain .step .v{font-size:16px;font-weight:600}
+.chain .arrow{color:var(--text-3);font-size:18px}
+.chain .hl-gold{color:var(--gold)}
+.chain .hl-neg{color:var(--neg)}
+.price-block{text-align:right;min-width:280px}
+.price-label{font-size:12px;color:var(--text-3);letter-spacing:.1em}
+.price{
+  font-size:34px;font-weight:650;line-height:1.15;color:var(--gold-bright);
+  font-family:var(--mono);font-variant-numeric:tabular-nums;
+}
+.price-chg{font-size:15px;margin-top:2px}
+.price-chg .up{color:var(--pos)}
+.price-sub{font-size:12px;color:var(--text-2);margin-top:10px}
+.price-sub em{font-style:normal;color:var(--text-3)}
+.hero-metrics{
+  display:flex;gap:0;margin-top:28px;padding-top:22px;
+  border-top:1px solid var(--border-soft);
+}
+.hm{flex:1;padding:0 20px;border-left:1px solid var(--border-soft)}
+.hm:first-child{padding-left:0;border-left:none}
+.hm .k{font-size:11px;color:var(--text-3);letter-spacing:.06em;margin-bottom:4px}
+.hm .v{font-size:19px;font-weight:600;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.hm .s{font-size:11px;color:var(--text-3);margin-top:2px}
+.prob-cells{display:flex;gap:10px}
+.pc{text-align:center}
+.pc .pv{font-size:15px;font-weight:600;font-family:var(--mono)}
+.pc .pk{font-size:10px;color:var(--text-3)}
+.pc .bar{height:3px;border-radius:2px;background:var(--surface-2);margin-top:4px;position:relative}
+.pc .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--gold)}
+
+/* ── 区块通用 ── */
+.section{margin-top:36px}
+.sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+.sec-title{font-size:13px;font-weight:600;letter-spacing:.12em;color:var(--text-2);text-transform:uppercase}
+.sec-note{font-size:12px;color:var(--text-3)}
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:22px 24px;
+}
+
+/* ── 数据诚实标签 ── */
+.tag{
+  display:inline-block;font-size:10px;padding:1px 7px;border-radius:3px;
+  letter-spacing:.08em;vertical-align:middle;margin-left:8px;
+}
+.tag.bt{color:var(--text-3);border:1px solid var(--border)}
+.tag.oos{color:var(--gold);border:1px solid rgba(217,166,72,.4);background:var(--gold-dim)}
+
+/* ── 模型表现对比 ── */
+.perf-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.perf-table{width:100%;border-collapse:collapse;font-size:13px}
+.perf-table th{
+  text-align:left;font-weight:500;color:var(--text-3);font-size:11px;
+  letter-spacing:.06em;padding:6px 8px;border-bottom:1px solid var(--border-soft);
+}
+.perf-table td{padding:9px 8px;border-bottom:1px solid var(--border-soft)}
+.perf-table tr:last-child td{border-bottom:none}
+.perf-table td.num{text-align:right}
+.perf-table th.num{text-align:right}
+.oos-big{font-size:17px;font-weight:650}
+.verdict{
+  display:flex;flex-direction:column;justify-content:center;gap:10px;
+  background:var(--surface-2);border-radius:8px;padding:20px 24px;
+}
+.verdict .big{font-size:34px;font-weight:700;color:var(--pos);font-family:var(--mono)}
+.verdict .lbl{font-size:12px;color:var(--text-2)}
+.verdict .hint{font-size:12px;color:var(--text-3);line-height:1.6}
+
+/* ── ML 命中率 ── */
+.acc-strip{display:flex;gap:16px}
+.acc{flex:1;text-align:center;padding:16px 8px;background:var(--surface);border:1px solid var(--border);border-radius:10px}
+.acc .p{font-size:12px;color:var(--text-3);letter-spacing:.08em}
+.acc .a{font-size:26px;font-weight:650;margin-top:6px;font-family:var(--mono)}
+.acc .m{font-size:11px;color:var(--text-3);margin-top:4px}
+.acc.best{border-color:rgba(217,166,72,.35)}
+.acc.best .a{color:var(--gold)}
+
+/* ── 因子 + 执行 ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.factor-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border-soft);font-size:13px}
+.factor-row:last-child{border-bottom:none}
+.factor-row .fname{width:110px;color:var(--text-2)}
+.factor-row .fval{width:76px;text-align:right;font-family:var(--mono)}
+.factor-row .fbar{flex:1;height:4px;background:var(--surface-2);border-radius:2px;position:relative}
+.factor-row .fbar i{position:absolute;top:0;bottom:0;border-radius:2px}
+.factor-row .fsig{width:44px;text-align:right;font-size:11px}
+.sig-pos{color:var(--pos)} .sig-neg{color:var(--neg)}
+.layer{display:flex;align-items:baseline;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-soft)}
+.layer:last-child{border-bottom:none}
+.layer .lname{width:150px;font-size:13px}
+.layer .lname small{display:block;color:var(--text-3);font-size:11px}
+.layer .lpct{font-family:var(--mono);color:var(--text-2);font-size:13px;width:70px}
+.layer .lcur{margin-left:auto;font-family:var(--mono);font-size:15px;font-weight:600}
+
+/* ── 价格图 ── */
+.chart-legend{display:flex;gap:18px;font-size:11px;color:var(--text-3);margin-bottom:8px}
+.chart-legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:5px}
+
+.footer{
+  margin-top:44px;padding-top:18px;border-top:1px solid var(--border-soft);
+  font-size:11px;color:var(--text-3);display:flex;justify-content:space-between;
+}
+/* ── 数据 / 系统 组 ── */
+.data-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.data-table th{text-align:left;font-weight:500;color:var(--text-3);font-size:11px;letter-spacing:.06em;padding:5px 8px;border-bottom:1px solid var(--border-soft)}
+.data-table td{padding:6px 8px;border-bottom:1px solid var(--border-soft);font-family:var(--mono)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table td.r,.data-table th.r{text-align:right}
+.src-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.src{background:var(--surface-2);border-radius:8px;padding:14px 16px}
+.src .s-name{font-size:13px;font-weight:600}
+.src .s-desc{font-size:11.5px;color:var(--text-3);margin-top:4px;line-height:1.6}
+.src .s-chain{font-size:11px;color:var(--gold);margin-top:6px;font-family:var(--mono)}
+.sys-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.sys{background:var(--surface-2);border-radius:8px;padding:14px 16px}
+.sys .s-name{font-size:13px;font-weight:600;margin-bottom:6px}
+.sys ul{list-style:none;font-size:12px;color:var(--text-3);line-height:1.8}
+.sys ul b{color:var(--text-2);font-weight:500}
+.factor-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:40px}
+@media(max-width:860px){
+  .perf-grid,.two-col{grid-template-columns:1fr}
+  .src-grid,.sys-grid,.factor-grid{grid-template-columns:1fr}
+  .decision{font-size:22px}
+  .hero-metrics{flex-wrap:wrap}
+  .hm{flex:1 1 40%;margin-top:12px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <span class="brand">GOLD BRIEFING</span>
+    <div class="navgroups">
+      <span class="on" data-nav="decision">决策</span><span data-nav="model">模型</span><span data-nav="data">数据</span><span data-nav="system">系统</span>
+    </div>
+    <div class="right">
+      <button class="priv-toggle" id="privToggle" title="隐私遮罩（快捷键 P）">👁 遮罩</button>
+      <span class="health"><i class="dot warn"></i>模型健康 · 漂移观察中</span>
+      <span>基准日 2026-08-06</span>
+      <span class="health"><i class="dot live"></i>LIVE</span>
+    </div>
+  </div>
+
+  <!-- Hero 决策卡 -->
+  <div class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="eyebrow">今日建议 · <b>2026-08-06 周四</b></div>
+        <div class="decision sens">空仓观望</div>
+        <div class="chain sens">
+          <div class="step"><span class="k">加权集成概率</span><span class="v hl-gold num">56.6% 偏多</span></div>
+          <span class="arrow">→</span>
+          <div class="step"><span class="k">Regime 过滤</span><span class="v hl-neg">熊市 · 压制多头</span></div>
+          <span class="arrow">→</span>
+          <div class="step"><span class="k">目标仓位</span><span class="v num">0%</span></div>
+        </div>
+      </div>
+      <div class="price-block">
+        <div class="price-label">伦敦金现 · XAU/USD</div>
+        <div class="price">$4,324.50</div>
+        <div class="price-chg num"><span class="up">+16.80&nbsp;&nbsp;+0.39%</span></div>
+        <div class="price-sub num">
+          MA50 <em>$4,180.06 · 上方</em><br>
+          MA200 <em>$4,510.36 · 下方 −4.1%</em>
+        </div>
+      </div>
+    </div>
+    <div class="hero-metrics">
+      <div class="hm" style="flex:1.6">
+        <div class="k">各周期看多概率</div>
+        <div class="prob-cells" id="probCells"></div>
+      </div>
+      <div class="hm"><div class="k">60日波动率</div><div class="v">25.9%</div><div class="s">高于年均 18%</div></div>
+      <div class="hm"><div class="k">RSI 14</div><div class="v">71.0</div><div class="s">偏强 · 接近超买</div></div>
+      <div class="hm"><div class="k">距 CPI 公布</div><div class="v">6 天</div><div class="s">事件窗口临近</div></div>
+    </div>
+  </div>
+
+  <!-- 价格走势 -->
+  <div class="section" data-g="decision">
+    <div class="sec-head">
+      <span class="sec-title">近 60 日走势</span>
+      <span class="sec-note">2026-05-15 ~ 2026-08-06 · 实盘数据</span>
+    </div>
+    <div class="card">
+      <div class="chart-legend">
+        <span><i style="background:#eec170"></i>金价</span>
+        <span><i style="background:#66635c"></i>MA200 $4,510</span>
+      </div>
+      <svg id="priceChart" width="100%" height="220"></svg>
+    </div>
+  </div>
+
+  <!-- 模型表现：回测 vs 样本外 -->
+  <div class="section hidden" data-g="model">
+    <div class="sec-head">
+      <span class="sec-title">模型表现</span>
+      <span class="sec-note">实盘预期请以样本外（OOS）数据为准</span>
+    </div>
+    <div class="perf-grid">
+      <div class="card">
+        <table class="perf-table">
+          <tr><th>策略</th><th class="num">全量夏普<span class="tag bt">回测</span></th><th class="num">OOS 夏普<span class="tag oos">样本外</span></th><th class="num">衰减</th></tr>
+          <tr><td>V3.0-E 多周期集成</td><td class="num" style="color:var(--text-3)">2.53</td><td class="num oos-big" style="color:var(--neg)">−0.78</td><td class="num" style="color:var(--neg)">131%</td></tr>
+          <tr><td>V3.0-B +Vol靶向</td><td class="num" style="color:var(--text-3)">2.27</td><td class="num oos-big" style="color:var(--neg)">−1.14</td><td class="num" style="color:var(--neg)">150%</td></tr>
+          <tr><td>V1.0 线性IC</td><td class="num" style="color:var(--text-3)">0.89</td><td class="num oos-big" style="color:var(--neg)">−1.93</td><td class="num" style="color:var(--neg)">317%</td></tr>
+          <tr><td>买入持有（基准）</td><td class="num" style="color:var(--text-3)">1.30</td><td class="num oos-big" style="color:var(--neg)">−1.78</td><td class="num" style="color:var(--text-3)">—</td></tr>
+        </table>
+      </div>
+      <div class="verdict">
+        <div class="lbl">V3.0-E 相对买入持有（OOS 区间）</div>
+        <div class="big">+1.00</div>
+        <div class="hint">Holdout 6 个月：模型 −0.78 vs 买入持有 −1.78，<b style="color:var(--text-2)">少亏即是超额</b>。全量回测的 2.53 存在过拟合水分，不作为预期依据。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ML 命中率 -->
+  <div class="section hidden" data-g="model">
+    <div class="sec-head">
+      <span class="sec-title">方向预测命中率</span>
+      <span class="sec-note">短周期接近掷硬币，长周期是主要信息来源</span>
+    </div>
+    <div class="acc-strip">
+      <div class="acc"><div class="p">5 日</div><div class="a num">51.7%</div><div class="m num">AUC 0.508 · IC +0.036</div></div>
+      <div class="acc"><div class="p">10 日</div><div class="a num">47.2%</div><div class="m num">AUC 0.479 · IC −0.045</div></div>
+      <div class="acc"><div class="p">20 日</div><div class="a num">50.0%</div><div class="m num">AUC 0.449 · IC −0.107</div></div>
+      <div class="acc best"><div class="p">60 日</div><div class="a num">78.3%</div><div class="m num">AUC 0.565 · IC +0.200</div></div>
+    </div>
+  </div>
+
+  <!-- 执行计划（决策组） -->
+  <div class="section" data-g="decision">
+    <div class="sec-head"><span class="sec-title">执行计划</span><span class="sec-note sens">三层仓位 · 当前全部空仓</span></div>
+    <div class="card">
+      <div class="layer">
+        <div class="lname">底仓层<small>ETF 518880 · 月均调仓 1.7 次</small></div>
+        <span class="lpct num">60–70%</span>
+        <span class="lcur num sens">0%</span>
+      </div>
+      <div class="layer">
+        <div class="lname">战术层<small>COMEX GC=F · 杠杆约 20×</small></div>
+        <span class="lpct num">30–40%</span>
+        <span class="lcur num sens">0%</span>
+      </div>
+      <div class="layer">
+        <div class="lname">现金层<small>保证金 + 申赎缓冲</small></div>
+        <span class="lpct num">0–10%</span>
+        <span class="lcur num">—</span>
+      </div>
+      <div style="margin-top:14px;font-size:12px;color:var(--text-3);line-height:1.7">
+        下次调仓触发：仓位信号变化 ≥ 0.3 或 Regime 切换。<br>
+        熊市 Regime 下禁止开多，信号转多后需等待 Regime 确认。
+      </div>
+    </div>
+  </div>
+
+  <!-- 因子快照（模型组） -->
+  <div class="section hidden" data-g="model">
+    <div class="sec-head"><span class="sec-title">因子快照</span><span class="sec-note">Top 6 / 共 25 特征 · VIF 共线性剔除后</span></div>
+    <div class="card factor-grid" id="factorCard"></div>
+  </div>
+
+  <!-- 原始数据 + 数据源（数据组） -->
+  <div class="section hidden" data-g="data">
+    <div class="sec-head"><span class="sec-title">原始数据</span><span class="sec-note">近 10 个交易日 · raw_data</span></div>
+    <div class="card" style="margin-bottom:24px"><table class="data-table" id="rawTable"></table></div>
+    <div class="sec-head"><span class="sec-title">数据源与缓存</span><span class="sec-note">多层 fallback 架构 · 实时健康监控待接入</span></div>
+    <div class="src-grid">
+      <div class="src">
+        <div class="s-name">金价行情</div>
+        <div class="s-chain">东财 → 新浪 → 腾讯 → Yahoo</div>
+        <div class="s-desc">东财报 429 限流时自动降级重试；Yahoo 在中国大陆不可用，仅作境外备份。</div>
+      </div>
+      <div class="src">
+        <div class="s-name">宏观利率 · FRED</div>
+        <div class="s-chain">fredgraph.csv 直取</div>
+        <div class="s-desc">实际利率 / 联邦基金 / 通胀预期等，免费免 key，只取近 5 年。</div>
+      </div>
+      <div class="src">
+        <div class="s-name">VIX 波动率 · CBOE</div>
+        <div class="s-chain">cdn.cboe.com CSV</div>
+        <div class="s-desc">VIX 与 3 个月期货价格，用于计算期限结构因子。</div>
+      </div>
+      <div class="src">
+        <div class="s-name">事件日历缓存</div>
+        <div class="s-chain">fomc_cache.json / cpi_cache.json</div>
+        <div class="s-desc">FOMC / CPI 日期本地化缓存，避免重复抓取，离线也能跑。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模型健康与运维（系统组） -->
+  <div class="section hidden" data-g="system">
+    <div class="sec-head"><span class="sec-title">模型健康与运维</span><span class="sec-note">漂移监控 · 自动化 · 已知问题</span></div>
+    <div class="sys-grid">
+      <div class="sys">
+        <div class="s-name">漂移监控</div>
+        <ul>
+          <li>历史快照 <b>28 条</b>（drift_history.json）</li>
+          <li>多头偏见治理 <b>观察期至 8 月中旬</b></li>
+          <li>Holdout 衰减 131%，<b>预期以 OOS 为准</b></li>
+        </ul>
+      </div>
+      <div class="sys">
+        <div class="s-name">自动化</div>
+        <ul>
+          <li>每日 <b>22:30</b> launchd 自动跑 V5 管道</li>
+          <li>ingest 入库 + 单文件数据内联刷新</li>
+          <li>PDF 周报 · 飞书 webhook（走环境变量）</li>
+        </ul>
+      </div>
+      <div class="sys">
+        <div class="s-name">已知问题</div>
+        <ul>
+          <li>回归分支 <b>R²=−0.36</b>，暂不可用</li>
+          <li>5 / 10 / 20 日命中率 ≈ 掷硬币</li>
+          <li>「人工调整」Tab 缺干预日志</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>V7 设计原型 · 数据源 dashboard_data.json / execution_data.json · 2026-08-06</span>
+    <span>深灰为回测口径 · 金色为实盘/样本外口径</span>
+  </div>
+</div>
+
+<script>
+// ── 导航分组切换（支持 ?g= 深链）──
+function switchGroup(g){
+  document.querySelectorAll('[data-nav]').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-nav')===g); });
+  document.querySelectorAll('[data-g]').forEach(function(s){ s.classList.toggle('hidden', s.getAttribute('data-g')!==g); });
+}
+document.querySelectorAll('[data-nav]').forEach(function(el){
+  el.addEventListener('click', function(){
+    switchGroup(el.getAttribute('data-nav'));
+    history.replaceState(null, '', '?g=' + el.getAttribute('data-nav'));
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+});
+const initG = new URLSearchParams(location.search).get('g');
+if (initG && document.querySelector('[data-g="' + initG + '"]')) switchGroup(initG);
+
+// ── 隐私遮罩（点击按钮或按 P 切换）──
+const privBtn = document.getElementById('privToggle');
+function applyPriv(on){
+  document.body.classList.toggle('privacy', on);
+  privBtn.textContent = on ? '🙈 已遮罩' : '👁 遮罩';
+  try { localStorage.setItem('v7-privacy', on ? '1' : '0'); } catch(e){}
+}
+function togglePriv(){
+  applyPriv(!document.body.classList.contains('privacy'));
+}
+privBtn.addEventListener('click', togglePriv);
+document.addEventListener('keydown', function(e){
+  if ((e.key === 'p' || e.key === 'P') && !e.metaKey && !e.ctrlKey && !e.altKey) togglePriv();
+});
+try { if (localStorage.getItem('v7-privacy') === '1') applyPriv(true); } catch(e){}
+
+// ── 真实数据（2026-08-06 管道输出）──
+const probs = [
+  {k:'5日', v:51.0},{k:'10日', v:62.4},{k:'20日', v:62.0},{k:'60日', v:55.8}
+];
+document.getElementById('probCells').innerHTML = probs.map(p=>
+  '<div class="pc">' +
+    '<div class="pv" style="color:' + (p.v>=55?'var(--gold)':'var(--text-2)') + '">' + p.v + '%</div>' +
+    '<div class="bar" style="width:56px"><i style="width:' + p.v + '%"></i></div>' +
+    '<div class="pk">' + p.k + '</div>' +
+  '</div>').join('');
+
+const factors = [
+  {n:'RSI14', v:'71.02', s:1, w:.77},
+  {n:'金价/长期均线', v:'0.99', s:1, w:.44},
+  {n:'曲线×美元', v:'42.98', s:1, w:.21},
+  {n:'美元指数', v:'99.77', s:-1, w:.34},
+  {n:'BTC/黄金', v:'14.99', s:-1, w:.15},
+  {n:'10年通胀预期', v:'2.22', s:-1, w:.13}
+];
+document.getElementById('factorCard').innerHTML = factors.map(f=>
+  '<div class="factor-row">' +
+    '<span class="fname">' + f.n + '</span>' +
+    '<span class="fval num">' + f.v + '</span>' +
+    '<span class="fbar"><i style="' + (f.s>0 ? 'left:50%;width:'+(f.w*50)+'%' : 'right:50%;width:'+(f.w*50)+'%') + ';background:' + (f.s>0?'var(--pos)':'var(--neg)') + '"></i></span>' +
+    '<span class="fsig ' + (f.s>0?'sig-pos':'sig-neg') + '">' + (f.s>0?'偏强':'偏弱') + '</span>' +
+  '</div>').join('');
+
+// ── 价格图（无网格线，端点直接标注）──
+const data = [["05-15",4543.3],["05-18",4570.6],["05-19",4485.3],["05-20",4546.2],["05-21",4543.8],["05-22",4543.3],["05-25",4604.8],["05-26",4541.3],["05-27",4488.2],["05-28",4527.0],["05-29",4569.4],["06-01",4514.8],["06-02",4519.2],["06-03",4462.7],["06-04",4502.4],["06-05",4353.8],["06-08",4353.7],["06-09",4284.7],["06-10",4094.1],["06-11",4233.5],["06-12",4239.9],["06-15",4330.6],["06-16",4352.8],["06-17",4275.9],["06-18",4227.9],["06-19",4172.2],["06-22",4209.7],["06-23",4128.5],["06-24",4016.3],["06-25",4041.5],["06-26",4102.4],["06-29",4030.4],["06-30",4021.2],["07-01",4044.1],["07-02",4135.5],["07-03",4186.8],["07-06",4176.1],["07-07",4116.6],["07-08",4085.6],["07-09",4132.4],["07-10",4128.4],["07-13",4008.3],["07-14",4057.9],["07-15",4066.7],["07-16",3979.8],["07-17",4022.7],["07-20",4011.8],["07-21",4081.6],["07-22",4134.7],["07-23",4052.1],["07-24",4055.2],["07-27",4138.0],["07-28",4088.2],["07-29",4125.9],["07-30",4162.3],["07-31",4097.6],["08-03",4110.9],["08-04",4134.1],["08-05",4307.7],["08-06",4324.5]];
+const svg = document.getElementById('priceChart');
+const W = 1116, H = 220, PAD = {l:8, r:70, t:16, b:8};
+const ps = data.map(x=>x[1]);
+const min = Math.min.apply(null, ps), max = Math.max.apply(null, ps);
+const X = i => PAD.l + i*(W-PAD.l-PAD.r)/(data.length-1);
+const Y = p => PAD.t + (max-p)*(H-PAD.t-PAD.b)/(max-min);
+const pts = data.map((x,i)=>X(i).toFixed(1)+','+Y(x[1]).toFixed(1)).join(' ');
+const ma200 = 4510.36;
+let inner = '';
+if (ma200 <= max) {
+  inner += '<line x1="'+PAD.l+'" y1="'+Y(ma200)+'" x2="'+(W-PAD.r)+'" y2="'+Y(ma200)+'" stroke="#66635c" stroke-width="1" stroke-dasharray="4 4"/>' +
+  '<text x="'+(W-4)+'" y="'+(Y(ma200)+4)+'" fill="#66635c" font-size="11" text-anchor="end" font-family="SF Mono,monospace">MA200 4510</text>';
+}
+inner += '<polyline points="'+pts+'" fill="none" stroke="#eec170" stroke-width="1.8" stroke-linejoin="round"/>';
+const last = data[data.length-1];
+inner += '<circle cx="'+X(data.length-1)+'" cy="'+Y(last[1])+'" r="3.2" fill="#eec170"/>' +
+'<text x="'+(X(data.length-1)+8)+'" y="'+(Y(last[1])+4)+'" fill="#eec170" font-size="12" font-weight="600" font-family="SF Mono,monospace">'+last[1].toFixed(0)+'</text>' +
+'<text x="'+PAD.l+'" y="'+(Y(min)+14)+'" fill="#66635c" font-size="10" font-family="SF Mono,monospace">'+data[0][0]+'</text>' +
+'<text x="'+(W-PAD.r)+'" y="'+(Y(min)+14)+'" fill="#66635c" font-size="10" text-anchor="end" font-family="SF Mono,monospace">'+last[0]+'</text>';
+svg.setAttribute('viewBox', '0 0 '+W+' '+H);
+svg.innerHTML = inner;
+
+// ── 原始数据表（近10日，倒序）──
+const n = data.length;
+const bodyRows = data.slice(n-10).map(function(x, j){
+  const prev = data[n-10+j-1][1];
+  const chg = x[1]-prev, pct = chg/prev*100;
+  const cls = chg>=0 ? 'var(--pos)' : 'var(--neg)';
+  const sign = chg>=0 ? '+' : '';
+  return '<tr><td>2026-'+x[0]+'</td><td class="r">'+x[1].toFixed(2)+'</td>' +
+    '<td class="r" style="color:'+cls+'">'+sign+chg.toFixed(2)+'</td>' +
+    '<td class="r" style="color:'+cls+'">'+sign+pct.toFixed(2)+'%</td></tr>';
+}).reverse().join('');
+document.getElementById('rawTable').innerHTML =
+  '<tr><th>日期</th><th class="r">收盘</th><th class="r">涨跌</th><th class="r">涨幅</th></tr>' + bodyRows;
+</script>
+</body>
+</html>

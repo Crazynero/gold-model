@@ -68,9 +68,9 @@ import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData } from '@/composables/useDashboardData'
 
 const C = {
-  bg: '#04060a', accent: '#00d4ff', pos: '#00ff9c', neg: '#ff3860',
-  warn: '#ffb800', gold: '#ffb020', text2: '#8b949e', text3: '#6e7681',
-  border: 'rgba(0,212,255,0.14)', grid: 'rgba(0,212,255,0.05)'
+  bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62',
+  warn: '#eec170', gold: '#d9a648', text2: '#a09d94', text3: '#66635c',
+  border: 'rgba(217, 166, 72,0.14)', grid: 'rgba(217, 166, 72,0.05)'
 }
 
 const strategyRows = computed(() => dashboardData.value.strategies || [])
@@ -95,7 +95,7 @@ function evolutionOpt(): EChartsOption {
       symbolSize: 8,
       lineStyle: { width: 2, color: C.accent },
       itemStyle: { color: C.accent },
-      areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(0,212,255,0.2)' }, { offset: 1, color: 'rgba(0,212,255,0)' }] } },
+      areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(217, 166, 72,0.2)' }, { offset: 1, color: 'rgba(217, 166, 72,0)' }] } },
       label: { show: true, position: 'top', color: C.text2, fontSize: 10, formatter: '{c}' }
     }]
   }
@@ -137,8 +137,8 @@ function radarOpt(): EChartsOption {
     series: [{
       type: 'radar',
       data: [
-        { value: toArr(v3e), name: 'V3.0-E', lineStyle: { color: C.accent }, areaStyle: { color: 'rgba(0,212,255,0.15)' } },
-        { value: toArr(v3b), name: 'V3.0-B', lineStyle: { color: C.pos }, areaStyle: { color: 'rgba(0,255,156,0.1)' } },
+        { value: toArr(v3e), name: 'V3.0-E', lineStyle: { color: C.accent }, areaStyle: { color: 'rgba(217, 166, 72,0.15)' } },
+        { value: toArr(v3b), name: 'V3.0-B', lineStyle: { color: C.pos }, areaStyle: { color: 'rgba(69, 183, 137,0.1)' } },
         { value: toArr(bh), name: '买入持有', lineStyle: { color: C.text2 }, areaStyle: { color: 'rgba(139,148,158,0.08)' } }
       ]
     }]

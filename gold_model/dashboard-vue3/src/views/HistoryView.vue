@@ -72,9 +72,9 @@ const ranges = [
 const range = ref(30)
 
 const C = {
-  bg: '#04060a', accent: '#00d4ff', pos: '#00ff9c', neg: '#ff3860',
-  warn: '#ffb800', gold: '#ffb020', text2: '#8b949e', text3: '#6e7681',
-  border: 'rgba(0,212,255,0.14)', grid: 'rgba(0,212,255,0.05)'
+  bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62',
+  warn: '#eec170', gold: '#d9a648', text2: '#a09d94', text3: '#66635c',
+  border: 'rgba(217, 166, 72,0.14)', grid: 'rgba(217, 166, 72,0.05)'
 }
 
 // 按时间倒序过滤最近 N 天
@@ -113,7 +113,7 @@ function probOpt(): EChartsOption {
       {
         name: '加权概率', type: 'line', data: weighted, smooth: true, symbol: 'circle', symbolSize: 5,
         lineStyle: { width: 2, color: C.accent },
-        areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(0,212,255,0.25)' }, { offset: 1, color: 'rgba(0,212,255,0)' }] } },
+        areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(217, 166, 72,0.25)' }, { offset: 1, color: 'rgba(217, 166, 72,0)' }] } },
         markLine: { silent: true, data: [{ yAxis: 60, lineStyle: { color: C.pos, type: 'dashed' }, label: { formatter: '建仓线 60%', color: C.pos } }] }
       }
     ]
@@ -196,7 +196,7 @@ function sharpeOpt(): EChartsOption {
     series: [{
       type: 'line', data: sharpes, smooth: true, symbol: 'circle', symbolSize: 6,
       lineStyle: { width: 2, color: C.gold },
-      areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(255,176,32,0.2)' }, { offset: 1, color: 'rgba(255,176,32,0)' }] } },
+      areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(217, 166, 72,0.2)' }, { offset: 1, color: 'rgba(217, 166, 72,0)' }] } },
       markLine: { silent: true, data: [{ yAxis: 2.0, lineStyle: { color: C.pos, type: 'dashed' }, label: { formatter: '目标 2.0', color: C.pos } }] }
     }]
   }

@@ -167,7 +167,7 @@ function resetParams() {
 .hint-warn {
   margin-top: 8px;
   padding: 8px 12px;
-  background: rgba(255, 184, 0, 0.06);
+  background: rgba(238, 193, 112, 0.06);
   border-left: 2px solid var(--warn);
   color: var(--warn);
   font-family: var(--mono);

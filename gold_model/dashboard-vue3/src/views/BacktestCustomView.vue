@@ -298,19 +298,19 @@ function navOpt(): EChartsOption {
   const data = navSeries.value
   if (data.length === 0) return {}
   return {
-    backgroundColor: '#04060a', animation: false,
+    backgroundColor: '#0e0f11', animation: false,
     tooltip: { trigger: 'axis' },
-    legend: { data: ['策略NAV', '金价基准'], textStyle: { color: '#6e7681', fontSize: 10 }, top: 0 },
+    legend: { data: ['策略NAV', '金价基准'], textStyle: { color: '#66635c', fontSize: 10 }, top: 0 },
     grid: { left: '5%', right: '5%', bottom: '8%', top: '12%' },
-    xAxis: { type: 'category', data: data.map(d => d.date), axisLine: { lineStyle: { color: 'rgba(0,212,255,0.14)' } }, axisLabel: { color: '#6e7681', fontSize: 10 } },
+    xAxis: { type: 'category', data: data.map(d => d.date), axisLine: { lineStyle: { color: 'rgba(217, 166, 72,0.14)' } }, axisLabel: { color: '#66635c', fontSize: 10 } },
     yAxis: [
-      { type: 'value', scale: true, axisLine: { show: false }, axisLabel: { color: '#6e7681', formatter: '${value}' }, splitLine: { lineStyle: { color: 'rgba(0,212,255,0.05)' } } },
-      { type: 'value', scale: true, position: 'right', axisLine: { show: false }, axisLabel: { color: '#6e7681', formatter: '${value}' }, splitLine: { show: false } }
+      { type: 'value', scale: true, axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: '${value}' }, splitLine: { lineStyle: { color: 'rgba(217, 166, 72,0.05)' } } },
+      { type: 'value', scale: true, position: 'right', axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: '${value}' }, splitLine: { show: false } }
     ],
     dataZoom: [{ type: 'inside' }, { type: 'slider' }],
     series: [
-      { name: '策略NAV', type: 'line', data: data.map(d => d.nav), symbol: 'none', smooth: true, lineStyle: { width: 2, color: '#00d4ff' }, areaStyle: { color: 'rgba(0,212,255,0.08)' } },
-      { name: '金价基准', type: 'line', data: data.map(d => d.gold), symbol: 'none', yAxisIndex: 1, lineStyle: { width: 1, color: '#ffb020', opacity: 0.6 } }
+      { name: '策略NAV', type: 'line', data: data.map(d => d.nav), symbol: 'none', smooth: true, lineStyle: { width: 2, color: '#d9a648' }, areaStyle: { color: 'rgba(217, 166, 72,0.08)' } },
+      { name: '金价基准', type: 'line', data: data.map(d => d.gold), symbol: 'none', yAxisIndex: 1, lineStyle: { width: 1, color: '#d9a648', opacity: 0.6 } }
     ]
   }
 }
@@ -319,15 +319,15 @@ function ddOpt(): EChartsOption {
   const data = navSeries.value
   if (data.length === 0) return {}
   return {
-    backgroundColor: '#04060a', animation: false,
+    backgroundColor: '#0e0f11', animation: false,
     tooltip: { trigger: 'axis', formatter: (p: any) => p[0] ? `${p[0].axisValue}<br/>回撤: ${(p[0].value * 100).toFixed(2)}%` : '' },
     grid: { left: '5%', right: '5%', bottom: '8%', top: '5%' },
-    xAxis: { type: 'category', data: data.map(d => d.date), axisLine: { lineStyle: { color: 'rgba(0,212,255,0.14)' } }, axisLabel: { color: '#6e7681', fontSize: 10 } },
-    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#6e7681', formatter: '{value}%' }, splitLine: { lineStyle: { color: 'rgba(0,212,255,0.05)' } } },
+    xAxis: { type: 'category', data: data.map(d => d.date), axisLine: { lineStyle: { color: 'rgba(217, 166, 72,0.14)' } }, axisLabel: { color: '#66635c', fontSize: 10 } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: '{value}%' }, splitLine: { lineStyle: { color: 'rgba(217, 166, 72,0.05)' } } },
     dataZoom: [{ type: 'inside' }],
     series: [{
       name: '回撤', type: 'line', data: data.map(d => +(d.dd * 100).toFixed(2)), symbol: 'none',
-      lineStyle: { width: 1, color: '#ff3860' }, areaStyle: { color: 'rgba(255,56,96,0.15)' }
+      lineStyle: { width: 1, color: '#cf6b62' }, areaStyle: { color: 'rgba(207, 107, 98,0.15)' }
     }]
   }
 }
@@ -342,7 +342,7 @@ function ddOpt(): EChartsOption {
   line-height: 1.7;
   padding: 8px 10px;
   border-left: 2px solid var(--pos);
-  background: rgba(0, 255, 156, 0.05);
+  background: rgba(69, 183, 137, 0.05);
   margin-bottom: 10px;
   font-family: var(--mono);
 }

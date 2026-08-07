@@ -1,26 +1,33 @@
 <template>
   <div class="overview-grid">
-    <HudCard title="DECISION CHAIN" meta="WHY THIS ACTION" class="span-2">
-      <div class="chain-row">
-        <div class="chain-step">
-          <div class="chain-label">加权集成概率</div>
-          <div class="chain-value text-acc">{{ prob }}</div>
-          <div class="chain-note">{{ probNum >= 50 ? '信号偏多' : '信号偏空' }}</div>
-        </div>
-        <div class="chain-arrow">→</div>
-        <div class="chain-step">
-          <div class="chain-label">Regime 过滤</div>
-          <div class="chain-value" :style="{ color: regimeColor }">{{ regime }}</div>
-          <div class="chain-note">{{ regimeNote }}</div>
-        </div>
-        <div class="chain-arrow">→</div>
-        <div class="chain-step">
-          <div class="chain-label">最终建议</div>
-          <div class="chain-value text-gold">{{ action }}</div>
-          <div class="chain-note">基准日 {{ baseDate }}</div>
+    <!-- V7 晨报决策头：低调决策行 + 传导链 + 价格块 -->
+    <div class="brief-hero span-2">
+      <div class="bh-left">
+        <div class="bh-eyebrow">今日建议 · <b>{{ baseDate }}</b></div>
+        <div class="bh-decision sens">{{ action }}</div>
+        <div class="bh-chain sens">
+          <div class="bh-step">
+            <span class="k">加权集成概率</span>
+            <span class="v text-gold">{{ prob }} {{ probNum >= 50 ? '偏多' : '偏空' }}</span>
+          </div>
+          <span class="arr">→</span>
+          <div class="bh-step">
+            <span class="k">Regime 过滤</span>
+            <span class="v" :style="{ color: regimeColor }">{{ regime }} · {{ regimeNote }}</span>
+          </div>
+          <span class="arr">→</span>
+          <div class="bh-step">
+            <span class="k">执行建议</span>
+            <span class="v">{{ action }}</span>
+          </div>
         </div>
       </div>
-    </HudCard>
+      <div class="bh-price">
+        <div class="bp-label">伦敦金现 · XAU/USD</div>
+        <div class="bp-price">{{ goldPrice }}</div>
+        <div class="bp-sub mono">MA50 <em>{{ ma50 }}</em><br>MA200 <em>{{ ma200 }}</em></div>
+      </div>
+    </div>
 
     <HudCard title="CURRENT STATE" meta="V5">
       <div class="ov-row"><span>预测基准日</span><b>{{ baseDate }}</b></div>
@@ -77,9 +84,9 @@ import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData, extractValue, simpleMA } from '@/composables/useDashboardData'
 
 const C = {
-  bg: '#04060a', accent: '#00d4ff', pos: '#00ff9c', neg: '#ff3860',
-  warn: '#ffb800', gold: '#ffb020', text2: '#8b949e', text3: '#6e7681',
-  border: 'rgba(0,212,255,0.14)', grid: 'rgba(0,212,255,0.05)'
+  bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62',
+  warn: '#eec170', gold: '#d9a648', text2: '#a09d94', text3: '#66635c',
+  border: 'rgba(217, 166, 72,0.14)', grid: 'rgba(217, 166, 72,0.05)'
 }
 
 const baseDate = computed(() => extractValue(dashboardData.value.overview, '预测基准日') || '--')
@@ -205,27 +212,56 @@ function strategyOpt(): EChartsOption {
 .ov-row:last-child { border-bottom: none; }
 .ov-row b { color: var(--text); font-family: var(--mono); font-weight: 500; }
 .big-prob-c { text-align: center; padding: 10px 0 16px; }
-.big-prob { font-family: var(--mono); font-size: 44px; color: var(--accent); text-shadow: 0 0 16px rgba(0,212,255,0.4); }
+.big-prob { font-family: var(--mono); font-size: 40px; color: var(--accent); }
 .big-prob-label { font-family: var(--mono); font-size: 10px; color: var(--text-3); margin-top: 4px; letter-spacing: 0.1em; text-transform: uppercase; }
-.chain-row {
+/* ── V7 晨报决策头 ── */
+.brief-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 48px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 26px 30px 24px;
+}
+.bh-eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--text-3);
+  text-transform: uppercase;
+}
+.bh-eyebrow b { color: var(--text-2); font-weight: 500; }
+.bh-decision {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 8px 0 16px;
+  color: var(--text);
+}
+.bh-chain {
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  padding: 10px 0 4px;
-  gap: 8px;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 14px;
 }
-.chain-step { text-align: center; min-width: 160px; }
-.chain-label {
+.bh-step { display: flex; flex-direction: column; gap: 2px; }
+.bh-step .k { font-size: 11px; color: var(--text-3); letter-spacing: 0.06em; }
+.bh-step .v { font-size: 15px; font-weight: 600; }
+.bh-chain .arr { color: var(--text-dim); font-size: 16px; }
+.bh-price { text-align: right; min-width: 240px; }
+.bp-label { font-size: 12px; color: var(--text-3); letter-spacing: 0.08em; }
+.bp-price {
+  font-size: 34px;
+  font-weight: 650;
+  line-height: 1.2;
+  color: var(--gold-bright);
   font-family: var(--mono);
-  font-size: 10px;
-  color: var(--text-3);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
 }
-.chain-value { font-family: var(--mono); font-size: 22px; font-weight: 600; }
-.chain-note { font-size: 11px; color: var(--text-2); margin-top: 4px; }
-.chain-arrow { font-family: var(--mono); font-size: 20px; color: var(--text-dim); }
+.bp-sub { font-size: 12px; color: var(--text-2); margin-top: 8px; }
+.bp-sub em { font-style: normal; color: var(--text-3); }
 
 @media (max-width: 1024px) {
   .overview-grid { grid-template-columns: 1fr; }

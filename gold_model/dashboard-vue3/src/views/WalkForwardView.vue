@@ -79,9 +79,9 @@ import ChartBox from '@/components/ChartBox.vue'
 import { driftHistory } from '@/composables/useDashboardData'
 
 const C = {
-  bg: '#04060a', accent: '#00d4ff', pos: '#00ff9c', neg: '#ff3860',
-  warn: '#ffb800', text2: '#8b949e', text3: '#6e7681',
-  border: 'rgba(0,212,255,0.14)', grid: 'rgba(0,212,255,0.05)'
+  bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62',
+  warn: '#eec170', text2: '#a09d94', text3: '#66635c',
+  border: 'rgba(217, 166, 72,0.14)', grid: 'rgba(217, 166, 72,0.05)'
 }
 
 const metric = ref<'accuracy' | 'auc' | 'ic'>('ic')
@@ -203,7 +203,7 @@ function sharpeOpt(): EChartsOption {
       symbolSize: 6,
       lineStyle: { width: 2, color: C.pos },
       itemStyle: { color: C.pos },
-      areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(0,255,156,0.15)' }, { offset: 1, color: 'rgba(0,255,156,0)' }] } },
+      areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(69, 183, 137,0.15)' }, { offset: 1, color: 'rgba(69, 183, 137,0)' }] } },
       markLine: { data: [{ type: 'average', name: '均值' }], lineStyle: { color: C.text3, type: 'dashed' } }
     }]
   }

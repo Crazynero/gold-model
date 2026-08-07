@@ -2,19 +2,19 @@
   <div class="exec-grid">
     <HudCard title="EXECUTION PLAN" meta="CURRENT" class="span-2">
       <div class="exec-summary">
-        <div class="exec-cell">
+        <div class="exec-cell sens">
           <div class="mini-label">建议操作</div>
           <div class="exec-value text-acc">{{ action }}</div>
         </div>
-        <div class="exec-cell">
+        <div class="exec-cell sens">
           <div class="mini-label">目标仓位</div>
           <div class="exec-value text-gold">{{ targetPos }}</div>
         </div>
-        <div class="exec-cell">
+        <div class="exec-cell sens">
           <div class="mini-label">ETF层 (65%)</div>
           <div class="exec-value">{{ etfLayer }}</div>
         </div>
-        <div class="exec-cell">
+        <div class="exec-cell sens">
           <div class="mini-label">期货层 (35%)</div>
           <div class="exec-value">{{ futLayer }}</div>
         </div>
@@ -161,9 +161,9 @@ const capitalOptions = [
 ]
 
 const C = {
-  bg: '#04060a', accent: '#00d4ff', pos: '#00ff9c', neg: '#ff3860',
-  warn: '#ffb800', gold: '#ffb020', text2: '#8b949e', text3: '#6e7681',
-  border: 'rgba(0,212,255,0.14)', grid: 'rgba(0,212,255,0.05)'
+  bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62',
+  warn: '#eec170', gold: '#d9a648', text2: '#a09d94', text3: '#66635c',
+  border: 'rgba(217, 166, 72,0.14)', grid: 'rgba(217, 166, 72,0.05)'
 }
 
 const action = computed(() => extractValue(dashboardData.value.overview, '建议操作') || '空仓观望')
@@ -294,7 +294,7 @@ function posOpt(): EChartsOption {
     dataZoom: [{ type: 'inside' }, { type: 'slider' }],
     series: [
       { name: '模型仓位', type: 'line', data: positions, symbol: 'none', smooth: true, lineStyle: { width: 2, color: C.gold }, yAxisIndex: 0 },
-      { name: 'ETF层', type: 'line', data: etf, symbol: 'none', smooth: true, lineStyle: { width: 1, color: C.accent, opacity: 0.7 }, areaStyle: { color: 'rgba(0,212,255,0.08)' }, yAxisIndex: 0 },
+      { name: 'ETF层', type: 'line', data: etf, symbol: 'none', smooth: true, lineStyle: { width: 1, color: C.accent, opacity: 0.7 }, areaStyle: { color: 'rgba(217, 166, 72,0.08)' }, yAxisIndex: 0 },
       { name: '期货层', type: 'line', data: fut, symbol: 'none', smooth: true, lineStyle: { width: 1, color: C.text2, opacity: 0.7 }, yAxisIndex: 0 },
       { name: '金价', type: 'line', data: ph.gold_prices, symbol: 'none', lineStyle: { width: 1, color: C.pos, opacity: 0.5 }, yAxisIndex: 1 }
     ]
@@ -362,12 +362,12 @@ function posOpt(): EChartsOption {
   align-items: center;
 }
 .report-result.ok {
-  background: rgba(0, 255, 156, 0.06);
+  background: rgba(69, 183, 137, 0.06);
   border-color: var(--pos);
   color: var(--pos);
 }
 .report-result.err {
-  background: rgba(255, 56, 96, 0.06);
+  background: rgba(207, 107, 98, 0.06);
   border-color: var(--neg);
   color: var(--neg);
 }
@@ -381,7 +381,7 @@ function posOpt(): EChartsOption {
   line-height: 1.7;
   padding: 8px 10px;
   border-left: 2px solid var(--warn);
-  background: rgba(255, 184, 0, 0.05);
+  background: rgba(238, 193, 112, 0.05);
   margin-bottom: 10px;
   font-family: var(--mono);
 }

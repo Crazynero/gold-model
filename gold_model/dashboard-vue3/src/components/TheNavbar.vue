@@ -82,32 +82,24 @@ function handleRefresh() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
-  background: linear-gradient(180deg, rgba(10, 14, 22, 0.95) 0%, rgba(4, 6, 10, 0.85) 100%);
-  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border-soft);
   position: sticky;
   top: 0;
   z-index: 100;
   height: 48px;
-  backdrop-filter: blur(8px);
 }
 .nav-left { display: flex; align-items: center; gap: 20px; }
 .logo {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  color: var(--accent);
-  text-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
-}
-.logo::before {
-  content: '◢◣';
-  color: var(--accent);
-  font-size: 10px;
-  letter-spacing: -2px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--gold);
 }
 .logo .ver {
   color: var(--text-3);
@@ -123,8 +115,7 @@ function handleRefresh() {
   letter-spacing: 0.08em;
   padding: 2px 8px;
   border: 1px solid var(--border);
-  background: rgba(0, 212, 255, 0.04);
-  border-radius: 2px;
+  border-radius: 6px;
 }
 .symbol-switch {
   display: flex;

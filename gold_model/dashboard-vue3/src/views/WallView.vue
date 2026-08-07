@@ -9,7 +9,7 @@
       <div class="big-signal">
         <div class="big-prob">{{ prob }}</div>
         <div class="big-prob-label">集成看多概率</div>
-        <div class="big-action">
+        <div class="big-action sens">
           <span>{{ action }}</span>
         </div>
         <div class="signal-grid">
@@ -134,16 +134,16 @@ import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData, executionData, driftHistory, extractValue, simpleMA } from '@/composables/useDashboardData'
 
 const C = {
-  bg: '#04060a',
-  accent: '#00d4ff',
-  pos: '#00ff9c',
-  neg: '#ff3860',
-  warn: '#ffb800',
-  gold: '#ffb020',
-  text2: '#8b949e',
-  text3: '#6e7681',
-  border: 'rgba(0,212,255,0.14)',
-  grid: 'rgba(0,212,255,0.05)'
+  bg: '#0e0f11',
+  accent: '#d9a648',
+  pos: '#45b789',
+  neg: '#cf6b62',
+  warn: '#eec170',
+  gold: '#d9a648',
+  text2: '#a09d94',
+  text3: '#66635c',
+  border: 'rgba(217, 166, 72,0.14)',
+  grid: 'rgba(217, 166, 72,0.05)'
 }
 
 const prob = computed(() => extractValue(dashboardData.value.overview, '加权集成概率') || '--%')
@@ -340,7 +340,7 @@ function featOpt(): EChartsOption {
     tooltip: { trigger: 'axis' },
     grid: { left: '30%', right: '5%', bottom: '5%', top: '5%' },
     xAxis: { type: 'value', axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9 }, splitLine: { lineStyle: { color: C.grid } } },
-    yAxis: { type: 'category', data: top8.map(f => f.name), axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: '#8b949e', fontSize: 10 } },
+    yAxis: { type: 'category', data: top8.map(f => f.name), axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: '#a09d94', fontSize: 10 } },
     series: [{ type: 'bar', data: top8.map(f => ({ value: f.avg, itemStyle: { color: C.accent } })), barWidth: '60%', label: { show: true, position: 'right', color: C.text3, fontSize: 9 } }]
   }
 }
@@ -545,7 +545,7 @@ const alerts = computed<Alert[]>(() => {
   color: var(--accent);
   line-height: 1;
   letter-spacing: -0.02em;
-  text-shadow: 0 0 24px rgba(0, 212, 255, 0.4);
+  text-shadow: 0 0 24px rgba(217, 166, 72, 0.4);
 }
 .big-prob-label {
   font-family: var(--mono);
@@ -608,7 +608,7 @@ const alerts = computed<Alert[]>(() => {
   font-family: var(--mono);
   font-size: 42px;
   color: var(--neg);
-  text-shadow: 0 0 14px rgba(255, 56, 96, 0.3);
+  text-shadow: 0 0 14px rgba(207, 107, 98, 0.3);
 }
 .decay-detail {
   margin-top: 8px;
@@ -642,9 +642,9 @@ const alerts = computed<Alert[]>(() => {
   font-size: 11px;
   font-family: var(--mono);
 }
-.alert-item.sev-high { border-color: var(--neg); background: rgba(255, 56, 96, 0.06); }
-.alert-item.sev-medium { border-color: var(--warn); background: rgba(255, 184, 0, 0.05); }
-.alert-item.sev-low { border-color: var(--accent); background: rgba(0, 212, 255, 0.04); }
+.alert-item.sev-high { border-color: var(--neg); background: rgba(207, 107, 98, 0.06); }
+.alert-item.sev-medium { border-color: var(--warn); background: rgba(238, 193, 112, 0.05); }
+.alert-item.sev-low { border-color: var(--accent); background: rgba(217, 166, 72, 0.04); }
 .alert-item.sev-info { border-color: var(--text-3); }
 .alert-sev {
   font-size: 9px;
