@@ -50,7 +50,7 @@
       </div>
     </HudCard>
 
-    <HudCard :title="$t('card.multiStrategyCompare')" :meta="$t('meta.selected')">
+    <HudCard :title="$t('card.multiStrategyCompare')" :meta="$t('meta.selected')" class="span-2">
       <div class="control-bar">
         <a-radio-group v-model="metric" type="button" size="small">
           <a-radio value="夏普">SHARPE</a-radio>

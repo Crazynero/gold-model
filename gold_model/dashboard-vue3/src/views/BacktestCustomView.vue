@@ -61,7 +61,7 @@
       </div>
     </HudCard>
 
-    <HudCard :title="$t('card.performanceMetrics')" :meta="$t('meta.calculated')">
+    <HudCard :title="$t('card.performanceMetrics')" :meta="$t('meta.calculated')" class="span-2">
       <div v-if="metrics" class="metrics-grid">
         <div class="metric"><div class="m-label">{{ $t('txt.totalRet') }}</div><div class="m-value" :class="metrics.totalRet >= 0 ? 'text-pos' : 'text-neg'">{{ (metrics.totalRet * 100).toFixed(2) }}%</div></div>
         <div class="metric"><div class="m-label">{{ $t('txt.annualRet') }}</div><div class="m-value" :class="metrics.annualRet >= 0 ? 'text-pos' : 'text-neg'">{{ (metrics.annualRet * 100).toFixed(2) }}%</div></div>

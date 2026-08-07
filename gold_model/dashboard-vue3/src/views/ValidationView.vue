@@ -31,7 +31,7 @@
       <ChartBox :option="compOpt" height="440px" />
     </HudCard>
 
-    <HudCard :title="$t('card.regressionBranch')" :meta="$t('meta.rDirAcc')">
+    <HudCard :title="$t('card.regressionBranch')" :meta="$t('meta.rDirAcc')" class="span-2">
       <a-table :data="regressionRows" :pagination="false" size="small" :bordered="{ cell: true }">
         <template #columns>
           <a-table-column :title="$t('col.horizon')" data-index="horizon"></a-table-column>

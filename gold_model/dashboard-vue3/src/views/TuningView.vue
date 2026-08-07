@@ -48,7 +48,7 @@
       </div>
     </HudCard>
 
-    <HudCard :title="$t('card.runResult')" :meta="$t('meta.live')">
+    <HudCard :title="$t('card.runResult')" :meta="$t('meta.live')" class="span-2">
       <div v-if="result" class="result-area">
         <div class="r-status" :class="result.status === 'ok' ? 'ok' : 'fail'">
           {{ result.status === 'ok' ? 'SUCCESS' : 'FAILED' }}

@@ -4,7 +4,7 @@
       <ChartBox :option="featOpt" height="440px" />
     </HudCard>
 
-    <HudCard :title="$t('card.topFactors')" :meta="$t('meta.ranked')">
+    <HudCard :title="$t('card.topFactors')" :meta="$t('meta.ranked')" class="span-2">
       <a-table :data="topFeatures" :pagination="false" size="small" :bordered="{ cell: true }">
         <template #columns>
           <a-table-column title="#" :width="40">

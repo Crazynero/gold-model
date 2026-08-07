@@ -47,7 +47,7 @@
       <ChartBox :option="hitRateOpt" height="260px" />
     </HudCard>
 
-    <HudCard :title="$t('card.stabilityAnalysis')" :meta="$t('meta.variance')">
+    <HudCard :title="$t('card.stabilityAnalysis')" :meta="$t('meta.variance')" class="span-2">
       <a-table :data="stabilityRows" :pagination="false" size="small" :bordered="{ cell: true }">
         <template #columns>
           <a-table-column :title="$t('col.metric')" data-index="metric" :width="100"></a-table-column>

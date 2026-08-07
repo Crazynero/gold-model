@@ -35,7 +35,7 @@
         <span>{{ $t('txt.multiHorizon') }}</span>
         <span class="meta">5D/10D/20D/60D</span>
       </div>
-      <ProbBars :items="multiHorizon" :height="120" />
+      <ProbBars :items="multiHorizon" :height="160" />
     </div>
 
     <!-- Cell 3: Key metrics -->
@@ -71,7 +71,7 @@
     </div>
 
     <!-- Cell 5: Strategy nav -->
-    <div class="wall-cell">
+    <div class="wall-cell span-2">
       <div class="wall-cell-title"><span>{{ $t('txt.strategyNav') }}</span></div>
       <ChartBox :option="strategyOpt" height="160px" />
     </div>
@@ -90,7 +90,7 @@
     </div>
 
     <!-- Cell 7: Top 8 features -->
-    <div class="wall-cell span-2">
+    <div class="wall-cell span-3">
       <div class="wall-cell-title"><span>{{ $t('txt.top8Features') }}</span></div>
       <ChartBox :option="featOpt" height="160px" />
     </div>
@@ -101,11 +101,11 @@
         <span>{{ $t('txt.positionHistory250d') }}</span>
         <span class="meta">{{ $t('txt.modelEtfFutGold') }}</span>
       </div>
-      <ChartBox :option="posOpt" height="180px" />
+      <ChartBox :option="posOpt" height="160px" />
     </div>
 
     <!-- Cell 9: Alerts stream -->
-    <div class="wall-cell span-2">
+    <div class="wall-cell span-3">
       <div class="wall-cell-title">
         <span>{{ $t('txt.alertsStream') }}</span>
         <span class="meta">{{ alerts.length }} ACTIVE</span>
@@ -495,44 +495,32 @@ const alerts = computed<Alert[]>(() => {
   grid-template-columns: 1.4fr 1fr 1fr;
   grid-template-rows: auto auto auto auto;
   gap: 12px;
+  align-items: stretch;
 }
 .wall-cell {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 2px;
-  padding: 14px;
+  border-radius: 10px;
+  padding: 18px;
   position: relative;
-  min-height: 200px;
+  min-height: 180px;
 }
-.wall-cell::before,
-.wall-cell::after {
-  content: '';
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  border-color: var(--accent);
-  border-style: solid;
-  border-width: 0;
-  pointer-events: none;
-}
-.wall-cell::before { top: -1px; left: -1px; border-top-width: 1px; border-left-width: 1px; }
-.wall-cell::after { bottom: -1px; right: -1px; border-bottom-width: 1px; border-right-width: 1px; }
 .wall-cell.span-2 { grid-column: span 2; }
+.wall-cell.span-3 { grid-column: 1 / -1; }
 .wall-cell.span-row { grid-column: 1 / -1; }
 .wall-cell.span-row-2 { grid-row: span 2; }
 .wall-cell-title {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--text-3);
-  margin-bottom: 10px;
-  letter-spacing: 0.12em;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 12px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.wall-cell-title::before { content: '//'; color: var(--accent); opacity: 0.6; margin-right: 6px; }
 .wall-cell-title .meta { color: var(--text-3); font-size: 9px; }
 
 .big-signal {
@@ -623,6 +611,7 @@ const alerts = computed<Alert[]>(() => {
   .wall-grid { grid-template-columns: 1fr; }
   .wall-cell.span-2 { grid-column: span 1; }
   .wall-cell.span-row-2 { grid-row: auto; }
+  .wall-cell.span-3 { grid-column: span 1; }
 }
 
 .alerts-list {

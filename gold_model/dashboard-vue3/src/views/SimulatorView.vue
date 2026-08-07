@@ -45,7 +45,7 @@
       </div>
     </HudCard>
 
-    <HudCard :title="$t('card.riskMetrics')" :meta="$t('meta.confidence95')">
+    <HudCard :title="$t('card.riskMetrics')" :meta="$t('meta.confidence95')" class="span-2">
       <div v-if="result" class="metrics-grid">
         <div class="metric">
           <div class="m-label">期望终值</div>
@@ -362,7 +362,7 @@ function distOpt(): EChartsOption {
 
 <style scoped>
 .sim-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
-.sim-grid .span-2 { grid-column: span 2; }
+.sim-grid .span-2 { grid-column: 1 / -1; }
 .config-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

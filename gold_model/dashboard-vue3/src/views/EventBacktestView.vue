@@ -13,6 +13,12 @@
         </div>
       </div>
     </HudCard>
+    <HudCard :title="$t('card.eventWindowDetail')" :meta="$t('meta.timeline')">
+      <a-select v-model="selectedDate" placeholder="选择事件日" size="small" :style="{ width: '100%' }">
+        <a-option v-for="d in eventDates(selected)" :key="d" :value="d">{{ d }}</a-option>
+      </a-select>
+      <ChartBox :option="windowOpt" height="260px" />
+    </HudCard>
 
     <HudCard :title="$t('card.eventWindows')" meta="RECENT · V5 真实仓位" class="span-2">
       <div class="preset-hint">
@@ -65,12 +71,6 @@
       <ChartBox :option="perfOpt" height="280px" />
     </HudCard>
 
-    <HudCard :title="$t('card.eventWindowDetail')" :meta="$t('meta.timeline')">
-      <a-select v-model="selectedDate" placeholder="选择事件日" size="small" :style="{ width: '100%' }">
-        <a-option v-for="d in eventDates(selected)" :key="d" :value="d">{{ d }}</a-option>
-      </a-select>
-      <ChartBox :option="windowOpt" height="260px" />
-    </HudCard>
   </div>
 </template>
 

@@ -43,17 +43,6 @@
       </div>
       <div v-else class="hint">{{ $t('common.clickAnalyze') }}</div>
     </HudCard>
-
-    <HudCard :title="$t('card.alphaDecomposition')" :meta="$t('meta.barChart')" class="span-2">
-      <ChartBox v-if="metrics" :option="decompOpt" height="280px" />
-      <div v-else class="hint">等待归因结果</div>
-    </HudCard>
-
-    <HudCard :title="$t('card.regimeBreakdown')" :meta="$t('meta.byState')" class="span-2">
-      <ChartBox v-if="metrics" :option="regimeOpt" height="280px" />
-      <div v-else class="hint">{{ $t('common.waitResult') }}</div>
-    </HudCard>
-
     <HudCard :title="$t('card.controls')" :meta="$t('meta.analyze')">
       <div class="preset-hint">
         <b>✓ 真实仓位 + Brinson 分解：</b>
@@ -73,6 +62,17 @@
         <p>基准：买入持有（仓位恒定1.0）</p>
       </div>
     </HudCard>
+
+    <HudCard :title="$t('card.alphaDecomposition')" :meta="$t('meta.barChart')" class="span-2">
+      <ChartBox v-if="metrics" :option="decompOpt" height="280px" />
+      <div v-else class="hint">等待归因结果</div>
+    </HudCard>
+
+    <HudCard :title="$t('card.regimeBreakdown')" :meta="$t('meta.byState')" class="span-2">
+      <ChartBox v-if="metrics" :option="regimeOpt" height="280px" />
+      <div v-else class="hint">{{ $t('common.waitResult') }}</div>
+    </HudCard>
+
   </div>
 </template>
 
