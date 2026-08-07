@@ -1,6 +1,6 @@
 <template>
   <div class="tuning-grid">
-    <HudCard title="V5 TUNING PARAMETERS" meta="6 PARAMS" class="span-2">
+    <HudCard :title="$t('card.v5TuningParameters')" :meta="$t('meta.params6')" class="span-2">
       <div class="params-grid">
         <div class="p-item">
           <div class="p-label">训练窗口 (日)</div>
@@ -41,14 +41,14 @@
         <a-button type="primary" long :loading="running" :disabled="!apiBase" @click="runV5">
           {{ running ? 'V5 运行中...（3-5 分钟）' : 'RUN V5' }}
         </a-button>
-        <a-button long @click="resetParams">RESET</a-button>
+        <a-button long @click="resetParams">{{ $t('common.reset') }}</a-button>
       </div>
       <div v-if="!apiBase" class="hint-warn">
         ⚠ file:// 协议下不可用。需启动后端：python3 -m uvicorn api_server:app --port 8000
       </div>
     </HudCard>
 
-    <HudCard title="RUN RESULT" meta="LIVE">
+    <HudCard :title="$t('card.runResult')" :meta="$t('meta.live')">
       <div v-if="result" class="result-area">
         <div class="r-status" :class="result.status === 'ok' ? 'ok' : 'fail'">
           {{ result.status === 'ok' ? 'SUCCESS' : 'FAILED' }}
@@ -74,12 +74,12 @@
       <div v-else class="hint">点击 RUN V5 开始（需后端服务）</div>
     </HudCard>
 
-    <HudCard title="STDOUT LOG" meta="TAIL" class="span-2">
+    <HudCard :title="$t('card.stdoutLog')" :meta="$t('meta.tail')" class="span-2">
       <pre v-if="result?.stdout_tail" class="stdout">{{ result.stdout_tail }}</pre>
       <div v-else class="hint">等待运行日志</div>
     </HudCard>
 
-    <HudCard title="STDERR" meta="ERROR" class="span-2">
+    <HudCard :title="$t('card.stderr')" :meta="$t('meta.error')" class="span-2">
       <pre v-if="result?.stderr_tail" class="stderr">{{ result.stderr_tail }}</pre>
       <div v-else class="hint">无错误</div>
     </HudCard>

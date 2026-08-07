@@ -1,6 +1,6 @@
 <template>
   <div class="backtest-grid">
-    <HudCard title="BACKTEST CONFIG" meta="CUSTOM · 真实仓位可切换" class="span-2">
+    <HudCard :title="$t('card.backtestConfig')" meta="CUSTOM · 真实仓位可切换" class="span-2">
       <div class="preset-hint">
         <b>✓ V5 真实仓位 + 简化策略双模式：</b>
         默认开启"使用 V5 真实仓位"，从 position_history 读真实仓位序列。
@@ -55,32 +55,32 @@
           <span class="toggle-label">使用 V5 真实仓位</span>
         </div>
         <div class="cfg-item cfg-actions">
-          <a-button type="primary" long @click="runBacktest">RUN</a-button>
-          <a-button long @click="resetConfig">RESET</a-button>
+          <a-button type="primary" long @click="runBacktest">{{ $t('common.run') }}</a-button>
+          <a-button long @click="resetConfig">{{ $t('common.reset') }}</a-button>
         </div>
       </div>
     </HudCard>
 
-    <HudCard title="PERFORMANCE METRICS" meta="CALCULATED">
+    <HudCard :title="$t('card.performanceMetrics')" :meta="$t('meta.calculated')">
       <div v-if="metrics" class="metrics-grid">
-        <div class="metric"><div class="m-label">TOTAL RET</div><div class="m-value" :class="metrics.totalRet >= 0 ? 'text-pos' : 'text-neg'">{{ (metrics.totalRet * 100).toFixed(2) }}%</div></div>
-        <div class="metric"><div class="m-label">ANNUAL RET</div><div class="m-value" :class="metrics.annualRet >= 0 ? 'text-pos' : 'text-neg'">{{ (metrics.annualRet * 100).toFixed(2) }}%</div></div>
+        <div class="metric"><div class="m-label">{{ $t('txt.totalRet') }}</div><div class="m-value" :class="metrics.totalRet >= 0 ? 'text-pos' : 'text-neg'">{{ (metrics.totalRet * 100).toFixed(2) }}%</div></div>
+        <div class="metric"><div class="m-label">{{ $t('txt.annualRet') }}</div><div class="m-value" :class="metrics.annualRet >= 0 ? 'text-pos' : 'text-neg'">{{ (metrics.annualRet * 100).toFixed(2) }}%</div></div>
         <div class="metric"><div class="m-label">SHARPE</div><div class="m-value text-acc">{{ metrics.sharpe.toFixed(2) }}</div></div>
         <div class="metric"><div class="m-label">MAX DD</div><div class="m-value text-neg">{{ (metrics.maxDD * 100).toFixed(2) }}%</div></div>
-        <div class="metric"><div class="m-label">WIN RATE</div><div class="m-value text-acc">{{ (metrics.winRate * 100).toFixed(1) }}%</div></div>
+        <div class="metric"><div class="m-label">{{ $t('txt.winRate') }}</div><div class="m-value text-acc">{{ (metrics.winRate * 100).toFixed(1) }}%</div></div>
         <div class="metric"><div class="m-label">CALMAR</div><div class="m-value">{{ metrics.calmar.toFixed(2) }}</div></div>
-        <div class="metric"><div class="m-label">DAYS</div><div class="m-value">{{ metrics.days }}</div></div>
+        <div class="metric"><div class="m-label">{{ $t('txt.days') }}</div><div class="m-value">{{ metrics.days }}</div></div>
         <div class="metric"><div class="m-label">VOL</div><div class="m-value">{{ (metrics.vol * 100).toFixed(2) }}%</div></div>
       </div>
       <div v-else class="hint">{{ $t('common.clickRun') }}</div>
     </HudCard>
 
-    <HudCard title="EQUITY CURVE" meta="NAV" class="span-2">
+    <HudCard :title="$t('card.equityCurve')" :meta="$t('meta.nav')" class="span-2">
       <ChartBox v-if="metrics" :option="navOpt" height="380px" />
       <div v-else class="hint">{{ $t('common.waitBacktest') }}</div>
     </HudCard>
 
-    <HudCard title="DRAWDOWN" meta="UNDERWATER" class="span-2">
+    <HudCard :title="$t('card.drawdown')" :meta="$t('meta.underwater')" class="span-2">
       <ChartBox v-if="metrics" :option="ddOpt" height="260px" />
       <div v-else class="hint">{{ $t('common.waitBacktest') }}</div>
     </HudCard>
@@ -300,7 +300,7 @@ function navOpt(): EChartsOption {
   return {
     backgroundColor: '#0e0f11', animation: false,
     tooltip: { trigger: 'axis' },
-    legend: { data: ['策略NAV', '金价基准'], textStyle: { color: '#66635c', fontSize: 10 }, top: 0 },
+    legend: { data: [t('chart.strategyNav'), t('chart.goldBenchmark')], textStyle: { color: '#66635c', fontSize: 10 }, top: 0 },
     grid: { left: '5%', right: '5%', bottom: '8%', top: '12%' },
     xAxis: { type: 'category', data: data.map(d => d.date), axisLine: { lineStyle: { color: 'rgba(217, 166, 72,0.14)' } }, axisLabel: { color: '#66635c', fontSize: 10 } },
     yAxis: [
@@ -309,8 +309,8 @@ function navOpt(): EChartsOption {
     ],
     dataZoom: [{ type: 'inside' }, { type: 'slider' }],
     series: [
-      { name: '策略NAV', type: 'line', data: data.map(d => d.nav), symbol: 'none', smooth: true, lineStyle: { width: 2, color: '#d9a648' }, areaStyle: { color: 'rgba(217, 166, 72,0.08)' } },
-      { name: '金价基准', type: 'line', data: data.map(d => d.gold), symbol: 'none', yAxisIndex: 1, lineStyle: { width: 1, color: '#d9a648', opacity: 0.6 } }
+      { name: t('chart.strategyNav'), type: 'line', data: data.map(d => d.nav), symbol: 'none', smooth: true, lineStyle: { width: 2, color: '#d9a648' }, areaStyle: { color: 'rgba(217, 166, 72,0.08)' } },
+      { name: t('chart.goldBenchmark'), type: 'line', data: data.map(d => d.gold), symbol: 'none', yAxisIndex: 1, lineStyle: { width: 1, color: '#d9a648', opacity: 0.6 } }
     ]
   }
 }

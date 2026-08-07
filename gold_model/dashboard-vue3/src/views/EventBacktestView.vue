@@ -1,6 +1,6 @@
 <template>
   <div class="eb-grid">
-    <HudCard title="EVENT SELECTOR" meta="PRESET">
+    <HudCard :title="$t('card.eventSelector')" :meta="$t('meta.preset')">
       <div class="event-list">
         <div
           v-for="(e, i) in eventTypes"
@@ -14,7 +14,7 @@
       </div>
     </HudCard>
 
-    <HudCard title="EVENT WINDOWS" meta="RECENT · V5 真实仓位" class="span-2">
+    <HudCard :title="$t('card.eventWindows')" meta="RECENT · V5 真实仓位" class="span-2">
       <div class="preset-hint">
         <b>✓ 真实仓位 + 事件窗口：</b>
         事件窗口策略收益优先使用 <b>V5 真实仓位序列</b>（从 position_history 对齐日期）。
@@ -23,33 +23,33 @@
       </div>
       <a-table :data="eventRows" :pagination="false" size="small" :bordered="{ cell: true }">
         <template #columns>
-          <a-table-column title="EVENT DATE" data-index="date" :width="110"></a-table-column>
-          <a-table-column title="TYPE" data-index="type" :width="80"></a-table-column>
-          <a-table-column title="GOLD" :width="100">
+          <a-table-column :title="$t('col.eventDate')" data-index="date" :width="110"></a-table-column>
+          <a-table-column :title="$t('col.type')" data-index="type" :width="80"></a-table-column>
+          <a-table-column :title="$t('col.gold')" :width="100">
             <template #cell="{ record }">
               <span class="mono text-gold">${{ record.gold.toFixed(2) }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="WINDOW" :width="120">
+          <a-table-column :title="$t('col.window')" :width="120">
             <template #cell="{ record }">
               <span class="mono text-muted">{{ record.window }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="WINDOW RET" :width="100">
+          <a-table-column :title="$t('col.windowRet')" :width="100">
             <template #cell="{ record }">
               <span :class="record.windowRet >= 0 ? 'text-pos mono' : 'text-neg mono'">
                 {{ (record.windowRet * 100).toFixed(2) }}%
               </span>
             </template>
           </a-table-column>
-          <a-table-column title="STRATEGY" :width="100">
+          <a-table-column :title="$t('col.strategy')" :width="100">
             <template #cell="{ record }">
               <span :class="record.stratRet >= 0 ? 'text-pos mono' : 'text-neg mono'">
                 {{ (record.stratRet * 100).toFixed(2) }}%
               </span>
             </template>
           </a-table-column>
-          <a-table-column title="VS BH" :width="80">
+          <a-table-column :title="$t('col.vsBh')" :width="80">
             <template #cell="{ record }">
               <span :class="record.alpha >= 0 ? 'text-pos mono' : 'text-neg mono'">
                 {{ (record.alpha * 100).toFixed(2) }}%
@@ -61,11 +61,11 @@
       <div v-if="eventRows.length === 0" class="hint">{{ $t('common.selectEvent') }}</div>
     </HudCard>
 
-    <HudCard title="EVENT PERFORMANCE" meta="AGGREGATE" class="span-2">
+    <HudCard :title="$t('card.eventPerformance')" :meta="$t('meta.aggregate')" class="span-2">
       <ChartBox :option="perfOpt" height="280px" />
     </HudCard>
 
-    <HudCard title="EVENT WINDOW DETAIL" meta="TIMELINE">
+    <HudCard :title="$t('card.eventWindowDetail')" :meta="$t('meta.timeline')">
       <a-select v-model="selectedDate" placeholder="选择事件日" size="small" :style="{ width: '100%' }">
         <a-option v-for="d in eventDates(selected)" :key="d" :value="d">{{ d }}</a-option>
       </a-select>

@@ -1,6 +1,6 @@
 <template>
   <div class="data-grid">
-    <HudCard title="RAW DATA TABLE" meta="LAST 250 DAYS" class="span-2">
+    <HudCard :title="$t('card.rawDataTable')" :meta="$t('meta.last250Days')" class="span-2">
       <div class="data-toolbar">
         <a-input v-model="search" :placeholder="$t('common.searchDate')" style="width: 200px" size="small" allow-clear />
         <a-radio-group v-model="filter" size="small" type="button">
@@ -18,18 +18,18 @@
         :scroll="{ y: 400 }"
       >
         <template #columns>
-          <a-table-column title="DATE" data-index="日期" :width="100" fixed="left"></a-table-column>
-          <a-table-column title="GOLD" :width="90">
+          <a-table-column :title="$t('col.date')" data-index="日期" :width="100" fixed="left"></a-table-column>
+          <a-table-column :title="$t('col.gold')" :width="90">
             <template #cell="{ record }">
               <span class="mono text-gold">{{ formatPrice(record['金价']) }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="REGIME" data-index="Regime" :width="70">
+          <a-table-column :title="$t('col.regime')" data-index="Regime" :width="70">
             <template #cell="{ record }">
               <span :class="record.Regime === '牛市' ? 'text-pos' : record.Regime === '熊市' ? 'text-neg' : 'text-warn'">{{ record.Regime }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="REAL RATE" :width="90">
+          <a-table-column :title="$t('col.realRate')" :width="90">
             <template #cell="{ record }"><span class="mono">{{ fmtNum(record['10年实际利率']) }}</span></template>
           </a-table-column>
           <a-table-column title="DXY" :width="70">
@@ -54,7 +54,7 @@
       </a-table>
     </HudCard>
 
-    <HudCard title="DATA SOURCE STATUS">
+    <HudCard :title="$t('card.dataSourceStatus')">
       <div class="src-row"><span>yfinance</span><b class="text-pos">25/25 ✅</b></div>
       <div class="src-row"><span>FRED (8序列)</span><b class="text-pos">8/8 ✅</b></div>
       <div class="src-row"><span>Stooq</span><b class="text-warn">备用</b></div>

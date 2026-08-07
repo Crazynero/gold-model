@@ -3,7 +3,7 @@
     <!-- Cell 1: Big signal readout -->
     <div class="wall-cell span-row-2">
       <div class="wall-cell-title">
-        <span>CURRENT SIGNAL</span>
+        <span>{{ $t('txt.currentSignal') }}</span>
         <span class="meta">BASE {{ baseDate }}</span>
       </div>
       <div class="big-signal">
@@ -14,11 +14,11 @@
         </div>
         <div class="signal-grid">
           <div>
-            <div class="mini-label">REGIME</div>
+            <div class="mini-label">{{ $t('status.regime') }}</div>
             <div class="mini-value" :style="{ color: regimeColor }">{{ regime }}</div>
           </div>
           <div>
-            <div class="mini-label">PRICE</div>
+            <div class="mini-label">{{ $t('txt.price') }}</div>
             <div class="mini-value text-gold">{{ goldPrice }}</div>
           </div>
           <div>
@@ -32,7 +32,7 @@
     <!-- Cell 2: Multi-horizon -->
     <div class="wall-cell">
       <div class="wall-cell-title">
-        <span>MULTI-HORIZON</span>
+        <span>{{ $t('txt.multiHorizon') }}</span>
         <span class="meta">5D/10D/20D/60D</span>
       </div>
       <ProbBars :items="multiHorizon" :height="120" />
@@ -40,7 +40,7 @@
 
     <!-- Cell 3: Key metrics -->
     <div class="wall-cell">
-      <div class="wall-cell-title"><span>KEY METRICS</span></div>
+      <div class="wall-cell-title"><span>{{ $t('txt.keyMetrics') }}</span></div>
       <div class="key-metric-grid">
         <div>
           <div class="mini-label">SHARPE</div>
@@ -64,7 +64,7 @@
     <!-- Cell 4: Price chart -->
     <div class="wall-cell span-2">
       <div class="wall-cell-title">
-        <span>GOLD PRICE // WEEKLY K</span>
+        <span>{{ $t('txt.goldPriceWeeklyK') }}</span>
         <span class="meta">{{ goldPrice }}</span>
       </div>
       <ChartBox :option="priceOpt" height="160px" />
@@ -72,36 +72,34 @@
 
     <!-- Cell 5: Strategy nav -->
     <div class="wall-cell">
-      <div class="wall-cell-title"><span>STRATEGY NAV</span></div>
+      <div class="wall-cell-title"><span>{{ $t('txt.strategyNav') }}</span></div>
       <ChartBox :option="strategyOpt" height="160px" />
     </div>
 
     <!-- Cell 6: Holdout decay -->
     <div class="wall-cell">
-      <div class="wall-cell-title"><span>OVERFIT CHECK</span></div>
+      <div class="wall-cell-title"><span>{{ $t('txt.overfitCheck') }}</span></div>
       <div class="decay-block">
         <div class="decay-value">{{ decay }}</div>
-        <div class="mini-label">SHARPE DECAY</div>
-        <div class="decay-detail">
-          FULL <span class="text-pos">{{ full }}</span> → OOS <span class="text-neg">{{ oos }}</span>
+        <div class="mini-label">{{ $t('txt.sharpeDecay') }}</div>
+        <div class="decay-detail">{{ $t('txt.full') }}<span class="text-pos">{{ full }}</span> → OOS <span class="text-neg">{{ oos }}</span>
         </div>
-        <div class="decay-detail">
-          FEATURES <span class="text-acc">{{ feat }}</span> | DIR <span class="text-acc">{{ dirAcc }}</span>
+        <div class="decay-detail">{{ $t('txt.features') }}<span class="text-acc">{{ feat }}</span> | DIR <span class="text-acc">{{ dirAcc }}</span>
         </div>
       </div>
     </div>
 
     <!-- Cell 7: Top 8 features -->
     <div class="wall-cell span-2">
-      <div class="wall-cell-title"><span>TOP 8 FEATURES</span></div>
+      <div class="wall-cell-title"><span>{{ $t('txt.top8Features') }}</span></div>
       <ChartBox :option="featOpt" height="160px" />
     </div>
 
     <!-- Cell 8: Position history -->
     <div class="wall-cell span-row">
       <div class="wall-cell-title">
-        <span>POSITION HISTORY (250D)</span>
-        <span class="meta">MODEL / ETF / FUT / GOLD</span>
+        <span>{{ $t('txt.positionHistory250d') }}</span>
+        <span class="meta">{{ $t('txt.modelEtfFutGold') }}</span>
       </div>
       <ChartBox :option="posOpt" height="180px" />
     </div>
@@ -109,7 +107,7 @@
     <!-- Cell 9: Alerts stream -->
     <div class="wall-cell span-2">
       <div class="wall-cell-title">
-        <span>ALERTS STREAM</span>
+        <span>{{ $t('txt.alertsStream') }}</span>
         <span class="meta">{{ alerts.length }} ACTIVE</span>
       </div>
       <div class="alerts-list">
@@ -120,7 +118,7 @@
           <span class="alert-detail">{{ a.detail }}</span>
           <span class="alert-time">{{ a.time }}</span>
         </div>
-        <div v-if="alerts.length === 0" class="no-alerts">NO ACTIVE ALERTS</div>
+        <div v-if="alerts.length === 0" class="no-alerts">{{ $t('txt.noActiveAlerts') }}</div>
       </div>
     </div>
   </div>
@@ -128,10 +126,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { EChartsOption } from 'echarts'
 import ProbBars from '@/components/ProbBars.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData, executionData, driftHistory, extractValue, simpleMA } from '@/composables/useDashboardData'
+
+const { t } = useI18n()
 
 const C = {
   bg: '#0e0f11',
@@ -286,7 +287,7 @@ function priceOpt(): EChartsOption {
     },
     series: [
       {
-        name: 'WEEKLY K',
+        name: t('chart.weeklyK'),
         type: 'candlestick',
         data: wData,
         itemStyle: {
@@ -325,7 +326,7 @@ function strategyOpt(): EChartsOption {
     xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { show: false }, splitLine: { show: false } },
     yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { show: false, color: C.text3 }, splitLine: { lineStyle: { color: C.grid } } },
     series: [
-      { name: 'BH', type: 'line', data: bh, symbol: 'none', lineStyle: { width: 1, color: C.text3, opacity: 0.5 } },
+      { name: t('chart.bh'), type: 'line', data: bh, symbol: 'none', lineStyle: { width: 1, color: C.text3, opacity: 0.5 } },
       { name: 'V3.0-E', type: 'line', data: v3e, symbol: 'none', lineStyle: { width: 1.5, color: C.accent } }
     ]
   }
@@ -354,18 +355,18 @@ function posOpt(): EChartsOption {
   return {
     backgroundColor: C.bg, animation: false,
     tooltip: { trigger: 'axis' },
-    legend: { data: ['MODEL', 'ETF', 'FUT', 'GOLD'], textStyle: { color: C.text3, fontSize: 9 }, top: 0 },
+    legend: { data: [t('chart.model'), 'ETF', t('chart.fut'), t('chart.gold')], textStyle: { color: C.text3, fontSize: 9 }, top: 0 },
     grid: { left: '5%', right: '5%', bottom: '8%', top: '12%' },
     xAxis: { type: 'category', data: ph.dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9 } },
     yAxis: [
       { type: 'value', name: 'POS%', min: -100, max: 100, axisLine: { show: false }, axisLabel: { color: C.text3, fontSize: 9, formatter: '{value}%' }, splitLine: { lineStyle: { color: C.grid } } },
-      { type: 'value', name: 'GOLD', position: 'right', scale: true, axisLine: { show: false }, axisLabel: { color: C.text3, fontSize: 9 }, splitLine: { show: false } }
+      { type: 'value', name: t('chart.gold'), position: 'right', scale: true, axisLine: { show: false }, axisLabel: { color: C.text3, fontSize: 9 }, splitLine: { show: false } }
     ],
     series: [
-      { name: 'MODEL', type: 'line', data: positions, symbol: 'none', lineStyle: { width: 1.5, color: C.gold } },
+      { name: t('chart.model'), type: 'line', data: positions, symbol: 'none', lineStyle: { width: 1.5, color: C.gold } },
       { name: 'ETF', type: 'line', data: etf, symbol: 'none', lineStyle: { width: 1, color: C.accent, opacity: 0.6 } },
-      { name: 'FUT', type: 'line', data: fut, symbol: 'none', lineStyle: { width: 1, color: C.accent, opacity: 0.4, type: 'dashed' } },
-      { name: 'GOLD', type: 'line', data: ph.gold_prices, symbol: 'none', lineStyle: { width: 1, color: C.pos, opacity: 0.5 }, yAxisIndex: 1 }
+      { name: t('chart.fut'), type: 'line', data: fut, symbol: 'none', lineStyle: { width: 1, color: C.accent, opacity: 0.4, type: 'dashed' } },
+      { name: t('chart.gold'), type: 'line', data: ph.gold_prices, symbol: 'none', lineStyle: { width: 1, color: C.pos, opacity: 0.5 }, yAxisIndex: 1 }
     ]
   }
 }

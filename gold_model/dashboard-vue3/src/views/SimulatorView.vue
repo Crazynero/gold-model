@@ -1,6 +1,6 @@
 <template>
   <div class="sim-grid">
-    <HudCard title="SIMULATOR CONFIG" meta="MONTE CARLO" class="span-2">
+    <HudCard :title="$t('card.simulatorConfig')" :meta="$t('meta.monteCarlo')" class="span-2">
       <div class="config-grid">
         <div class="cfg-item">
           <div class="cfg-label">本金 ($)</div>
@@ -40,12 +40,12 @@
         </div>
       </div>
       <div class="cfg-actions">
-        <a-button type="primary" long @click="runSim">RUN SIMULATION</a-button>
-        <a-button long @click="resetSim">RESET</a-button>
+        <a-button type="primary" long @click="runSim">{{ $t('common.simulate') }}</a-button>
+        <a-button long @click="resetSim">{{ $t('common.reset') }}</a-button>
       </div>
     </HudCard>
 
-    <HudCard title="RISK METRICS" meta="95% CONFIDENCE">
+    <HudCard :title="$t('card.riskMetrics')" :meta="$t('meta.confidence95')">
       <div v-if="result" class="metrics-grid">
         <div class="metric">
           <div class="m-label">期望终值</div>
@@ -97,12 +97,12 @@
       <div v-else class="hint">{{ $t('common.clickSimulate') }}</div>
     </HudCard>
 
-    <HudCard title="PATH FAN" meta="1000 PATHS" class="span-2">
+    <HudCard :title="$t('card.pathFan')" :meta="$t('meta.n1000Paths')" class="span-2">
       <ChartBox v-if="result" :option="pathOpt" height="380px" />
       <div v-else class="hint">{{ $t('common.waitSimulation') }}</div>
     </HudCard>
 
-    <HudCard title="FINAL NAV DISTRIBUTION" meta="HISTOGRAM" class="span-2">
+    <HudCard :title="$t('card.finalNavDistribution')" :meta="$t('meta.histogram')" class="span-2">
       <ChartBox v-if="result" :option="distOpt" height="280px" />
       <div v-else class="hint">{{ $t('common.waitSimulation') }}</div>
     </HudCard>
@@ -301,17 +301,17 @@ function pathOpt(): EChartsOption {
     { name: '5-95%', type: 'line', data: p5, symbol: 'none', lineStyle: { opacity: 0 }, stack: 'ci', areaStyle: { color: 'rgba(217, 166, 72,0.05)' } },
     { name: '95-5%', type: 'line', data: p95.map((v, i) => v - p5[i]), symbol: 'none', lineStyle: { opacity: 0 }, stack: 'ci', areaStyle: { color: 'rgba(217, 166, 72,0.05)' } },
     // 中位数
-    { name: '中位数', type: 'line', data: p50, symbol: 'none', lineStyle: { width: 2, color: C.gold } },
+    { name: t('chart.median'), type: 'line', data: p50, symbol: 'none', lineStyle: { width: 2, color: C.gold } },
     // 25-75% 扇形（内层）
     { name: '25-75%', type: 'line', data: p25, symbol: 'none', lineStyle: { opacity: 0 }, stack: 'inner', areaStyle: { color: 'rgba(217, 166, 72,0.12)' } },
     { name: '75-25%', type: 'line', data: p75.map((v, i) => v - p25[i]), symbol: 'none', lineStyle: { opacity: 0 }, stack: 'inner', areaStyle: { color: 'rgba(217, 166, 72,0.12)' } },
     // 本金线
-    { name: '本金', type: 'line', data: Array(D).fill(capital.value), symbol: 'none', lineStyle: { width: 1, color: C.text3, type: 'dashed' } }
+    { name: t('chart.principal'), type: 'line', data: Array(D).fill(capital.value), symbol: 'none', lineStyle: { width: 1, color: C.text3, type: 'dashed' } }
   ]
   return {
     backgroundColor: C.bg, animation: false,
     tooltip: { trigger: 'axis' },
-    legend: { data: ['中位数', '本金'], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
+    legend: { data: [t('chart.median'), t('chart.principal')], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
     grid: { left: '8%', right: '3%', bottom: '8%', top: '10%' },
     xAxis: { type: 'category', data: r.dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9, interval: Math.floor(D / 10) } },
     yAxis: { type: 'value', scale: true, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: '${value}' }, splitLine: { lineStyle: { color: C.grid } } },

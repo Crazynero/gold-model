@@ -1,7 +1,7 @@
 <template>
   <div class="sys-grid">
     <!-- 连接与数据状态 -->
-    <HudCard title="数据连接" meta="LOAD STATE">
+    <HudCard title="数据连接" :meta="$t('meta.loadState')">
       <div class="ov-row"><span>数据来源</span><b class="text-acc">{{ srcLabel }}</b></div>
       <div class="ov-row"><span>最近更新</span><b>{{ lastUpdateStr }}</b></div>
       <div class="ov-row"><span>WS 实时通道</span><b :class="wsConnected ? 'text-pos' : 'text-muted'">{{ wsConnected ? '已连接' : '未连接' }}</b></div>
@@ -9,16 +9,16 @@
     </HudCard>
 
     <!-- 模型健康 -->
-    <HudCard title="模型健康" meta="V3.0-E HOLDOUT">
-      <div class="ov-row"><span>Full Sharpe <i class="tag-bt">回测</i></span><b class="text-pos">{{ full }}</b></div>
-      <div class="ov-row"><span>OOS Sharpe <i class="tag-oos">样本外</i></span><b class="text-neg">{{ oos }}</b></div>
+    <HudCard title="模型健康" :meta="$t('meta.v30eHoldout')">
+      <div class="ov-row"><span>{{ $t('txt.fullSharpe') }}<i class="tag-bt">回测</i></span><b class="text-pos">{{ full }}</b></div>
+      <div class="ov-row"><span>{{ $t('txt.oosSharpe') }}<i class="tag-oos">样本外</i></span><b class="text-neg">{{ oos }}</b></div>
       <div class="ov-row"><span>衰减</span><b class="text-neg">{{ decay }}</b></div>
       <div class="ov-row"><span>20日方向准确率</span><b>{{ dirAcc }}</b></div>
       <div class="ov-row"><span>特征数</span><b>{{ feat }}</b></div>
     </HudCard>
 
     <!-- 漂移监控 -->
-    <HudCard title="漂移监控" meta="DRIFT HISTORY" class="span-2">
+    <HudCard title="漂移监控" :meta="$t('meta.driftHistory')" class="span-2">
       <div v-if="driftRows.length === 0" class="empty-note">
         无漂移记录。漂移历史由后端 <span class="mono">/api/drift</span> 提供，静态部署下不可用。
       </div>
@@ -33,7 +33,7 @@
     </HudCard>
 
     <!-- 数据源架构 -->
-    <HudCard title="数据源架构" meta="FALLBACK CHAIN">
+    <HudCard title="数据源架构" :meta="$t('meta.fallbackChain')">
       <div class="src-line" v-for="s in sources" :key="s.name">
         <b>{{ s.name }}</b>
         <span class="chain-text">{{ s.chain }}</span>
@@ -48,7 +48,7 @@
     </HudCard>
 
     <!-- 已知问题 -->
-    <HudCard title="已知问题" meta="KNOWN ISSUES" class="span-2">
+    <HudCard title="已知问题" :meta="$t('meta.knownIssues')" class="span-2">
       <ul class="issue-list">
         <li><b>回归分支不可用</b> — 金价回归模型 R² = −0.36，预测结果劣于均值基线，仓位决策已切换至分类分支。</li>
         <li><b>多头偏见治理观察期</b> — 至 8 月中旬，期间做多信号需 Regime 二次确认。</li>

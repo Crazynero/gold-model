@@ -1,6 +1,6 @@
 <template>
   <div class="attr-grid">
-    <HudCard title="ATTRIBUTION SUMMARY" meta="BRINSON · 真实仓位" class="span-2">
+    <HudCard :title="$t('card.attributionSummary')" meta="BRINSON · 真实仓位" class="span-2">
       <div v-if="metrics" class="attr-summary">
         <div class="attr-row">
           <span class="a-label">策略总收益</span>
@@ -44,17 +44,17 @@
       <div v-else class="hint">{{ $t('common.clickAnalyze') }}</div>
     </HudCard>
 
-    <HudCard title="ALPHA DECOMPOSITION" meta="BAR CHART" class="span-2">
+    <HudCard :title="$t('card.alphaDecomposition')" :meta="$t('meta.barChart')" class="span-2">
       <ChartBox v-if="metrics" :option="decompOpt" height="280px" />
       <div v-else class="hint">等待归因结果</div>
     </HudCard>
 
-    <HudCard title="REGIME BREAKDOWN" meta="BY STATE" class="span-2">
+    <HudCard :title="$t('card.regimeBreakdown')" :meta="$t('meta.byState')" class="span-2">
       <ChartBox v-if="metrics" :option="regimeOpt" height="280px" />
       <div v-else class="hint">{{ $t('common.waitResult') }}</div>
     </HudCard>
 
-    <HudCard title="CONTROLS" meta="ANALYZE">
+    <HudCard :title="$t('card.controls')" :meta="$t('meta.analyze')">
       <div class="preset-hint">
         <b>✓ 真实仓位 + Brinson 分解：</b>
         归因分析优先使用 <b>V5 真实仓位序列</b>（从 execution_data.position_history 读，对齐日期）。
@@ -62,8 +62,8 @@
         结果与 V5 真实策略归因一致。
       </div>
       <div class="controls">
-        <a-button type="primary" long @click="analyze">ANALYZE</a-button>
-        <a-button long @click="reset">RESET</a-button>
+        <a-button type="primary" long @click="analyze">{{ $t('common.analyze') }}</a-button>
+        <a-button long @click="reset">{{ $t('common.reset') }}</a-button>
       </div>
       <div class="ctrl-info">
         <p>Brinson 三因素分解：</p>
@@ -229,13 +229,13 @@ function regimeOpt(): EChartsOption {
   return {
     backgroundColor: '#0e0f11', animation: false,
     tooltip: { trigger: 'axis' },
-    legend: { data: ['策略', '买入持有'], textStyle: { color: '#66635c', fontSize: 10 }, top: 0 },
+    legend: { data: [t('chart.strategy'), t('chart.bh')], textStyle: { color: '#66635c', fontSize: 10 }, top: 0 },
     grid: { left: '10%', right: '5%', bottom: '10%', top: '15%' },
     xAxis: { type: 'category', data: ['牛市', '熊市', '震荡'], axisLine: { lineStyle: { color: 'rgba(217, 166, 72,0.14)' } }, axisLabel: { color: '#66635c', fontSize: 11 } },
     yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: '{value}%' }, splitLine: { lineStyle: { color: 'rgba(217, 166, 72,0.05)' } } },
     series: [
-      { name: '策略', type: 'bar', data: ['牛市', '熊市', '震荡'].map(r => +(rd[r].stratRet * 100).toFixed(2)), itemStyle: { color: '#d9a648' }, barWidth: '30%' },
-      { name: '买入持有', type: 'bar', data: ['牛市', '熊市', '震荡'].map(r => +(rd[r].bhRet * 100).toFixed(2)), itemStyle: { color: '#a09d94' }, barWidth: '30%' }
+      { name: t('chart.strategy'), type: 'bar', data: ['牛市', '熊市', '震荡'].map(r => +(rd[r].stratRet * 100).toFixed(2)), itemStyle: { color: '#d9a648' }, barWidth: '30%' },
+      { name: t('chart.bh'), type: 'bar', data: ['牛市', '熊市', '震荡'].map(r => +(rd[r].bhRet * 100).toFixed(2)), itemStyle: { color: '#a09d94' }, barWidth: '30%' }
     ]
   }
 }

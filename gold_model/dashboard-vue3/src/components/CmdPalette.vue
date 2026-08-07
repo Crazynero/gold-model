@@ -7,7 +7,7 @@
           ref="inputRef"
           v-model="query"
           class="cp-input"
-          placeholder="输入命令或 Tab 名（如：监控墙 / RUN 回测 / 切标的）..."
+          :placeholder="t('cmd.placeholder')"
           @keydown.enter="execute"
           @keydown.esc="close"
           @keydown.up.prevent="moveUp"
@@ -26,12 +26,12 @@
           <span class="cp-label">{{ c.label }}</span>
           <span v-if="c.shortcut" class="cp-shortcut">{{ c.shortcut }}</span>
         </div>
-        <div v-if="filtered.length === 0" class="cp-empty">无匹配命令</div>
+        <div v-if="filtered.length === 0" class="cp-empty">{{ t('cmd.empty') }}</div>
       </div>
       <div class="cp-footer">
-        <span>↑↓ 导航</span>
-        <span>↵ 执行</span>
-        <span>ESC 关闭</span>
+        <span>{{ t('cmd.navHint') }}</span>
+        <span>{{ t('cmd.execHint') }}</span>
+        <span>{{ t('cmd.closeHint') }}</span>
       </div>
     </div>
   </div>
@@ -39,6 +39,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   visible: boolean
@@ -65,24 +68,24 @@ interface Cmd {
 }
 
 const commands = computed<Cmd[]>(() => {
-  const tabs: Cmd[] = (props.tabs || []).map(t => ({
-    id: `tab-${t.key}`,
+  const tabs: Cmd[] = (props.tabs || []).map(tab => ({
+    id: `tab-${tab.key}`,
     cat: 'TAB',
-    label: `切换到 ${t.label}`,
+    label: t('cmd.switchTab', { label: tab.label }),
     action: 'switch',
-    target: t.key,
+    target: tab.key,
     shortcut: ''
   }))
   const cmds: Cmd[] = [
-    { id: 'cmd-refresh', cat: 'CMD', label: '刷新数据', action: 'command', target: 'refresh' },
-    { id: 'cmd-gold', cat: 'SYMBOL', label: '切换到 GOLD', action: 'command', target: 'symbol:GOLD' },
-    { id: 'cmd-silver', cat: 'SYMBOL', label: '切换到 SILVER', action: 'command', target: 'symbol:SILVER' },
-    { id: 'cmd-btc', cat: 'SYMBOL', label: '切换到 BTC', action: 'command', target: 'symbol:BTC' },
-    { id: 'cmd-run-bt', cat: 'CMD', label: 'RUN 信号回测', action: 'command', target: 'run:backtest' },
-    { id: 'cmd-run-sim', cat: 'CMD', label: 'RUN 仓位模拟', action: 'command', target: 'run:simulator' },
-    { id: 'cmd-pdf', cat: 'CMD', label: '生成 PDF 周报', action: 'command', target: 'run:report' },
-    { id: 'cmd-csv', cat: 'CMD', label: '导出 CSV 数据', action: 'command', target: 'export:csv' },
-    { id: 'cmd-toggle-theme', cat: 'CMD', label: '切换主题色（开发中）', action: 'command', target: 'toggle:theme' }
+    { id: 'cmd-refresh', cat: 'CMD', label: t('cmd.refresh'), action: 'command', target: 'refresh' },
+    { id: 'cmd-gold', cat: 'SYMBOL', label: t('cmd.switchSymbol', { symbol: 'GOLD' }), action: 'command', target: 'symbol:GOLD' },
+    { id: 'cmd-silver', cat: 'SYMBOL', label: t('cmd.switchSymbol', { symbol: 'SILVER' }), action: 'command', target: 'symbol:SILVER' },
+    { id: 'cmd-btc', cat: 'SYMBOL', label: t('cmd.switchSymbol', { symbol: 'BTC' }), action: 'command', target: 'symbol:BTC' },
+    { id: 'cmd-run-bt', cat: 'CMD', label: t('cmd.runBt'), action: 'command', target: 'run:backtest' },
+    { id: 'cmd-run-sim', cat: 'CMD', label: t('cmd.runSim'), action: 'command', target: 'run:simulator' },
+    { id: 'cmd-pdf', cat: 'CMD', label: t('cmd.pdf'), action: 'command', target: 'run:report' },
+    { id: 'cmd-csv', cat: 'CMD', label: t('cmd.csv'), action: 'command', target: 'export:csv' },
+    { id: 'cmd-toggle-theme', cat: 'CMD', label: t('cmd.theme'), action: 'command', target: 'toggle:theme' }
   ]
   return [...tabs, ...cmds]
 })

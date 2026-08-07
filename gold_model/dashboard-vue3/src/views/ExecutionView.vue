@@ -1,6 +1,6 @@
 <template>
   <div class="exec-grid">
-    <HudCard title="EXECUTION PLAN" meta="CURRENT" class="span-2">
+    <HudCard :title="$t('card.executionPlan')" :meta="$t('meta.current')" class="span-2">
       <div class="exec-summary">
         <div class="exec-cell sens">
           <div class="mini-label">建议操作</div>
@@ -25,7 +25,7 @@
       </div>
     </HudCard>
 
-    <HudCard title="EXECUTION INSTRUCTIONS" meta="STEP BY STEP · 操作模板" class="span-2">
+    <HudCard :title="$t('card.executionInstructions')" meta="STEP BY STEP · 操作模板" class="span-2">
       <div class="preset-hint">
         <b>⚠ 操作模板：</b>
         以下指令根据当前信号（空仓/建仓）<b>预设</b>，非动态生成。
@@ -33,22 +33,22 @@
       </div>
       <a-table :data="execRows" :pagination="false" size="small" :bordered="{ cell: true }">
         <template #columns>
-          <a-table-column title="STEP" :width="60">
+          <a-table-column :title="$t('col.step')" :width="60">
             <template #cell="{ rowIndex }">{{ rowIndex + 1 }}</template>
           </a-table-column>
-          <a-table-column title="ACTION" data-index="action"></a-table-column>
-          <a-table-column title="TARGET" data-index="target"></a-table-column>
-          <a-table-column title="AMOUNT" data-index="amount">
+          <a-table-column :title="$t('col.action')" data-index="action"></a-table-column>
+          <a-table-column :title="$t('col.target')" data-index="target"></a-table-column>
+          <a-table-column :title="$t('col.amount')" data-index="amount">
             <template #cell="{ record }">
               <span class="mono text-gold">{{ record.amount }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="NOTE" data-index="note"></a-table-column>
+          <a-table-column :title="$t('col.note')" data-index="note"></a-table-column>
         </template>
       </a-table>
     </HudCard>
 
-    <HudCard title="SIGNAL QUALITY" meta="HIT RATE / COST">
+    <HudCard :title="$t('card.signalQuality')" :meta="$t('meta.hitRateCost')">
       <div class="sq-row"><span>20日命中率</span><b :class="hitOk ? 'text-pos' : 'text-neg'">{{ hitRate }}</b></div>
       <div class="sq-row"><span>WF基准</span><b class="text-muted">{{ baseRate }}</b></div>
       <div class="sq-row"><span>偏差</span><b :class="hitOk ? 'text-pos' : 'text-neg'">{{ deviation }}</b></div>
@@ -56,7 +56,7 @@
       <div class="sq-row"><span>状态</span><b :class="hitOk ? 'text-pos' : 'text-neg'">{{ hitOk ? '正常' : '熔断中' }}</b></div>
     </HudCard>
 
-    <HudCard title="COST COMPARISON" meta="3 SCENARIOS">
+    <HudCard :title="$t('card.costComparison')" :meta="$t('meta.scenarios3')">
       <div class="capital-select">
         <span class="cs-label">资金规模</span>
         <a-radio-group v-model="selectedCapital" type="button" size="small">
@@ -66,11 +66,11 @@
       <ChartBox :option="costOpt" height="320px" />
     </HudCard>
 
-    <HudCard title="POSITION HISTORY" meta="250D" class="span-2">
+    <HudCard :title="$t('card.positionHistory')" :meta="$t('meta.d250')" class="span-2">
       <ChartBox :option="posOpt" height="440px" />
     </HudCard>
 
-    <HudCard title="WEEKLY REPORT" meta="PDF" class="span-2">
+    <HudCard :title="$t('card.weeklyReport')" meta="PDF" class="span-2">
       <div class="report-area">
         <div class="report-info">
           <div>
@@ -110,6 +110,9 @@ import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData, executionData, extractValue, apiBase } from '@/composables/useDashboardData'
 import { Message } from '@arco-design/web-vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // M: PDF 周报
 const generating = ref(false)
@@ -284,7 +287,7 @@ function posOpt(): EChartsOption {
   return {
     backgroundColor: C.bg, animation: false,
     tooltip: { trigger: 'axis' },
-    legend: { data: ['模型仓位', 'ETF层', '期货层', '金价'], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
+    legend: { data: [t('chart.modelPos'), t('chart.etfLayer'), t('chart.futLayer'), t('chart.goldPrice')], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
     grid: { left: '5%', right: '5%', bottom: '8%', top: '12%' },
     xAxis: { type: 'category', data: ph.dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 10 } },
     yAxis: [
@@ -293,10 +296,10 @@ function posOpt(): EChartsOption {
     ],
     dataZoom: [{ type: 'inside' }, { type: 'slider' }],
     series: [
-      { name: '模型仓位', type: 'line', data: positions, symbol: 'none', smooth: true, lineStyle: { width: 2, color: C.gold }, yAxisIndex: 0 },
-      { name: 'ETF层', type: 'line', data: etf, symbol: 'none', smooth: true, lineStyle: { width: 1, color: C.accent, opacity: 0.7 }, areaStyle: { color: 'rgba(217, 166, 72,0.08)' }, yAxisIndex: 0 },
-      { name: '期货层', type: 'line', data: fut, symbol: 'none', smooth: true, lineStyle: { width: 1, color: C.text2, opacity: 0.7 }, yAxisIndex: 0 },
-      { name: '金价', type: 'line', data: ph.gold_prices, symbol: 'none', lineStyle: { width: 1, color: C.pos, opacity: 0.5 }, yAxisIndex: 1 }
+      { name: t('chart.modelPos'), type: 'line', data: positions, symbol: 'none', smooth: true, lineStyle: { width: 2, color: C.gold }, yAxisIndex: 0 },
+      { name: t('chart.etfLayer'), type: 'line', data: etf, symbol: 'none', smooth: true, lineStyle: { width: 1, color: C.accent, opacity: 0.7 }, areaStyle: { color: 'rgba(217, 166, 72,0.08)' }, yAxisIndex: 0 },
+      { name: t('chart.futLayer'), type: 'line', data: fut, symbol: 'none', smooth: true, lineStyle: { width: 1, color: C.text2, opacity: 0.7 }, yAxisIndex: 0 },
+      { name: t('chart.goldPrice'), type: 'line', data: ph.gold_prices, symbol: 'none', lineStyle: { width: 1, color: C.pos, opacity: 0.5 }, yAxisIndex: 1 }
     ]
   }
 }

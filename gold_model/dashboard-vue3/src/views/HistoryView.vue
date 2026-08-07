@@ -1,6 +1,6 @@
 <template>
   <div class="history-grid">
-    <HudCard title="TIME RANGE" meta="LAST N DAYS">
+    <HudCard :title="$t('card.timeRange')" :meta="$t('meta.lastNDays')">
       <a-radio-group v-model="range" type="button" size="small" @change="() => {}">
         <a-radio v-for="r in ranges" :key="r.value" :value="r.value">{{ r.label }}</a-radio>
       </a-radio-group>
@@ -12,31 +12,31 @@
       </div>
     </HudCard>
 
-    <HudCard title="PROBABILITY TIMELINE" meta="5D/10D/20D/60D/WEIGHTED" class="span-2">
+    <HudCard :title="$t('card.probabilityTimeline')" :meta="$t('meta.multiWindows')" class="span-2">
       <ChartBox :option="probOpt" height="380px" />
     </HudCard>
 
-    <HudCard title="REGIME & POSITION" meta="STATE" class="span-2">
+    <HudCard :title="$t('card.regimePosition')" :meta="$t('meta.state')" class="span-2">
       <ChartBox :option="regimeOpt" height="280px" />
     </HudCard>
 
-    <HudCard title="ML METRICS DRIFT" meta="ACC/AUC/IC" class="span-2">
+    <HudCard :title="$t('card.mlMetricsDrift')" meta="ACC/AUC/IC" class="span-2">
       <ChartBox :option="metricsOpt" height="320px" />
     </HudCard>
 
-    <HudCard title="BEST SHARPE TIMELINE" meta="STRATEGY V3.0-E" class="span-2">
+    <HudCard :title="$t('card.bestSharpeTimeline')" :meta="$t('meta.strategyV30e')" class="span-2">
       <ChartBox :option="sharpeOpt" height="260px" />
     </HudCard>
 
-    <HudCard title="HISTORY LOG" meta="LATEST N RUNS" class="span-2">
+    <HudCard :title="$t('card.historyLog')" :meta="$t('meta.latestNRuns')" class="span-2">
       <a-table :data="logRows" :pagination="{ pageSize: 10, showTotal: true }" size="small" :bordered="{ cell: true }" :scroll="{ x: 1000 }">
         <template #columns>
-          <a-table-column title="RUN AT" data-index="run_at" :width="140"></a-table-column>
-          <a-table-column title="BASE DATE" data-index="run_date" :width="100"></a-table-column>
-          <a-table-column title="GOLD" :width="80">
+          <a-table-column :title="$t('col.runAt')" data-index="run_at" :width="140"></a-table-column>
+          <a-table-column :title="$t('col.baseDate')" data-index="run_date" :width="100"></a-table-column>
+          <a-table-column :title="$t('col.gold')" :width="80">
             <template #cell="{ record }"><span class="mono text-gold">${{ (record.gold_price || 0).toFixed(0) }}</span></template>
           </a-table-column>
-          <a-table-column title="REGIME" data-index="regime" :width="70"></a-table-column>
+          <a-table-column :title="$t('col.regime')" data-index="regime" :width="70"></a-table-column>
           <a-table-column title="POS" :width="60">
             <template #cell="{ record }"><span class="mono">{{ ((record.position || 0) * 100).toFixed(0) }}%</span></template>
           </a-table-column>
@@ -46,10 +46,10 @@
           <a-table-column title="SHARPE" :width="80">
             <template #cell="{ record }"><span class="mono text-pos">{{ (record.best_sharpe || 0).toFixed(2) }}</span></template>
           </a-table-column>
-          <a-table-column title="HIT%" :width="70">
+          <a-table-column :title="$t('col.hitPct')" :width="70">
             <template #cell="{ record }"><span class="mono">{{ ((record.hit_rate_20d || 0) * 100).toFixed(0) }}%</span></template>
           </a-table-column>
-          <a-table-column title="ACTION" data-index="signal_action" :width="100"></a-table-column>
+          <a-table-column :title="$t('col.action')" data-index="signal_action" :width="100"></a-table-column>
         </template>
       </a-table>
     </HudCard>
@@ -62,6 +62,9 @@ import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { driftHistory } from '@/composables/useDashboardData'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const ranges = [
   { label: '近7天', value: 7 },
@@ -137,7 +140,7 @@ function regimeOpt(): EChartsOption {
     xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9, rotate: 30 } },
     yAxis: [
       { type: 'value', name: '仓位%', min: -100, max: 100, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: '{value}%' }, splitLine: { lineStyle: { color: C.grid } } },
-      { type: 'value', name: 'Regime', min: -1.5, max: 1.5, position: 'right', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => v === 1 ? '牛' : v === 0 ? '震' : v === -1 ? '熊' : '' }, splitLine: { show: false } }
+      { type: 'value', name: t('chart.regime'), min: -1.5, max: 1.5, position: 'right', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => v === 1 ? '牛' : v === 0 ? '震' : v === -1 ? '熊' : '' }, splitLine: { show: false } }
     ],
     dataZoom: [{ type: 'inside' }, { type: 'slider' }],
     series: [
@@ -146,7 +149,7 @@ function regimeOpt(): EChartsOption {
         itemStyle: { color: (p: any) => p.value >= 0 ? C.pos : C.neg }
       },
       {
-        name: 'Regime', type: 'line', data: regimes, yAxisIndex: 1, step: 'end',
+        name: t('chart.regime'), type: 'line', data: regimes, yAxisIndex: 1, step: 'end',
         symbol: 'none', lineStyle: { width: 1.5, color: C.gold }
       }
     ]

@@ -1,19 +1,19 @@
 <template>
   <div class="val-grid">
-    <HudCard title="HOLDOUT VERIFICATION" meta="OOS 6M" class="span-2">
+    <HudCard :title="$t('card.holdoutVerification')" :meta="$t('meta.oos6m')" class="span-2">
       <div class="val-summary">
         <div class="val-cell">
-          <div class="val-label">FULL SHARPE</div>
+          <div class="val-label">{{ $t('txt.fullSharpe') }}</div>
           <div class="val-value text-pos">{{ full }}</div>
         </div>
         <div class="val-arrow">→</div>
         <div class="val-cell">
-          <div class="val-label">OOS SHARPE</div>
+          <div class="val-label">{{ $t('txt.oosSharpe') }}</div>
           <div class="val-value text-neg">{{ oos }}</div>
         </div>
         <div class="val-arrow">·</div>
         <div class="val-cell">
-          <div class="val-label">DECAY</div>
+          <div class="val-label">{{ $t('txt.decay') }}</div>
           <div class="val-value text-neg">{{ decay }}</div>
         </div>
         <div class="val-cell">
@@ -21,26 +21,26 @@
           <div class="val-value text-neg">{{ bhOos }}</div>
         </div>
         <div class="val-cell">
-          <div class="val-label">FEATURES</div>
+          <div class="val-label">{{ $t('txt.features') }}</div>
           <div class="val-value text-acc">{{ feat }}/{{ featOrig }}</div>
         </div>
       </div>
     </HudCard>
 
-    <HudCard title="FULL vs OOS SHARPE" meta="BY STRATEGY" class="span-2">
+    <HudCard :title="$t('card.fullVsOosSharpe')" :meta="$t('meta.byStrategy')" class="span-2">
       <ChartBox :option="compOpt" height="440px" />
     </HudCard>
 
-    <HudCard title="REGRESSION BRANCH" meta="R² / DIR ACC">
+    <HudCard :title="$t('card.regressionBranch')" :meta="$t('meta.rDirAcc')">
       <a-table :data="regressionRows" :pagination="false" size="small" :bordered="{ cell: true }">
         <template #columns>
-          <a-table-column title="HORIZON" data-index="horizon"></a-table-column>
+          <a-table-column :title="$t('col.horizon')" data-index="horizon"></a-table-column>
           <a-table-column title="R²" data-index="r2">
             <template #cell="{ record }">
               <span :class="parseFloat(record.r2) < 0 ? 'text-neg mono' : 'text-pos mono'">{{ record.r2 }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="DIR ACC" data-index="dir_acc">
+          <a-table-column :title="$t('col.dirAcc')" data-index="dir_acc">
             <template #cell="{ record }">
               <span class="text-acc mono">{{ record.dir_acc }}</span>
             </template>
@@ -49,46 +49,46 @@
       </a-table>
     </HudCard>
 
-    <HudCard title="HOLDOUT DETAIL" meta="6M STRATEGIES" class="span-2">
+    <HudCard :title="$t('card.holdoutDetail')" :meta="$t('meta.strategies6m')" class="span-2">
       <a-table :data="holdoutRows" :pagination="false" size="small" :bordered="{ cell: true }">
         <template #columns>
-          <a-table-column title="STRATEGY" data-index="strategy" fixed="left" :width="180"></a-table-column>
-          <a-table-column title="FULL SHARPE" :width="120">
+          <a-table-column :title="$t('col.strategy')" data-index="strategy" fixed="left" :width="180"></a-table-column>
+          <a-table-column :title="$t('col.fullSharpe')" :width="120">
             <template #cell="{ record }">
               <span class="mono text-pos">{{ findFullSharpe(record.strategy) }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="OOS SHARPE" :width="120">
+          <a-table-column :title="$t('col.oosSharpe')" :width="120">
             <template #cell="{ record }">
               <span :class="record.sharpe > 0 ? 'text-pos mono' : 'text-neg mono'">{{ record.sharpe.toFixed(2) }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="DECAY%" :width="100">
+          <a-table-column :title="$t('col.decayPct')" :width="100">
             <template #cell="{ record }">
               <span class="text-neg mono">{{ calcDecay(record) }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="OOS RET" data-index="ann_ret" :width="100">
+          <a-table-column :title="$t('col.oosRet')" data-index="ann_ret" :width="100">
             <template #cell="{ record }">
               <span :class="parseFloat(record.ann_ret) > 0 ? 'text-pos mono' : 'text-neg mono'">{{ record.ann_ret }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="OOS DD" data-index="max_dd" :width="100">
+          <a-table-column :title="$t('col.oosDd')" data-index="max_dd" :width="100">
             <template #cell="{ record }">
               <span class="text-neg mono">{{ record.max_dd }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="WIN" data-index="win_rate" :width="80"></a-table-column>
+          <a-table-column :title="$t('col.win')" data-index="win_rate" :width="80"></a-table-column>
         </template>
       </a-table>
     </HudCard>
 
-    <HudCard title="OVERFITTING DIAGNOSIS" class="span-2">
+    <HudCard :title="$t('card.overfittingDiagnosis')" class="span-2">
       <div class="diagnosis">
-        <div class="diag-item"><span class="badge badge-red">CAUSE 1</span><p>V1→V4 在同一 5 年数据上反复迭代调参，每版看着回测结果加料（数据窥探）。</p></div>
-        <div class="diag-item"><span class="badge badge-red">CAUSE 2</span><p>2020-2025 黄金大牛市，"牛市不做空"规则恰好匹配此段历史，非模型泛化能力。</p></div>
-        <div class="diag-item"><span class="badge badge-red">CAUSE 3</span><p>8 个策略在同一数据上选最优 V3.0-E，"选最优"本身就在看回测结果。</p></div>
-        <div class="diag-item"><span class="badge badge-green">CONCLUSION</span><p>实盘夏普预期 ≈ -0.1，非回测的 2.5。但 OOS 仍跑赢 BH（-1.5），模型有 OOS 价值只是被夸大。</p></div>
+        <div class="diag-item"><span class="badge badge-red">{{ $t('txt.cause1') }}</span><p>V1→V4 在同一 5 年数据上反复迭代调参，每版看着回测结果加料（数据窥探）。</p></div>
+        <div class="diag-item"><span class="badge badge-red">{{ $t('txt.cause2') }}</span><p>2020-2025 黄金大牛市，"牛市不做空"规则恰好匹配此段历史，非模型泛化能力。</p></div>
+        <div class="diag-item"><span class="badge badge-red">{{ $t('txt.cause3') }}</span><p>8 个策略在同一数据上选最优 V3.0-E，"选最优"本身就在看回测结果。</p></div>
+        <div class="diag-item"><span class="badge badge-green">{{ $t('txt.conclusion') }}</span><p>实盘夏普预期 ≈ -0.1，非回测的 2.5。但 OOS 仍跑赢 BH（-1.5），模型有 OOS 价值只是被夸大。</p></div>
       </div>
     </HudCard>
   </div>
@@ -100,6 +100,9 @@ import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData } from '@/composables/useDashboardData'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const C = {
   bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62',
@@ -154,7 +157,7 @@ function compOpt(): EChartsOption {
     xAxis: { type: 'category', data: rows.map(r => r.strategy), axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9, rotate: 30 } },
     yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3 }, splitLine: { lineStyle: { color: C.grid } } },
     series: [
-      { name: 'FULL', type: 'bar', data: rows.map(r => r.full_sharpe), itemStyle: { color: C.accent }, barWidth: '30%' },
+      { name: t('chart.full'), type: 'bar', data: rows.map(r => r.full_sharpe), itemStyle: { color: C.accent }, barWidth: '30%' },
       { name: 'OOS', type: 'bar', data: rows.map(r => r.sharpe), itemStyle: { color: C.neg }, barWidth: '30%' }
     ]
   }

@@ -1,6 +1,6 @@
 <template>
   <div class="adjust-grid">
-    <HudCard title="MARKET VIEW ADJUSTMENT" meta="MANUAL OVERRIDE">
+    <HudCard :title="$t('card.marketViewAdjustment')" :meta="$t('meta.manualOverride')">
       <div class="adjust-section">
         <div class="adj-label">市场观点 <InfoIcon title="市场观点">取值范围 -5（极度看空）到 +5（极度看多），0 为中性。Regime 自动判定：>2 牛市，<-2 熊市，其他震荡。</InfoIcon></div>
         <a-slider v-model="viewValue" :min="-5" :max="5" :step="1" show-input :marks="{ [-5]: '熊', [-2]: '熊市', 0: '震荡', 2: '牛市', 5: '牛' }" />
@@ -32,7 +32,7 @@
       </div>
     </HudCard>
 
-    <HudCard title="EVENT OVERLAY" meta="BLACK SWAN · 估算影响">
+    <HudCard :title="$t('card.eventOverlay')" meta="BLACK SWAN · 估算影响">
       <div class="preset-hint">
         <b>⚠ 预设影响估算：</b>
         以下事件的影响幅度（如"金价 +3%"）为<b>手动估算</b>，非历史回测数据。
@@ -50,13 +50,13 @@
       </div>
     </HudCard>
 
-    <HudCard title="MANUAL OVERRIDE PREVIEW" class="span-2">
+    <HudCard :title="$t('card.manualOverridePreview')" class="span-2">
       <a-table :data="previewRows" :pagination="false" size="small" :bordered="{ cell: true }">
         <template #columns>
           <a-table-column title="维度" data-index="dim"></a-table-column>
-          <a-table-column title="MODEL" data-index="model"></a-table-column>
-          <a-table-column title="MANUAL" data-index="manual"></a-table-column>
-          <a-table-column title="DELTA" data-index="delta">
+          <a-table-column :title="$t('col.model')" data-index="model"></a-table-column>
+          <a-table-column :title="$t('col.manual')" data-index="manual"></a-table-column>
+          <a-table-column :title="$t('col.delta')" data-index="delta">
             <template #cell="{ record }">
               <span :class="parseFloat(record.delta) >= 0 ? 'text-pos mono' : 'text-neg mono'">{{ record.delta }}</span>
             </template>

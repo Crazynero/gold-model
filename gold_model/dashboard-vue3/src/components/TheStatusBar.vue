@@ -1,22 +1,21 @@
 <template>
   <div class="status-bar">
     <div class="left">
-      <span>SYS: <b>ONLINE</b></span>
-      <span>MODEL: <b>V6.0/VUE3</b></span>
-      <span>DATA: <b class="src-tag" :class="srcClass">{{ srcLabel }}</b></span>
+      <span>{{ $t('txt.sysC') }}<b>{{ $t('common.online') }}</b></span>
+      <span>{{ $t('txt.modelC') }}<b>V7/VUE3</b></span>
+      <span>{{ $t('txt.dataC') }}<b class="src-tag" :class="srcClass">{{ srcLabel }}</b></span>
       <span v-if="wsConnected" class="ws-tag">
-        <span class="ws-dot"></span>WS LIVE
-      </span>
-      <span v-else-if="apiBase" class="ws-tag dim">WS OFF</span>
+        <span class="ws-dot"></span>{{ $t('txt.wsLive') }}</span>
+      <span v-else-if="apiBase" class="ws-tag dim">{{ $t('txt.wsOff') }}</span>
       <span v-if="lastUpdate" class="updt">
         <span class="dot" :class="dotClass"></span>
         UPD {{ lastUpdateStr }}
       </span>
     </div>
     <div class="right">
-      <span>REGIME: <b class="text-acc">{{ regime }}</b></span>
-      <span class="sens">POSITION: <b class="text-acc">{{ position }}</b></span>
-      <span>BASE: <b class="text-acc">{{ baseDate }}</b></span>
+      <span>{{ $t('txt.regimeC') }}<b class="text-acc">{{ regime }}</b></span>
+      <span class="sens">{{ $t('txt.positionC') }}<b class="text-acc">{{ position }}</b></span>
+      <span>{{ $t('txt.baseC') }}<b class="text-acc">{{ baseDate }}</b></span>
     </div>
   </div>
 </template>

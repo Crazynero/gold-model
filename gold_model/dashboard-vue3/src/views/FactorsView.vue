@@ -1,17 +1,17 @@
 <template>
   <div class="factors-grid">
-    <HudCard title="FEATURE IMPORTANCE" meta="XGBOOST GAIN" class="span-2">
+    <HudCard :title="$t('card.featureImportance')" :meta="$t('meta.xgboostGain')" class="span-2">
       <ChartBox :option="featOpt" height="440px" />
     </HudCard>
 
-    <HudCard title="TOP FACTORS" meta="RANKED">
+    <HudCard :title="$t('card.topFactors')" :meta="$t('meta.ranked')">
       <a-table :data="topFeatures" :pagination="false" size="small" :bordered="{ cell: true }">
         <template #columns>
           <a-table-column title="#" :width="40">
             <template #cell="{ rowIndex }">{{ rowIndex + 1 }}</template>
           </a-table-column>
-          <a-table-column title="FACTOR" data-index="name"></a-table-column>
-          <a-table-column title="GAIN" data-index="avg">
+          <a-table-column :title="$t('col.factor')" data-index="name"></a-table-column>
+          <a-table-column :title="$t('col.gain')" data-index="avg">
             <template #cell="{ record }">
               <span class="mono text-acc">{{ record.avg.toFixed(2) }}</span>
             </template>
@@ -20,17 +20,17 @@
       </a-table>
     </HudCard>
 
-    <HudCard title="CURRENT FACTOR SNAPSHOT" class="span-2">
+    <HudCard :title="$t('card.currentFactorSnapshot')" class="span-2">
       <a-table :data="currentFactors" :pagination="false" size="small" :bordered="{ cell: true }">
         <template #columns>
-          <a-table-column title="FACTOR" data-index="name"></a-table-column>
-          <a-table-column title="VALUE" data-index="value">
+          <a-table-column :title="$t('col.factor')" data-index="name"></a-table-column>
+          <a-table-column :title="$t('col.value')" data-index="value">
             <template #cell="{ record }">
               <span class="mono text-acc">{{ fmtNum(record.value) }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="MOMENTUM" data-index="momentum"></a-table-column>
-          <a-table-column title="SIGNAL" data-index="signal"></a-table-column>
+          <a-table-column :title="$t('col.momentum')" data-index="momentum"></a-table-column>
+          <a-table-column :title="$t('col.signal')" data-index="signal"></a-table-column>
         </template>
       </a-table>
     </HudCard>

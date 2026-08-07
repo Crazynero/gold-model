@@ -1,20 +1,20 @@
 <template>
   <div class="navbar">
     <div class="nav-left">
-      <div class="logo">GOLD COMMAND<span class="ver">V6.0 // VUE3</span></div>
-      <span class="live-dot">LIVE</span>
+      <div class="logo">GOLD BRIEFING<span class="ver">V7 // VUE3</span></div>
+      <span class="live-dot">{{ $t('common.live') }}</span>
       <span class="clock">{{ clock }}</span>
       <div :class="['signal-badge', sigClass]">{{ sigText }}</div>
       <div class="symbol-switch">
-        <span class="ss-label">SYMBOL</span>
+        <span class="ss-label">{{ $t('common.symbol') }}</span>
         <a-radio-group v-model="selectedSymbol" type="button" size="mini" @change="onSymbolChange">
           <a-radio v-for="s in symbols" :key="s.key" :value="s.key">{{ s.label }}</a-radio>
         </a-radio-group>
       </div>
     </div>
     <div class="nav-btns">
-      <a-button size="small" @click="handleRefresh">REFRESH</a-button>
-      <a-button type="primary" size="small" @click="$emit('switch', 'adjust')">MANUAL</a-button>
+      <a-button size="small" @click="handleRefresh">{{ $t('common.refresh') }}</a-button>
+      <a-button type="primary" size="small" @click="$emit('switch', 'adjust')">{{ $t('common.manual') }}</a-button>
     </div>
   </div>
 </template>

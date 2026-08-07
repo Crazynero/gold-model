@@ -1,6 +1,6 @@
 <template>
   <div class="wf-grid">
-    <HudCard title="WALK-FORWARD OVERVIEW" meta="ML METRICS DRIFT" class="span-2">
+    <HudCard :title="$t('card.walkForwardOverview')" :meta="$t('meta.mlMetricsDrift')" class="span-2">
       <div class="wf-summary">
         <div class="wf-cell">
           <div class="m-label">总运行数</div>
@@ -30,7 +30,7 @@
       </div>
     </HudCard>
 
-    <HudCard title="ROLLING METRICS" meta="4 HORIZONS" class="span-2">
+    <HudCard :title="$t('card.rollingMetrics')" :meta="$t('meta.horizons4')" class="span-2">
       <a-radio-group v-model="metric" type="button" size="small">
         <a-radio value="accuracy">ACC</a-radio>
         <a-radio value="auc">AUC</a-radio>
@@ -39,18 +39,18 @@
       <ChartBox :option="rollingOpt" height="320px" />
     </HudCard>
 
-    <HudCard title="BEST SHARPE HISTORY" meta="OBSERVED">
+    <HudCard :title="$t('card.bestSharpeHistory')" :meta="$t('meta.observed')">
       <ChartBox :option="sharpeOpt" height="260px" />
     </HudCard>
 
-    <HudCard title="HIT RATE vs BASELINE" meta="20D ROLLING">
+    <HudCard :title="$t('card.hitRateVsBaseline')" :meta="$t('meta.rolling20d')">
       <ChartBox :option="hitRateOpt" height="260px" />
     </HudCard>
 
-    <HudCard title="STABILITY ANALYSIS" meta="VARIANCE">
+    <HudCard :title="$t('card.stabilityAnalysis')" :meta="$t('meta.variance')">
       <a-table :data="stabilityRows" :pagination="false" size="small" :bordered="{ cell: true }">
         <template #columns>
-          <a-table-column title="METRIC" data-index="metric" :width="100"></a-table-column>
+          <a-table-column :title="$t('col.metric')" data-index="metric" :width="100"></a-table-column>
           <a-table-column title="MEAN" data-index="mean" :width="80">
             <template #cell="{ record }"><span class="mono">{{ record.mean }}</span></template>
           </a-table-column>
@@ -62,7 +62,7 @@
           </a-table-column>
           <a-table-column title="MIN" data-index="min" :width="80"></a-table-column>
           <a-table-column title="MAX" data-index="max" :width="80"></a-table-column>
-          <a-table-column title="RANGE" data-index="range" :width="80">
+          <a-table-column :title="$t('col.range')" data-index="range" :width="80">
             <template #cell="{ record }"><span class="mono text-warn">{{ record.range }}</span></template>
           </a-table-column>
         </template>
@@ -77,6 +77,9 @@ import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { driftHistory } from '@/composables/useDashboardData'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const C = {
   bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62',
@@ -229,7 +232,7 @@ function hitRateOpt(): EChartsOption {
       {
         type: 'line',
         data: dates.map(() => wfBase),
-        name: 'WF基准',
+        name: t('chart.wfBenchmark'),
         lineStyle: { color: C.warn, type: 'dashed', width: 1.5 },
         symbol: 'none'
       }

@@ -29,7 +29,7 @@
       </div>
     </div>
 
-    <HudCard title="CURRENT STATE" meta="V5">
+    <HudCard :title="$t('card.currentState')" meta="V5">
       <div class="ov-row"><span>预测基准日</span><b>{{ baseDate }}</b></div>
       <div class="ov-row"><span>当前金价</span><b class="text-gold">{{ goldPrice }}</b></div>
       <div class="ov-row"><span>MA50</span><b>{{ ma50 }}</b></div>
@@ -38,7 +38,7 @@
       <div class="ov-row"><span>建议</span><b class="text-acc">{{ action }}</b></div>
     </HudCard>
 
-    <HudCard title="INTEGRATED PROBABILITY" meta="WEIGHTED">
+    <HudCard :title="$t('card.integratedProbability')" :meta="$t('meta.weighted')">
       <div class="big-prob-c">
         <div class="big-prob">{{ prob }}</div>
         <div class="big-prob-label">加权集成看多概率</div>
@@ -46,27 +46,27 @@
       <ProbBars :items="multiHorizon" :height="100" />
     </HudCard>
 
-    <HudCard title="V5 OVERFIT CHECK" meta="HOLDOUT 6M">
-      <div class="ov-row"><span>Full Sharpe</span><b class="text-pos">{{ full }}</b></div>
-      <div class="ov-row"><span>OOS Sharpe</span><b class="text-neg">{{ oos }}</b></div>
-      <div class="ov-row"><span>Decay</span><b class="text-neg">{{ decay }}</b></div>
-      <div class="ov-row"><span>Features</span><b class="text-acc">{{ feat }}</b></div>
+    <HudCard :title="$t('card.v5OverfitCheck')" :meta="$t('meta.holdout6m')">
+      <div class="ov-row"><span>{{ $t('txt.fullSharpe') }}</span><b class="text-pos">{{ full }}</b></div>
+      <div class="ov-row"><span>{{ $t('txt.oosSharpe') }}</span><b class="text-neg">{{ oos }}</b></div>
+      <div class="ov-row"><span>{{ $t('txt.decay') }}</span><b class="text-neg">{{ decay }}</b></div>
+      <div class="ov-row"><span>{{ $t('txt.features') }}</span><b class="text-acc">{{ feat }}</b></div>
       <div class="ov-row"><span>Dir Acc 20D</span><b class="text-acc">{{ dirAcc }}</b></div>
     </HudCard>
 
-    <HudCard title="GOLD PRICE" meta="250D" class="span-2">
+    <HudCard :title="$t('card.goldPrice')" :meta="$t('meta.d250')" class="span-2">
       <ChartBox :option="priceOpt" height="380px" />
     </HudCard>
 
-    <HudCard title="STRATEGY EVOLUTION" meta="CUM RETURN" class="span-2">
+    <HudCard :title="$t('card.strategyEvolution')" :meta="$t('meta.cumReturn')" class="span-2">
       <ChartBox :option="strategyOpt" height="380px" />
     </HudCard>
 
-    <HudCard title="ML MODEL PERFORMANCE" meta="ACC / AUC / IC" class="span-2">
+    <HudCard :title="$t('card.mlModelPerformance')" meta="ACC / AUC / IC" class="span-2">
       <a-table :data="mlModels" :pagination="false" size="small" :bordered="{ cell: true }">
         <template #columns>
-          <a-table-column title="PERIOD" data-index="period"></a-table-column>
-          <a-table-column title="ACCURACY" data-index="accuracy"></a-table-column>
+          <a-table-column :title="$t('col.period')" data-index="period"></a-table-column>
+          <a-table-column :title="$t('col.accuracy')" data-index="accuracy"></a-table-column>
           <a-table-column title="AUC" data-index="auc"></a-table-column>
           <a-table-column title="IC" data-index="ic"></a-table-column>
         </template>
@@ -82,6 +82,9 @@ import HudCard from '@/components/HudCard.vue'
 import ProbBars from '@/components/ProbBars.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData, extractValue, simpleMA } from '@/composables/useDashboardData'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const C = {
   bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62',
@@ -187,7 +190,7 @@ function strategyOpt(): EChartsOption {
     xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 10 } },
     yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3 }, splitLine: { lineStyle: { color: C.grid } } },
     series: [
-      { name: 'BH', type: 'line', data: bh, symbol: 'none', lineStyle: { width: 1, color: C.text3, opacity: 0.5 } },
+      { name: t('chart.bh'), type: 'line', data: bh, symbol: 'none', lineStyle: { width: 1, color: C.text3, opacity: 0.5 } },
       { name: 'V3.0-E', type: 'line', data: v3e, symbol: 'none', lineStyle: { width: 1.5, color: C.accent } }
     ]
   }

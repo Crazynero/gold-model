@@ -1,6 +1,6 @@
 <template>
   <div class="compare-grid">
-    <HudCard title="STRATEGY PERFORMANCE TABLE" meta="ALL 8" class="span-2">
+    <HudCard :title="$t('card.strategyPerformanceTable')" :meta="$t('meta.all8')" class="span-2">
       <a-table
         :data="strategies"
         :pagination="false"
@@ -10,14 +10,14 @@
         :scroll="{ x: 800 }"
       >
         <template #columns>
-          <a-table-column title="STRATEGY" data-index="策略" :width="180" fixed="left">
+          <a-table-column :title="$t('col.strategy')" data-index="策略" :width="180" fixed="left">
             <template #cell="{ record }">
               <a-checkbox :model-value="selected.includes(record['策略'])" @change="toggleSelect(record['策略'])">
                 <span :class="record['策略'].includes('V3.0-E') ? 'text-acc mono' : 'mono'">{{ record['策略'] }}</span>
               </a-checkbox>
             </template>
           </a-table-column>
-          <a-table-column title="ANNUAL RET" data-index="年化收益" :sortable="{ sortDirections: ['descend','ascend'] }">
+          <a-table-column :title="$t('col.annualRet')" data-index="年化收益" :sortable="{ sortDirections: ['descend','ascend'] }">
             <template #cell="{ record }">
               <span class="mono" :class="parseFloat(record['年化收益']) > 25 ? 'text-pos' : ''">{{ record['年化收益'] }}</span>
             </template>
@@ -33,10 +33,10 @@
               <span class="mono" :class="parseFloat(record['最大回撤']) < -15 ? 'text-neg' : ''">{{ record['最大回撤'] }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="WIN" data-index="胜率"></a-table-column>
+          <a-table-column :title="$t('col.win')" data-index="胜率"></a-table-column>
           <a-table-column title="CALMAR" data-index="Calmar" :sortable="{ sortDirections: ['descend','ascend'] }"></a-table-column>
-          <a-table-column title="CUM RET" data-index="累计收益"></a-table-column>
-          <a-table-column title="VS BH" data-index="vs买入持有" :width="100">
+          <a-table-column :title="$t('col.cumRet')" data-index="累计收益"></a-table-column>
+          <a-table-column :title="$t('col.vsBh')" data-index="vs买入持有" :width="100">
             <template #cell="{ record }">
               <span class="mono" :class="parseFloat(record['vs买入持有']) > 0 ? 'text-pos' : 'text-neg'">
                 {{ parseFloat(record['vs买入持有']) > 0 ? '+' : '' }}{{ record['vs买入持有'] }}
@@ -50,14 +50,14 @@
       </div>
     </HudCard>
 
-    <HudCard title="MULTI-STRATEGY COMPARE" meta="SELECTED">
+    <HudCard :title="$t('card.multiStrategyCompare')" :meta="$t('meta.selected')">
       <div class="control-bar">
         <a-radio-group v-model="metric" type="button" size="small">
           <a-radio value="夏普">SHARPE</a-radio>
-          <a-radio value="年化收益">RET</a-radio>
+          <a-radio value="年化收益">{{ $t('txt.ret') }}</a-radio>
           <a-radio value="最大回撤">MAX DD</a-radio>
           <a-radio value="Calmar">CALMAR</a-radio>
-          <a-radio value="胜率">WIN</a-radio>
+          <a-radio value="胜率">{{ $t('txt.win') }}</a-radio>
         </a-radio-group>
       </div>
       <ChartBox :option="barOpt" height="380px" />
@@ -67,7 +67,7 @@
       </div>
     </HudCard>
 
-    <HudCard title="RADAR OVERLAY" meta="5-AXIS" class="span-2">
+    <HudCard :title="$t('card.radarOverlay')" :meta="$t('meta.axis5')" class="span-2">
       <div class="control-bar">
         <span class="hint">已选 <b class="text-acc">{{ selected.length }}</b> / 4 策略做雷达叠加</span>
         <a-button size="mini" @click="selected = ['V3.0-E 多周期集成', '买入持有', 'V3.0-D +Kelly']">默认对比</a-button>
@@ -123,6 +123,10 @@ function parseNum(s: string | undefined): number {
   return parseFloat(s.replace('%', '').replace('+', '')) || 0
 }
 
+function dispName(name: string): string {
+  return name === '买入持有' ? t('chart.buyHold') : name
+}
+
 function barOpt(): EChartsOption {
   const rows = strategies.value.filter(s => selected.value.includes(s['策略'] || ''))
   return {
@@ -131,7 +135,7 @@ function barOpt(): EChartsOption {
     grid: { left: '12%', right: '5%', bottom: '15%', top: '8%' },
     xAxis: {
       type: 'category',
-      data: rows.map(r => r['策略']),
+      data: rows.map(r => dispName(r['策略'] || '')),
       axisLine: { lineStyle: { color: C.border } },
       axisLabel: { color: C.text3, fontSize: 10, rotate: 25, formatter: (v: string) => v.length > 8 ? v.substring(0, 8) + '…' : v }
     },
@@ -170,7 +174,7 @@ function radarOpt(): EChartsOption {
     const cal = parseNum(r['Calmar'])
     const dd = -parseNum(r['最大回撤'])  // 转为正
     return {
-      name: r['策略'],
+      name: dispName(r['策略'] || ''),
       value: [sharpe, ret, win, cal, dd],
       lineStyle: { color: COLORS[i % COLORS.length], width: 2 },
       areaStyle: { color: COLORS[i % COLORS.length], opacity: 0.12 },
@@ -181,7 +185,7 @@ function radarOpt(): EChartsOption {
     backgroundColor: C.bg, animation: false,
     tooltip: { trigger: 'item' },
     legend: {
-      data: rows.map(r => r['策略']),
+      data: rows.map(r => dispName(r['策略'] || '')),
       textStyle: { color: C.text3, fontSize: 10 },
       top: 0, type: 'scroll'
     },

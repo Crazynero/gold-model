@@ -1,14 +1,14 @@
 <template>
   <div class="backtest-grid">
-    <HudCard title="STRATEGY COMPARISON" meta="8 STRATEGIES" class="span-2">
+    <HudCard :title="$t('card.strategyComparison')" :meta="$t('meta.strategies8')" class="span-2">
       <a-table :data="strategies" :pagination="false" size="small" :bordered="{ cell: true }" row-key="策略">
         <template #columns>
-          <a-table-column title="STRATEGY" data-index="策略">
+          <a-table-column :title="$t('col.strategy')" data-index="策略">
             <template #cell="{ record }">
               <span :class="record['策略'].includes('V3.0-E') ? 'text-acc mono' : 'mono'">{{ record['策略'] }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="ANNUAL RET" data-index="年化收益"></a-table-column>
+          <a-table-column :title="$t('col.annualRet')" data-index="年化收益"></a-table-column>
           <a-table-column title="VOL" data-index="年化波动"></a-table-column>
           <a-table-column title="SHARPE" data-index="夏普">
             <template #cell="{ record }">
@@ -20,25 +20,25 @@
               <span class="text-neg mono">{{ record.最大回撤 }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="WIN RATE" data-index="胜率"></a-table-column>
+          <a-table-column :title="$t('col.winRate')" data-index="胜率"></a-table-column>
           <a-table-column title="CALMAR" data-index="Calmar"></a-table-column>
         </template>
       </a-table>
     </HudCard>
 
-    <HudCard title="STRATEGY EVOLUTION" meta="CUMULATIVE RETURN" class="span-2">
+    <HudCard :title="$t('card.strategyEvolution')" :meta="$t('meta.cumulativeReturn')" class="span-2">
       <ChartBox :option="strategyOpt" height="440px" />
     </HudCard>
 
-    <HudCard title="DRAWDOWN PROFILE" meta="UNDERWATER CURVE" class="span-2">
+    <HudCard :title="$t('card.drawdownProfile')" :meta="$t('meta.underwaterCurve')" class="span-2">
       <ChartBox :option="drawdownOpt" height="380px" />
     </HudCard>
 
-    <HudCard title="REGIME RADAR" meta="V3.0-E vs BH · 真实数据">
+    <HudCard :title="$t('card.regimeRadar')" meta="V3.0-E vs BH · 真实数据">
       <ChartBox :option="radarOpt" height="380px" />
     </HudCard>
 
-    <HudCard title="BACKTEST NOTES" class="span-2">
+    <HudCard :title="$t('card.backtestNotes')" class="span-2">
       <div class="notes">
         <p><b>V3.0-E</b> 多周期集成：5日/10日/20日/60日XGBoost加权</p>
         <p><b>非对称仓位</b>：牛市做多不做空，熊市做空不做多</p>
@@ -55,6 +55,9 @@ import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData } from '@/composables/useDashboardData'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const C = {
   bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62',
@@ -77,12 +80,12 @@ function strategyOpt(): EChartsOption {
   return {
     backgroundColor: C.bg, animation: false,
     tooltip: { trigger: 'axis' },
-    legend: { data: ['买入持有', 'V3.0-E'], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
+    legend: { data: [t('chart.bh'), 'V3.0-E'], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
     grid: { left: '5%', right: '3%', bottom: '8%', top: '12%' },
     xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 10 } },
     yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3 }, splitLine: { lineStyle: { color: C.grid } } },
     series: [
-      { name: '买入持有', type: 'line', data: bh, symbol: 'none', lineStyle: { width: 1, color: C.text3, opacity: 0.5 } },
+      { name: t('chart.bh'), type: 'line', data: bh, symbol: 'none', lineStyle: { width: 1, color: C.text3, opacity: 0.5 } },
       { name: 'V3.0-E', type: 'line', data: v3e, symbol: 'none', lineStyle: { width: 1.5, color: C.accent } }
     ]
   }
@@ -127,7 +130,7 @@ function radarOpt(): EChartsOption {
   return {
     backgroundColor: C.bg, animation: false,
     tooltip: { trigger: 'item' },
-    legend: { data: ['V3.0-E', '买入持有'], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
+    legend: { data: ['V3.0-E', t('chart.bh')], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
     radar: {
       indicator: [
         { name: 'SHARPE', max: 3 },
@@ -146,7 +149,7 @@ function radarOpt(): EChartsOption {
       type: 'radar',
       data: [
         { value: toArr(v3e), name: 'V3.0-E', lineStyle: { color: C.accent }, areaStyle: { color: 'rgba(217, 166, 72,0.15)' } },
-        { value: toArr(bh), name: '买入持有', lineStyle: { color: C.text3 }, areaStyle: { color: 'rgba(139,148,158,0.08)' } }
+        { value: toArr(bh), name: t('chart.bh'), lineStyle: { color: C.text3 }, areaStyle: { color: 'rgba(139,148,158,0.08)' } }
       ]
     }]
   }

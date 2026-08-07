@@ -1,14 +1,14 @@
 <template>
   <div class="mv-grid">
-    <HudCard title="VERSION COMPARISON TABLE" meta="V3.0-A → V3.0-E + BH" class="span-2">
+    <HudCard :title="$t('card.versionComparisonTable')" meta="V3.0-A → V3.0-E + BH" class="span-2">
       <a-table :data="strategyRows" :pagination="false" size="small" :bordered="{ cell: true }" row-key="策略">
         <template #columns>
-          <a-table-column title="STRATEGY" data-index="策略" :width="180" fixed="left">
+          <a-table-column :title="$t('col.strategy')" data-index="策略" :width="180" fixed="left">
             <template #cell="{ record }">
               <span :class="record['策略'].includes('V3.0-E') ? 'text-acc mono' : 'mono'">{{ record['策略'] }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="ANNUAL RET" data-index="年化收益" :sortable="{ sortDirections: ['descend','ascend'] }">
+          <a-table-column :title="$t('col.annualRet')" data-index="年化收益" :sortable="{ sortDirections: ['descend','ascend'] }">
             <template #cell="{ record }">
               <span class="mono" :class="parseFloat(record['年化收益']) > 25 ? 'text-pos' : 'text-2'">{{ record['年化收益'] }}</span>
             </template>
@@ -23,21 +23,21 @@
               <span class="mono text-neg">{{ record['最大回撤'] }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="WIN" data-index="胜率"></a-table-column>
-          <a-table-column title="CUM RET" data-index="累计收益"></a-table-column>
+          <a-table-column :title="$t('col.win')" data-index="胜率"></a-table-column>
+          <a-table-column :title="$t('col.cumRet')" data-index="累计收益"></a-table-column>
         </template>
       </a-table>
     </HudCard>
 
-    <HudCard title="EVOLUTION CHAIN" meta="V1→V5" class="span-2">
+    <HudCard :title="$t('card.evolutionChain')" meta="V1→V5" class="span-2">
       <ChartBox :option="evolutionOpt" height="320px" />
     </HudCard>
 
-    <HudCard title="MULTI-METRIC RADAR" meta="6 DIMENSIONS">
+    <HudCard :title="$t('card.multiMetricRadar')" :meta="$t('meta.dimensions6')">
       <ChartBox :option="radarOpt" height="320px" />
     </HudCard>
 
-    <HudCard title="KEY OBSERVATIONS" meta="LESSONS">
+    <HudCard :title="$t('card.keyObservations')" :meta="$t('meta.lessons')">
       <div class="obs-list">
         <div class="obs-item">
           <span class="obs-tag text-pos">V3.0-B</span>
