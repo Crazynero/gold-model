@@ -4,6 +4,7 @@
       <span>{{ $t('txt.sysC') }}<b>{{ $t('common.online') }}</b></span>
       <span>{{ $t('txt.modelC') }}<b>V7/VUE3</b></span>
       <span>{{ $t('txt.dataC') }}<b class="src-tag" :class="srcClass">{{ srcLabel }}</b></span>
+      <span class="api-tag" :class="apiClass">API:{{ apiLabel }}</span>
       <span v-if="wsConnected" class="ws-tag">
         <span class="ws-dot"></span>{{ $t('txt.wsLive') }}</span>
       <span v-else-if="apiBase" class="ws-tag dim">{{ $t('txt.wsOff') }}</span>
@@ -24,7 +25,7 @@
 import { computed } from 'vue'
 import {
   dashboardData, executionData, extractValue,
-  lastUpdate, updateSource, apiBase,
+  lastUpdate, updateSource, apiBase, apiStatus,
   wsConnected, wsMessageCount
 } from '@/composables/useDashboardData'
 
@@ -41,6 +42,18 @@ const srcClass = computed(() => {
   if (updateSource.value === 'fetch' || updateSource.value === 'api') return 'src-live'
   if (updateSource.value === 'window') return 'src-inline'
   return 'src-off'
+})
+
+const apiLabel = computed(() => {
+  if (apiStatus.value === 'online') return 'ON'
+  if (apiStatus.value === 'detecting') return '...'
+  return 'OFF'
+})
+
+const apiClass = computed(() => {
+  if (apiStatus.value === 'online') return 'api-on'
+  if (apiStatus.value === 'detecting') return 'api-detect'
+  return 'api-off'
 })
 
 const dotClass = computed(() => {
@@ -94,6 +107,17 @@ b { color: var(--accent); font-weight: 500; }
 .src-tag.src-ws { color: var(--accent); border-color: rgba(217, 166, 72,0.4); }
 .src-tag.src-inline { color: var(--warn); border-color: rgba(238, 193, 112,0.3); }
 .src-tag.src-off { color: var(--neg); border-color: rgba(207, 107, 98,0.3); }
+
+.api-tag {
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+.api-tag.api-on { color: var(--pos); border-color: rgba(69,183,137,0.3); }
+.api-tag.api-detect { color: var(--warn); border-color: rgba(238,193,112,0.3); }
+.api-tag.api-off { color: var(--text-3); border-color: var(--border); }
 
 .ws-tag {
   display: inline-flex;

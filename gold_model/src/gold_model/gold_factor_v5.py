@@ -52,6 +52,7 @@ plt.rcParams['axes.unicode_minus'] = False
 from gold_model.paths import (
     CHARTS_V5_DIR, DASHBOARD_JSON, EXECUTION_JSON, DRIFT_HISTORY,
     REPORT_V5_XLSX, EXECUTION_LATEST_JSON, ANALYSIS_JSON, ensure_dirs,
+    VUE3_PUBLIC_DIR,
 )
 ensure_dirs()
 
@@ -2436,6 +2437,23 @@ print(f"  ✅ execution_data.json (仓位={suggested_pos:.1%}, Regime={current_r
 
 # 同步到根目录（供API使用）
 shutil.copy2(exec_json_path, str(EXECUTION_LATEST_JSON))
+
+# 同步到 dashboard-vue3/public/（vite 静态资源目录，V5 直接写不再靠手动 cp）
+VUE3_PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
+shutil.copy2(dashboard_json_path, str(VUE3_PUBLIC_DIR / 'dashboard_data.json'))
+shutil.copy2(exec_json_path, str(VUE3_PUBLIC_DIR / 'execution_data.json'))
+print("  ✅ synced to dashboard-vue3/public/")
+
+# ── 直接写 SQLite（不再依赖 ingest_current.py 搬运）──
+print("  ✅ SQLite ingest", end='')
+try:
+    from gold_model.db import db
+    db.init()
+    sid = db.insert_signal(dashboard_data, execution_data)
+    stats = db.stats()
+    print(f" → signal_id={sid}, total={stats['total_signals']}")
+except Exception as e:
+    print(f" ❌ failed: {e}")
 
 # ── V4.2: 模型漂移快照 ──
 # 每次运行追加一条记录到 drift_history.json，供漂移检测用

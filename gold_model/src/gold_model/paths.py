@@ -14,6 +14,7 @@ CHARTS_V5_DIR = OUTPUTS_DIR / 'charts_v5'
 WEEKLY_REPORTS_DIR = OUTPUTS_DIR / 'weekly_reports'
 EXECUTION_PLAN_DIR = OUTPUTS_DIR / 'execution_plan'
 REPORTS_DIR = OUTPUTS_DIR / 'reports'
+VUE3_PUBLIC_DIR = PROJECT_ROOT / 'dashboard-vue3' / 'public'  # vite dev/build 静态资源目录
 
 # 常用文件
 FOMC_CACHE = DATA_DIR / 'fomc_cache.json'

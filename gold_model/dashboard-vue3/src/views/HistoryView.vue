@@ -6,6 +6,9 @@
       </a-radio-group>
       <div class="range-info">
         <span>共 {{ filtered.length }} 条记录</span>
+        <span class="data-source-tag" :class="apiBase ? 'src-db' : 'src-json'">
+          {{ apiBase ? 'SQLite' : 'drift_json' }}
+        </span>
         <span v-if="filtered.length > 0">
           {{ filtered[0].run_date || filtered[0].timestamp }} → {{ filtered[filtered.length - 1].run_date || filtered[filtered.length - 1].timestamp }}
         </span>
@@ -57,11 +60,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
-import { driftHistory } from '@/composables/useDashboardData'
+import { driftHistory, apiBase, apiStatus, fetchDbHistory } from '@/composables/useDashboardData'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -74,6 +77,30 @@ const ranges = [
 ]
 const range = ref(30)
 
+// SQLite 历史信号（API 模式下从后端拉取）
+const dbHistory = ref<any[]>([])
+
+// 加载 SQLite 历史
+async function loadDbHistory() {
+  if (!apiBase.value) { dbHistory.value = []; return }
+  const rows = await fetchDbHistory(365)  // 拉一年
+  dbHistory.value = rows || []
+}
+
+onMounted(() => {
+  loadDbHistory()
+})
+
+// API 状态变化时重新加载
+watch(apiBase, () => { loadDbHistory() })
+
+// 历史数据源：API 模式用 SQLite，否则用 drift_history
+const historySource = computed(() => {
+  return apiBase.value && dbHistory.value.length > 0
+    ? dbHistory.value
+    : (driftHistory.value || [])
+})
+
 const C = {
   bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62',
   warn: '#eec170', gold: '#d9a648', text2: '#a09d94', text3: '#66635c',
@@ -82,7 +109,7 @@ const C = {
 
 // 按时间倒序过滤最近 N 天
 const filtered = computed(() => {
-  const all = driftHistory.value || []
+  const all = historySource.value
   if (all.length === 0) return []
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - range.value)
@@ -216,7 +243,9 @@ const logRows = computed(() => {
     weighted_prob: r.current_state?.probability || 0,
     best_sharpe: r.best_sharpe || 0,
     hit_rate_20d: r.signal_backtest?.recent_20_hit_rate || 0,
-    signal_action: r.current_state?.regime === '熊市' ? '空仓观望' : (r.current_state?.probability > 0.6 ? '建仓' : '观望')
+    signal_action: r.signal_action ||
+      (r.current_state?.regime === '熊市' ? '空仓观望'
+       : (r.current_state?.probability > 0.6 ? '建仓' : '观望'))
   }))
 })
 </script>
@@ -227,11 +256,20 @@ const logRows = computed(() => {
 .range-info {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-top: 10px;
   font-family: var(--mono);
   font-size: 11px;
   color: var(--text-3);
 }
+.data-source-tag {
+  padding: 1px 6px;
+  border: 1px solid;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+.src-db { color: var(--pos); border-color: rgba(69,183,137,0.3); }
+.src-json { color: var(--warn); border-color: rgba(238,193,112,0.3); }
 @media (max-width: 1024px) {
   .history-grid { grid-template-columns: 1fr; }
   .history-grid .span-2 { grid-column: span 1; }

@@ -84,10 +84,14 @@ export const apiBase = ref<string>('')
 /** WebSocket 连接状态 */
 export const wsConnected = ref(false)
 export const wsMessageCount = ref(0)
+/** API 探测状态：'detecting' | 'online' | 'offline' */
+export const apiStatus = ref<'detecting' | 'online' | 'offline'>('detecting')
 
 let pollTimer: any = null
 let ws: WebSocket | null = null
 const POLL_INTERVAL = 30000  // 30秒
+const API_DETECT_TIMEOUT = 2500  // 探测超时 2.5s
+const API_DEFAULT_URL = 'http://localhost:8000'
 
 /** 从overview中按key子串匹配取值（容错中文键名变化） */
 export function extractValue(o: Record<string, string | number> | undefined, k: string): string | null {
@@ -242,8 +246,53 @@ export function setApiBase(url: string) {
   }
 }
 
+/** 自动探测本地 API 是否可用，成功则启用 API 模式，失败回退 JSON */
+export async function autoDetectApi(url: string = API_DEFAULT_URL): Promise<boolean> {
+  apiStatus.value = 'detecting'
+  try {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), API_DETECT_TIMEOUT)
+    const resp = await fetch(`${url}/api/health`, { signal: ctrl.signal })
+    clearTimeout(timer)
+    if (resp.ok) {
+      const d = await resp.json()
+      if (d?.status === 'ok') {
+        apiBase.value = url
+        apiStatus.value = 'online'
+        return true
+      }
+    }
+  } catch {
+    // 探测失败（连接拒绝/超时/CORS），静默回退
+  }
+  apiBase.value = ''
+  apiStatus.value = 'offline'
+  return false
+}
+
+/** 手动重试 API 探测（用户在 UI 点击重试时调用） */
+export async function retryApiDetection(url?: string) {
+  const ok = await autoDetectApi(url)
+  if (ok) {
+    stopPolling()
+    await loadAll()
+    connectWS()
+  }
+  return ok
+}
+
 export function useDashboard() {
-  onMounted(() => {
+  onMounted(async () => {
+    // 先探测本地 API，成功启用 API 模式（读 SQLite 历史），失败回退 JSON 模式
+    if (apiStatus.value === 'detecting') {
+      const ok = await autoDetectApi()
+      if (ok) {
+        await loadAll()  // API 模式加载
+        connectWS()
+        return
+      }
+    }
+    // JSON 回退模式
     if (!dataReady.value) loadAll()
     startPolling()
   })
@@ -253,12 +302,50 @@ export function useDashboard() {
   })
   return {
     dashboardData, executionData, dataReady, dataError,
-    lastUpdate, updateSource, apiBase,
+    lastUpdate, updateSource, apiBase, apiStatus,
     wsConnected, wsMessageCount
   }
 }
 
 // === 高级 API（配合 E 接口）===
+
+/** 从 SQLite 查历史信号（需 API 模式，返回字段与 drift_history 格式对齐便于复用） */
+export async function fetchDbHistory(days: number = 90, regime?: string) {
+  if (!apiBase.value) return null
+  try {
+    const params = new URLSearchParams({ days: String(days) })
+    if (regime) params.append('regime', regime)
+    const resp = await fetch(`${apiBase.value}/api/db/history?${params}`)
+    if (!resp.ok) return null
+    const r = await resp.json()
+    // 把 SQLite 字段映射成 drift_history 兼容格式
+    const rows = (r?.data || []).map((s: any) => ({
+      timestamp: s.run_at,
+      run_date: s.base_date,
+      current_state: {
+        regime: s.regime || '震荡',
+        probability: s.weighted_prob ?? 0,
+        position: s.position ?? 0,
+        gold_price: s.gold_price ?? 0,
+      },
+      ml_metrics: {},  // SQLite 不存逐 horizon 指标，留空
+      best_sharpe: s.v3e_sharpe ?? 0,
+      signal_backtest: {
+        recent_20_hit_rate: s.hit_rate_20d ?? 0,
+      },
+      // SQLite 独有字段
+      prob_5d: s.prob_5d,
+      prob_10d: s.prob_10d,
+      prob_20d: s.prob_20d,
+      prob_60d: s.prob_60d,
+      holdout_sharpe: s.holdout_sharpe,
+      holdout_decay: s.holdout_decay,
+      signal_action: s.signal_action,
+      pos_factor: s.pos_factor,
+    }))
+    return rows
+  } catch { return null }
+}
 
 export async function fetchHistory(days: number = 30, regime?: string) {
   if (!apiBase.value) return null
