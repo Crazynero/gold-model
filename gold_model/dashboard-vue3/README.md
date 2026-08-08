@@ -11,21 +11,20 @@
 ### 开发模式
 
 ```bash
-cd /home/z/my-project/reports/gold_model/dashboard-vue3
+cd dashboard-vue3
 npm install
 npm run dev          # http://localhost:5173
 npm run build        # 输出到 dist/
-python3 inject_data.py   # 把 JSON + drift_history 内联到 dist/index.html
+PYTHONPATH=../src python3 inject_data.py   # 把 JSON + drift_history 内联到 dist/index.html
 ```
 
 ### 后端 API（可选，启用实时数据 + WS + PDF + 飞书）
 
 ```bash
-pip install fastapi uvicorn yfinance
-python3 -m uvicorn api_server:app --host 0.0.0.0 --port 8000 --reload
+bash ../scripts/start_api.sh start   # 或 PYTHONPATH=src python3 -m gold_model.api_server
 ```
 
-前端切到 API 模式：浏览器 Console 执行 `setApiBase('http://localhost:8000')`
+前端自动探测同源的 `/api/health`：在线显示 `API:ON`（实时数据 + SQLite 历史），离线回退内联静态数据，无需手动配置。
 
 ## 文件结构
 
@@ -35,13 +34,7 @@ dashboard-vue3/
 ├── index.html                  # Vite 入口模板
 ├── vite.config.ts              # Vite + vite-plugin-singlefile 配置
 ├── package.json
-├── api_server.py               # FastAPI 后端（15+ 接口）
-├── db.py                       # SQLite 数据层（signals + alerts 表）
-├── weekly_report.py            # PDF 周报生成器（ReportLab）
-├── send_to_feishu.py           # 飞书机器人推送
-├── ingest_current.py           # 独立 ingest 脚本（cron 调用）
 ├── inject_data.py              # JSON 内联到 dist 的脚本
-├── gold_signals.db             # SQLite 数据库（运行时生成）
 ├── public/
 │   ├── dashboard_data.json     # V5 脚本输出的全量数据
 │   ├── execution_data.json     # 执行方案 + 仓位历史
@@ -50,7 +43,7 @@ dashboard-vue3/
 └── src/
     ├── main.ts                 # 应用入口 + SW 注册
     ├── App.vue                 # 根布局 + 17 Tab + Ctrl+K 命令面板
-    ├── styles/theme.css        # ArcoDesign 主题覆盖（深黑霓虹青HUD）
+    ├── styles/theme.css        # ArcoDesign 主题覆盖（V7 暖金晨报）
     ├── composables/
     │   └── useDashboardData.ts # 数据加载 + WS + 轮询 + API
     ├── components/
@@ -214,14 +207,13 @@ inject_data.py
 - **PWA**：manifest.json + Service Worker（双缓存策略）
 - **字体**：JetBrains Mono / SF Mono / Noto Serif SC
 
-## 主题色
+## 主题色（V7 暖金晨报）
 
-- 背景：`#04060a` 深黑
-- 主色：`#00d4ff` 霓虹青
-- 金价：`#ffb020` 琥珀金
-- 正值：`#00ff9c` 霓虹绿
-- 负值：`#ff3860` 霓虹红
-- 警告：`#ffb800` 琥珀
+- 背景：`#0e0f11` 暖石墨
+- 主色/金价：`#d9a648` 暖金（高光 `#eec170`）
+- 正值：`#45b789` 柔绿
+- 负值：`#cf6b62` 柔红
+- 警告：`#eec170` 金杏
 
 ---
 
