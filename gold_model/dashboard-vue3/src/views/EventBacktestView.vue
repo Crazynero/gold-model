@@ -81,6 +81,7 @@ import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData, executionData } from '@/composables/useDashboardData'
+import { fmtNum, fmtMoney } from '@/utils/format'
 
 const { t } = useI18n()
 
@@ -195,11 +196,11 @@ function perfOpt(): EChartsOption {
   if (rows.length === 0) return {}
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     legend: { data: ['窗口收益', '策略收益', 'Alpha'], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
     grid: { left: '5%', right: '3%', bottom: '8%', top: '12%' },
     xAxis: { type: 'category', data: rows.map(r => r.date), axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 10, rotate: 30 } },
-    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: '{value}%' }, splitLine: { lineStyle: { color: C.grid } } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtNum(v) + '%' }, splitLine: { lineStyle: { color: C.grid } } },
     series: [
       { name: '窗口收益', type: 'bar', data: rows.map(r => +(r.windowRet * 100).toFixed(2)), itemStyle: { color: C.gold }, barWidth: '25%' },
       { name: '策略收益', type: 'bar', data: rows.map(r => +(r.stratRet * 100).toFixed(2)), itemStyle: { color: C.accent }, barWidth: '25%' },
@@ -216,10 +217,10 @@ function windowOpt(): EChartsOption {
   const regimes = win.map(r => r['Regime'] || '震荡')
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtMoney(v) },
     grid: { left: '8%', right: '5%', bottom: '15%', top: '5%' },
     xAxis: { type: 'category', data: win.map(r => r['日期']), axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 10, rotate: 30 } },
-    yAxis: { type: 'value', scale: true, axisLine: { show: false }, axisLabel: { color: C.text3 }, splitLine: { lineStyle: { color: C.grid } } },
+    yAxis: { type: 'value', scale: true, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtMoney(v) }, splitLine: { lineStyle: { color: C.grid } } },
     series: [{
       type: 'line',
       data: prices,

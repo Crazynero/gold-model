@@ -559,6 +559,14 @@ const messages = {
       etfLayer: 'ETF层', futLayer: '期货层', modelPos: '模型仓位',
       median: '中位数', principal: '本金', goldPrice: '金价'
     },
+    cmd: {
+      placeholder: '输入命令或标签名（如 监控墙 / 信号回测 / 切换标的）…',
+      empty: '没有匹配的命令',
+      navHint: '↑↓ 导航', execHint: '↵ 执行', closeHint: 'ESC 关闭',
+      switchTab: '切换到「{label}」', switchSymbol: '切换标的 {symbol}',
+      refresh: '刷新数据', runBt: '运行信号回测', runSim: '运行仓位模拟器',
+      pdf: '生成 PDF 周报', csv: '导出 CSV 数据', theme: '切换主题（开发中）'
+    },
     nav: {
       wall: '监控墙', overview: '总览', factors: '因子分析', backtest: '策略回测',
       backtestHub: '回测中心',

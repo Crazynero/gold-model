@@ -131,6 +131,7 @@ import type { EChartsOption } from 'echarts'
 import ProbBars from '@/components/ProbBars.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData, executionData, driftHistory, extractValue, simpleMA } from '@/composables/useDashboardData'
+import { fmtNum } from '@/utils/format'
 
 const { t } = useI18n()
 
@@ -199,15 +200,15 @@ const multiHorizon = computed(() => {
 })
 
 const v3e = computed(() => dashboardData.value.strategies?.find(s => s.策略 && s.策略.includes('V3.0-E')))
-const sharpe = computed(() => v3e.value?.夏普 || '--')
-const maxDD = computed(() => v3e.value?.最大回撤 || '--')
+const sharpe = computed(() => fmtNum(v3e.value?.夏普))
+const maxDD = computed(() => fmtNum(v3e.value?.最大回撤))
 const acc20 = computed(() => {
   const m20 = dashboardData.value.ml_models?.find(m => m.period.includes('20'))
-  return m20?.accuracy || '--'
+  return fmtNum(m20?.accuracy)
 })
 const auc20 = computed(() => {
   const m20 = dashboardData.value.ml_models?.find(m => m.period.includes('20'))
-  return m20?.auc || '--'
+  return fmtNum(m20?.auc)
 })
 
 const full = computed(() => {
@@ -227,7 +228,7 @@ const decay = computed(() => {
 const feat = computed(() => dashboardData.value.v5_feature_count || '--')
 const dirAcc = computed(() => {
   const r20 = dashboardData.value.v5_regression?.find(r => r.horizon === '20日')
-  return r20?.dir_acc || '--'
+  return fmtNum(r20?.dir_acc)
 })
 
 // === Chart option builders (pure functions, no side effects) ===
@@ -338,11 +339,11 @@ function featOpt(): EChartsOption {
   const top8 = d.features.slice(0, 8).reverse()
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     grid: { left: '30%', right: '5%', bottom: '5%', top: '5%' },
-    xAxis: { type: 'value', axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9 }, splitLine: { lineStyle: { color: C.grid } } },
+    xAxis: { type: 'value', axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9, formatter: (v: number) => fmtNum(v) }, splitLine: { lineStyle: { color: C.grid } } },
     yAxis: { type: 'category', data: top8.map(f => f.name), axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: '#a09d94', fontSize: 10 } },
-    series: [{ type: 'bar', data: top8.map(f => ({ value: f.avg, itemStyle: { color: C.accent } })), barWidth: '60%', label: { show: true, position: 'right', color: C.text3, fontSize: 9 } }]
+    series: [{ type: 'bar', data: top8.map(f => ({ value: f.avg, itemStyle: { color: C.accent } })), barWidth: '60%', label: { show: true, position: 'right', color: C.text3, fontSize: 9, formatter: (p: any) => fmtNum(p.value) } }]
   }
 }
 

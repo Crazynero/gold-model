@@ -66,9 +66,15 @@
       <a-table :data="mlModels" :pagination="false" size="small" :bordered="{ cell: true }">
         <template #columns>
           <a-table-column :title="$t('col.period')" data-index="period"></a-table-column>
-          <a-table-column :title="$t('col.accuracy')" data-index="accuracy"></a-table-column>
-          <a-table-column title="AUC" data-index="auc"></a-table-column>
-          <a-table-column title="IC" data-index="ic"></a-table-column>
+          <a-table-column :title="$t('col.accuracy')" data-index="accuracy">
+            <template #cell="{ record }"><span class="mono">{{ fmtNum(record.accuracy) }}</span></template>
+          </a-table-column>
+          <a-table-column title="AUC" data-index="auc">
+            <template #cell="{ record }"><span class="mono">{{ fmtNum(record.auc) }}</span></template>
+          </a-table-column>
+          <a-table-column title="IC" data-index="ic">
+            <template #cell="{ record }"><span class="mono">{{ fmtNum(record.ic) }}</span></template>
+          </a-table-column>
         </template>
       </a-table>
     </HudCard>
@@ -82,6 +88,7 @@ import HudCard from '@/components/HudCard.vue'
 import ProbBars from '@/components/ProbBars.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData, extractValue, simpleMA } from '@/composables/useDashboardData'
+import { fmtNum, fmtMoney } from '@/utils/format'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -131,7 +138,7 @@ const multiHorizon = computed(() => {
 })
 
 const v3e = computed(() => dashboardData.value.strategies?.find(s => s.策略 && s.策略.includes('V3.0-E')))
-const full = computed(() => v3e.value?.夏普 || '--')
+const full = computed(() => fmtNum(v3e.value?.夏普))
 const oos = computed(() => {
   const h = dashboardData.value.v5_holdout?.find(s => s.strategy && s.strategy.includes('V3.0-E'))
   return h ? h.sharpe.toFixed(2) : '--'
@@ -145,7 +152,7 @@ const decay = computed(() => {
 const feat = computed(() => dashboardData.value.v5_feature_count || '--')
 const dirAcc = computed(() => {
   const r = dashboardData.value.v5_regression?.find(r => r.horizon === '20日')
-  return r?.dir_acc || '--'
+  return fmtNum(r?.dir_acc)
 })
 
 function priceOpt(): EChartsOption {
@@ -159,11 +166,11 @@ function priceOpt(): EChartsOption {
   const ma50 = simpleMA(prices, 50)
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtMoney(v) },
     legend: { data: ['金价', 'MA20', 'MA50'], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
     grid: { left: '5%', right: '3%', bottom: '8%', top: '12%' },
     xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 10 } },
-    yAxis: { type: 'value', scale: true, axisLine: { show: false }, axisLabel: { color: C.text3 }, splitLine: { lineStyle: { color: C.grid } } },
+    yAxis: { type: 'value', scale: true, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => '$' + fmtNum(v) }, splitLine: { lineStyle: { color: C.grid } } },
     series: [
       { name: '金价', type: 'line', data: prices, symbol: 'none', lineStyle: { width: 1.5, color: C.gold } },
       { name: 'MA20', type: 'line', data: ma20, symbol: 'none', lineStyle: { width: 1, color: C.accent, opacity: 0.6 } },
@@ -184,11 +191,11 @@ function strategyOpt(): EChartsOption {
   const v3e = bh.map(v => 1 + (v - 1) * 0.34)
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     legend: { data: ['BH', 'V3.0-E'], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
     grid: { left: '5%', right: '3%', bottom: '8%', top: '12%' },
     xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 10 } },
-    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3 }, splitLine: { lineStyle: { color: C.grid } } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtNum(v) }, splitLine: { lineStyle: { color: C.grid } } },
     series: [
       { name: t('chart.bh'), type: 'line', data: bh, symbol: 'none', lineStyle: { width: 1, color: C.text3, opacity: 0.5 } },
       { name: 'V3.0-E', type: 'line', data: v3e, symbol: 'none', lineStyle: { width: 1.5, color: C.accent } }

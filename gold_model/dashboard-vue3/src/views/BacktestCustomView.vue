@@ -95,6 +95,7 @@ import { Message } from '@arco-design/web-vue'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData, executionData } from '@/composables/useDashboardData'
+import { fmtNum, fmtMoney } from '@/utils/format'
 
 const { t } = useI18n()
 
@@ -275,7 +276,7 @@ function runBacktest() {
     totalRet, annualRet, sharpe, maxDD, winRate, calmar,
     days, vol: annualVol
   }
-  Message.success(t('common.backtestDone', { days, sharpe: sharpe.toFixed(2), usingReal, days }))
+  Message.success(t('common.backtestDone', { days, sharpe: sharpe.toFixed(2), usingReal }))
 }
 
 function resetConfig() {
@@ -299,13 +300,13 @@ function navOpt(): EChartsOption {
   if (data.length === 0) return {}
   return {
     backgroundColor: '#0e0f11', animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtMoney(v) },
     legend: { data: [t('chart.strategyNav'), t('chart.goldBenchmark')], textStyle: { color: '#66635c', fontSize: 10 }, top: 0 },
     grid: { left: '5%', right: '5%', bottom: '8%', top: '12%' },
     xAxis: { type: 'category', data: data.map(d => d.date), axisLine: { lineStyle: { color: 'rgba(217, 166, 72,0.14)' } }, axisLabel: { color: '#66635c', fontSize: 10 } },
     yAxis: [
-      { type: 'value', scale: true, axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: '${value}' }, splitLine: { lineStyle: { color: 'rgba(217, 166, 72,0.05)' } } },
-      { type: 'value', scale: true, position: 'right', axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: '${value}' }, splitLine: { show: false } }
+      { type: 'value', scale: true, axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: (v: number) => fmtMoney(v) }, splitLine: { lineStyle: { color: 'rgba(217, 166, 72,0.05)' } } },
+      { type: 'value', scale: true, position: 'right', axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: (v: number) => fmtMoney(v) }, splitLine: { show: false } }
     ],
     dataZoom: [{ type: 'inside' }, { type: 'slider' }],
     series: [
@@ -323,7 +324,7 @@ function ddOpt(): EChartsOption {
     tooltip: { trigger: 'axis', formatter: (p: any) => p[0] ? `${p[0].axisValue}<br/>回撤: ${(p[0].value * 100).toFixed(2)}%` : '' },
     grid: { left: '5%', right: '5%', bottom: '8%', top: '5%' },
     xAxis: { type: 'category', data: data.map(d => d.date), axisLine: { lineStyle: { color: 'rgba(217, 166, 72,0.14)' } }, axisLabel: { color: '#66635c', fontSize: 10 } },
-    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: '{value}%' }, splitLine: { lineStyle: { color: 'rgba(217, 166, 72,0.05)' } } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: (v: number) => fmtNum(v) + '%' }, splitLine: { lineStyle: { color: 'rgba(217, 166, 72,0.05)' } } },
     dataZoom: [{ type: 'inside' }],
     series: [{
       name: '回撤', type: 'line', data: data.map(d => +(d.dd * 100).toFixed(2)), symbol: 'none',

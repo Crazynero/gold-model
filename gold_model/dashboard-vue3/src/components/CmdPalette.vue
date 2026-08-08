@@ -45,7 +45,7 @@ const { t } = useI18n()
 
 const props = defineProps<{
   visible: boolean
-  tabs: Array<{ key: string; label: string; gold?: boolean }>
+  tabs: Array<{ key: string; tkey?: string; label?: string; gold?: boolean }>
 }>()
 
 const emit = defineEmits<{
@@ -68,14 +68,18 @@ interface Cmd {
 }
 
 const commands = computed<Cmd[]>(() => {
-  const tabs: Cmd[] = (props.tabs || []).map(tab => ({
-    id: `tab-${tab.key}`,
-    cat: 'TAB',
-    label: t('cmd.switchTab', { label: tab.label }),
-    action: 'switch',
-    target: tab.key,
-    shortcut: ''
-  }))
+  const tabs: Cmd[] = (props.tabs || []).map(tab => {
+    // tkey 优先（与左侧导航一致走 i18n），无 tkey 时回退到静态 label
+    const tabLabel = (tab.tkey && t(tab.tkey)) || tab.label || tab.key
+    return {
+      id: `tab-${tab.key}`,
+      cat: 'TAB',
+      label: t('cmd.switchTab', { label: tabLabel }),
+      action: 'switch',
+      target: tab.key,
+      shortcut: ''
+    }
+  })
   const cmds: Cmd[] = [
     { id: 'cmd-refresh', cat: 'CMD', label: t('cmd.refresh'), action: 'command', target: 'refresh' },
     { id: 'cmd-gold', cat: 'SYMBOL', label: t('cmd.switchSymbol', { symbol: 'GOLD' }), action: 'command', target: 'symbol:GOLD' },

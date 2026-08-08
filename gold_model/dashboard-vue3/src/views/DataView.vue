@@ -21,7 +21,7 @@
           <a-table-column :title="$t('col.date')" data-index="日期" :width="100" fixed="left"></a-table-column>
           <a-table-column :title="$t('col.gold')" :width="90">
             <template #cell="{ record }">
-              <span class="mono text-gold">{{ formatPrice(record['金价']) }}</span>
+              <span class="mono text-gold">{{ fmtMoney(record['金价']) }}</span>
             </template>
           </a-table-column>
           <a-table-column :title="$t('col.regime')" data-index="Regime" :width="70">
@@ -70,6 +70,7 @@ import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import HudCard from '@/components/HudCard.vue'
 import { dashboardData, extractValue } from '@/composables/useDashboardData'
+import { fmtNum, fmtMoney } from '@/utils/format'
 
 const { t } = useI18n()
 import { Message } from '@arco-design/web-vue'
@@ -92,26 +93,6 @@ const filteredRows = computed(() => {
   return rows
 })
 
-// 金价格式化：$4361.00
-function formatPrice(v: any): string {
-  if (v == null) return '--'
-  const n = parseFloat(String(v))
-  if (isNaN(n)) return String(v)
-  return '$' + n.toFixed(2)
-}
-
-// 智能数字格式化：整数0位，0.0xxx保留3位，其他2位
-function fmtNum(v: any): string {
-  if (v == null || v === '') return '--'
-  const n = parseFloat(String(v))
-  if (isNaN(n)) return String(v)
-  // 整数（如 FOMC 天数 37.0000）
-  if (Number.isInteger(n)) return n.toString()
-  // 极小值（如 0.0192 / -0.069）
-  if (Math.abs(n) < 1 && n !== 0) return n.toFixed(3)
-  // 常规 2 位
-  return n.toFixed(2)
-}
 
 function downloadCSV() {
   const rows = filteredRows.value

@@ -83,6 +83,7 @@ import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData, executionData } from '@/composables/useDashboardData'
+import { fmtNum } from '@/utils/format'
 
 const { t } = useI18n()
 import { Message } from '@arco-design/web-vue'
@@ -205,10 +206,10 @@ function decompOpt(): EChartsOption {
   const m = metrics.value
   return {
     backgroundColor: '#0e0f11', animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     grid: { left: '15%', right: '5%', bottom: '10%', top: '10%' },
     xAxis: { type: 'category', data: ['配置效应', '选股效应', '交互效应', '总 Alpha'], axisLine: { lineStyle: { color: 'rgba(217, 166, 72,0.14)' } }, axisLabel: { color: '#66635c', fontSize: 10 } },
-    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: '{value}%' }, splitLine: { lineStyle: { color: 'rgba(217, 166, 72,0.05)' } } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: (v: number) => fmtNum(v) + '%' }, splitLine: { lineStyle: { color: 'rgba(217, 166, 72,0.05)' } } },
     series: [{
       type: 'bar',
       data: [
@@ -228,11 +229,11 @@ function regimeOpt(): EChartsOption {
   const rd = metrics.value.regimeData
   return {
     backgroundColor: '#0e0f11', animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     legend: { data: [t('chart.strategy'), t('chart.bh')], textStyle: { color: '#66635c', fontSize: 10 }, top: 0 },
     grid: { left: '10%', right: '5%', bottom: '10%', top: '15%' },
     xAxis: { type: 'category', data: ['牛市', '熊市', '震荡'], axisLine: { lineStyle: { color: 'rgba(217, 166, 72,0.14)' } }, axisLabel: { color: '#66635c', fontSize: 11 } },
-    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: '{value}%' }, splitLine: { lineStyle: { color: 'rgba(217, 166, 72,0.05)' } } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#66635c', formatter: (v: number) => fmtNum(v) + '%' }, splitLine: { lineStyle: { color: 'rgba(217, 166, 72,0.05)' } } },
     series: [
       { name: t('chart.strategy'), type: 'bar', data: ['牛市', '熊市', '震荡'].map(r => +(rd[r].stratRet * 100).toFixed(2)), itemStyle: { color: '#d9a648' }, barWidth: '30%' },
       { name: t('chart.bh'), type: 'bar', data: ['牛市', '熊市', '震荡'].map(r => +(rd[r].bhRet * 100).toFixed(2)), itemStyle: { color: '#a09d94' }, barWidth: '30%' }

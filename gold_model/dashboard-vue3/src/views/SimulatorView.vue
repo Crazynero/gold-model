@@ -116,6 +116,7 @@ import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData, extractValue } from '@/composables/useDashboardData'
+import { fmtNum, fmtMoney } from '@/utils/format'
 import { Message } from '@arco-design/web-vue'
 
 const { t } = useI18n()
@@ -310,11 +311,11 @@ function pathOpt(): EChartsOption {
   ]
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtMoney(v) },
     legend: { data: [t('chart.median'), t('chart.principal')], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
     grid: { left: '8%', right: '3%', bottom: '8%', top: '10%' },
     xAxis: { type: 'category', data: r.dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9, interval: Math.floor(D / 10) } },
-    yAxis: { type: 'value', scale: true, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: '${value}' }, splitLine: { lineStyle: { color: C.grid } } },
+    yAxis: { type: 'value', scale: true, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtMoney(v) }, splitLine: { lineStyle: { color: C.grid } } },
     series
   }
 }
@@ -338,7 +339,7 @@ function distOpt(): EChartsOption {
   const xData = Array.from({ length: bins }, (_, i) => Math.round((min + i * binSize) / 1000) + 'k')
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     grid: { left: '5%', right: '3%', bottom: '8%', top: '5%' },
     xAxis: { type: 'category', data: xData, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9, interval: 2 } },
     yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3 }, splitLine: { lineStyle: { color: C.grid } } },

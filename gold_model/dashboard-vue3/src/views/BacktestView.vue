@@ -55,6 +55,7 @@ import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData } from '@/composables/useDashboardData'
+import { fmtNum } from '@/utils/format'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -79,11 +80,11 @@ function strategyOpt(): EChartsOption {
   const v3e = bh.map(v => 1 + (v - 1) * 0.34)
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     legend: { data: [t('chart.bh'), 'V3.0-E'], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
     grid: { left: '5%', right: '3%', bottom: '8%', top: '12%' },
     xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 10 } },
-    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3 }, splitLine: { lineStyle: { color: C.grid } } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtNum(v) }, splitLine: { lineStyle: { color: C.grid } } },
     series: [
       { name: t('chart.bh'), type: 'line', data: bh, symbol: 'none', lineStyle: { width: 1, color: C.text3, opacity: 0.5 } },
       { name: 'V3.0-E', type: 'line', data: v3e, symbol: 'none', lineStyle: { width: 1.5, color: C.accent } }
@@ -103,10 +104,10 @@ function drawdownOpt(): EChartsOption {
   const dd = gp.map((p, i) => i > 0 ? (p / peak[i] - 1) * 100 : 0)
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     grid: { left: '5%', right: '3%', bottom: '8%', top: '5%' },
     xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 10 } },
-    yAxis: { type: 'value', max: 0, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: '{value}%' }, splitLine: { lineStyle: { color: C.grid } } },
+    yAxis: { type: 'value', max: 0, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtNum(v) + '%' }, splitLine: { lineStyle: { color: C.grid } } },
     series: [{
       type: 'line', data: dd, symbol: 'none', lineStyle: { width: 1, color: C.neg },
       areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(207, 107, 98,0.05)' }, { offset: 1, color: 'rgba(207, 107, 98,0.3)' }] } }
@@ -129,7 +130,7 @@ function radarOpt(): EChartsOption {
   ]
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'item' },
+    tooltip: { trigger: 'item', valueFormatter: (v: any) => fmtNum(v) },
     legend: { data: ['V3.0-E', t('chart.bh')], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
     radar: {
       indicator: [

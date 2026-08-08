@@ -85,6 +85,7 @@ import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData, extractValue } from '@/composables/useDashboardData'
+import { fmtNum } from '@/utils/format'
 
 const { t } = useI18n()
 
@@ -131,7 +132,7 @@ function barOpt(): EChartsOption {
   const rows = strategies.value.filter(s => selected.value.includes(s['策略'] || ''))
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     grid: { left: '12%', right: '5%', bottom: '15%', top: '8%' },
     xAxis: {
       type: 'category',
@@ -142,7 +143,7 @@ function barOpt(): EChartsOption {
     yAxis: {
       type: 'value',
       axisLine: { show: false },
-      axisLabel: { color: C.text3, fontSize: 10 },
+      axisLabel: { color: C.text3, fontSize: 10, formatter: (v: number) => fmtNum(v) },
       splitLine: { lineStyle: { color: C.grid } }
     },
     series: [{
@@ -152,7 +153,7 @@ function barOpt(): EChartsOption {
         itemStyle: { color: COLORS[i % COLORS.length] }
       })),
       barWidth: '40%',
-      label: { show: true, position: 'top', color: C.text2, fontSize: 11 }
+      label: { show: true, position: 'top', color: C.text2, fontSize: 11, formatter: (p: any) => fmtNum(p.value) }
     }]
   }
 }
@@ -183,7 +184,7 @@ function radarOpt(): EChartsOption {
   })
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'item' },
+    tooltip: { trigger: 'item', valueFormatter: (v: any) => fmtNum(v) },
     legend: {
       data: rows.map(r => dispName(r['策略'] || '')),
       textStyle: { color: C.text3, fontSize: 10 },

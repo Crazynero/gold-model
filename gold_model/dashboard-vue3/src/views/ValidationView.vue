@@ -42,7 +42,7 @@
           </a-table-column>
           <a-table-column :title="$t('col.dirAcc')" data-index="dir_acc">
             <template #cell="{ record }">
-              <span class="text-acc mono">{{ record.dir_acc }}</span>
+              <span class="text-acc mono">{{ fmtNum(record.dir_acc) }}</span>
             </template>
           </a-table-column>
         </template>
@@ -70,15 +70,19 @@
           </a-table-column>
           <a-table-column :title="$t('col.oosRet')" data-index="ann_ret" :width="100">
             <template #cell="{ record }">
-              <span :class="parseFloat(record.ann_ret) > 0 ? 'text-pos mono' : 'text-neg mono'">{{ record.ann_ret }}</span>
+              <span :class="parseFloat(record.ann_ret) > 0 ? 'text-pos mono' : 'text-neg mono'">{{ fmtNum(record.ann_ret) }}</span>
             </template>
           </a-table-column>
           <a-table-column :title="$t('col.oosDd')" data-index="max_dd" :width="100">
             <template #cell="{ record }">
-              <span class="text-neg mono">{{ record.max_dd }}</span>
+              <span class="text-neg mono">{{ fmtNum(record.max_dd) }}</span>
             </template>
           </a-table-column>
-          <a-table-column :title="$t('col.win')" data-index="win_rate" :width="80"></a-table-column>
+          <a-table-column :title="$t('col.win')" data-index="win_rate" :width="80">
+            <template #cell="{ record }">
+              <span class="mono">{{ fmtNum(record.win_rate) }}</span>
+            </template>
+          </a-table-column>
         </template>
       </a-table>
     </HudCard>
@@ -100,6 +104,7 @@ import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData } from '@/composables/useDashboardData'
+import { fmtNum } from '@/utils/format'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -110,7 +115,7 @@ const C = {
 }
 
 const v3e = computed(() => dashboardData.value.strategies?.find(s => s.策略 && s.策略.includes('V3.0-E')))
-const full = computed(() => v3e.value?.夏普 || '--')
+const full = computed(() => fmtNum(v3e.value?.夏普))
 const oos = computed(() => {
   const h = dashboardData.value.v5_holdout?.find(s => s.strategy && s.strategy.includes('V3.0-E'))
   return h ? h.sharpe.toFixed(2) : '--'
@@ -135,7 +140,7 @@ const regressionRows = computed(() => dashboardData.value.v5_regression || [])
 function findFullSharpe(strategyName?: string): string {
   if (!strategyName) return '--'
   const s = dashboardData.value.strategies?.find(x => x.策略 === strategyName)
-  return s?.夏普 || '--'
+  return fmtNum(s?.夏普)
 }
 
 // 计算 decay%：(1 - oos/full) * 100

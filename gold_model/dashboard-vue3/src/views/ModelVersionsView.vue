@@ -66,6 +66,7 @@ import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData } from '@/composables/useDashboardData'
+import { fmtNum } from '@/utils/format'
 
 const C = {
   bg: '#0e0f11', accent: '#d9a648', pos: '#45b789', neg: '#cf6b62',
@@ -83,10 +84,10 @@ function evolutionOpt(): EChartsOption {
   const sharpes = ordered.map(n => parseFloat(byName(n)?.夏普 || '0'))
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     grid: { left: '8%', right: '5%', bottom: '10%', top: '10%' },
     xAxis: { type: 'category', data: labels, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 10 } },
-    yAxis: { type: 'value', name: 'Sharpe', axisLine: { show: false }, axisLabel: { color: C.text3 }, splitLine: { lineStyle: { color: C.grid } } },
+    yAxis: { type: 'value', name: 'Sharpe', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtNum(v) }, splitLine: { lineStyle: { color: C.grid } } },
     series: [{
       type: 'line',
       data: sharpes,

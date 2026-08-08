@@ -109,6 +109,7 @@ import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { dashboardData, executionData, extractValue, apiBase } from '@/composables/useDashboardData'
+import { fmtNum, fmtMoney } from '@/utils/format'
 import { Message } from '@arco-design/web-vue'
 import { useI18n } from 'vue-i18n'
 
@@ -265,7 +266,7 @@ function costOpt(): EChartsOption {
     },
     grid: { left: '15%', right: '5%', bottom: '8%', top: '5%' },
     xAxis: { type: 'category', data: labels, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 10 } },
-    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: '${value}' }, splitLine: { lineStyle: { color: C.grid } } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtMoney(v) }, splitLine: { lineStyle: { color: C.grid } } },
     series: [{
       type: 'bar',
       data: data1.map((v, i) => ({
@@ -286,13 +287,13 @@ function posOpt(): EChartsOption {
   const fut = positions.map((p: number) => p * 0.35)
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtMoney(v) },
     legend: { data: [t('chart.modelPos'), t('chart.etfLayer'), t('chart.futLayer'), t('chart.goldPrice')], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
     grid: { left: '5%', right: '5%', bottom: '8%', top: '12%' },
     xAxis: { type: 'category', data: ph.dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 10 } },
     yAxis: [
-      { type: 'value', name: '仓位%', min: -100, max: 100, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: '{value}%' }, splitLine: { lineStyle: { color: C.grid } } },
-      { type: 'value', name: '金价$', position: 'right', scale: true, axisLine: { show: false }, axisLabel: { color: C.text3 }, splitLine: { show: false } }
+      { type: 'value', name: '仓位%', min: -100, max: 100, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtNum(v) + '%' }, splitLine: { lineStyle: { color: C.grid } } },
+      { type: 'value', name: '金价$', position: 'right', scale: true, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtMoney(v) }, splitLine: { show: false } }
     ],
     dataZoom: [{ type: 'inside' }, { type: 'slider' }],
     series: [

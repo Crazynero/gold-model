@@ -65,6 +65,7 @@ import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { driftHistory, apiBase, apiStatus, fetchDbHistory } from '@/composables/useDashboardData'
+import { fmtNum } from '@/utils/format'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -133,11 +134,11 @@ function probOpt(): EChartsOption {
   // ml_metrics.{5,10,20,60}.accuracy 是准确率，不是概率。这里用 best_sharpe 反映模型质量
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     legend: { data: ['加权概率'], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
     grid: { left: '5%', right: '5%', bottom: '15%', top: '12%' },
     xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9, rotate: 30 } },
-    yAxis: { type: 'value', min: 0, max: 100, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: '{value}%' }, splitLine: { lineStyle: { color: C.grid } } },
+    yAxis: { type: 'value', min: 0, max: 100, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtNum(v) + '%' }, splitLine: { lineStyle: { color: C.grid } } },
     dataZoom: [{ type: 'inside' }, { type: 'slider' }],
     series: [
       {
@@ -161,12 +162,12 @@ function regimeOpt(): EChartsOption {
   const regimes = rows.map(r => regimeMap[r.current_state?.regime || '震荡'] ?? 0)
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     legend: { data: ['仓位%', 'Regime'], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
     grid: { left: '5%', right: '5%', bottom: '15%', top: '12%' },
     xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9, rotate: 30 } },
     yAxis: [
-      { type: 'value', name: '仓位%', min: -100, max: 100, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: '{value}%' }, splitLine: { lineStyle: { color: C.grid } } },
+      { type: 'value', name: '仓位%', min: -100, max: 100, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtNum(v) + '%' }, splitLine: { lineStyle: { color: C.grid } } },
       { type: 'value', name: t('chart.regime'), min: -1.5, max: 1.5, position: 'right', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => v === 1 ? '牛' : v === 0 ? '震' : v === -1 ? '熊' : '' }, splitLine: { show: false } }
     ],
     dataZoom: [{ type: 'inside' }, { type: 'slider' }],
@@ -193,13 +194,13 @@ function metricsOpt(): EChartsOption {
   const ic20 = rows.map(r => r.ml_metrics?.['20']?.ic ?? 0)
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     legend: { data: ['ACC 20D', 'ACC 60D', 'IC 20D'], textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
     grid: { left: '5%', right: '5%', bottom: '15%', top: '12%' },
     xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9, rotate: 30 } },
     yAxis: [
-      { type: 'value', name: 'ACC%', min: 0, max: 100, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: '{value}%' }, splitLine: { lineStyle: { color: C.grid } } },
-      { type: 'value', name: 'IC', position: 'right', axisLine: { show: false }, axisLabel: { color: C.text3 }, splitLine: { show: false } }
+      { type: 'value', name: 'ACC%', min: 0, max: 100, axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtNum(v) + '%' }, splitLine: { lineStyle: { color: C.grid } } },
+      { type: 'value', name: 'IC', position: 'right', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtNum(v) }, splitLine: { show: false } }
     ],
     dataZoom: [{ type: 'inside' }, { type: 'slider' }],
     series: [
@@ -218,10 +219,10 @@ function sharpeOpt(): EChartsOption {
   const sharpes = rows.map(r => r.best_sharpe || 0)
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     grid: { left: '5%', right: '5%', bottom: '15%', top: '8%' },
     xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9, rotate: 30 } },
-    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3 }, splitLine: { lineStyle: { color: C.grid } } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtNum(v) }, splitLine: { lineStyle: { color: C.grid } } },
     dataZoom: [{ type: 'inside' }, { type: 'slider' }],
     series: [{
       type: 'line', data: sharpes, smooth: true, symbol: 'circle', symbolSize: 6,

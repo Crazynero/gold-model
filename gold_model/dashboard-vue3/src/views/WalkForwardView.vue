@@ -77,6 +77,7 @@ import type { EChartsOption } from 'echarts'
 import HudCard from '@/components/HudCard.vue'
 import ChartBox from '@/components/ChartBox.vue'
 import { driftHistory } from '@/composables/useDashboardData'
+import { fmtNum } from '@/utils/format'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -171,11 +172,11 @@ function rollingOpt(): EChartsOption {
   const dates = records.value.map(r => r.timestamp || r.run_date || '--')
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     legend: { data: horizons.map(h => h + 'd'), textStyle: { color: C.text3, fontSize: 10 }, top: 0 },
     grid: { left: '5%', right: '5%', bottom: '10%', top: '12%' },
     xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9, rotate: 30 } },
-    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3 }, splitLine: { lineStyle: { color: C.grid } } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtNum(v) }, splitLine: { lineStyle: { color: C.grid } } },
     series: horizons.map((h, i) => ({
       name: h + 'd',
       type: 'line',
@@ -194,10 +195,10 @@ function sharpeOpt(): EChartsOption {
   const values = records.value.map(r => r.best_sharpe || 0)
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     grid: { left: '8%', right: '5%', bottom: '10%', top: '8%' },
     xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9, rotate: 30 } },
-    yAxis: { type: 'value', name: 'Sharpe', axisLine: { show: false }, axisLabel: { color: C.text3 }, splitLine: { lineStyle: { color: C.grid } } },
+    yAxis: { type: 'value', name: 'Sharpe', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtNum(v) }, splitLine: { lineStyle: { color: C.grid } } },
     series: [{
       type: 'line',
       data: values,
@@ -218,10 +219,10 @@ function hitRateOpt(): EChartsOption {
   const wfBase = records.value[0]?.signal_backtest?.wf_baseline_acc || 0.58
   return {
     backgroundColor: C.bg, animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (v: any) => fmtNum(v) },
     grid: { left: '8%', right: '5%', bottom: '10%', top: '8%' },
     xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: C.border } }, axisLabel: { color: C.text3, fontSize: 9, rotate: 30 } },
-    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: '{value}%' }, splitLine: { lineStyle: { color: C.grid } }, min: 0, max: 1 },
+    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: C.text3, formatter: (v: number) => fmtNum(v) + '%' }, splitLine: { lineStyle: { color: C.grid } }, min: 0, max: 1 },
     series: [
       {
         type: 'bar',
