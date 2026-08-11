@@ -106,10 +106,13 @@ FRED_SERIES = {
 
 print("\n[1a] yfinance数据采集（含多源fallback）...")
 # V4.2: 多源fallback架构 yfinance→FRED→Stooq
+# V5.3: 数据周期可配置。默认10y(含2018熊市,熊市样本184→461天);
+#   10y下WF IC近零但Holdout夏普-2.25→-1.58(首次跑赢买入持有),风控价值>方向预测
 from gold_model.data_fetcher import fetch_ticker_with_fallback
+DATA_PERIOD = os.environ.get('V5_DATA_PERIOD', '10y')
 raw = {}
 for ticker, name in TICKERS.items():
-    s = fetch_ticker_with_fallback(ticker, name, period='5y')
+    s = fetch_ticker_with_fallback(ticker, name, period=DATA_PERIOD)
     if s is not None:
         raw[name] = s
 
@@ -123,8 +126,9 @@ for sid, name in FRED_SERIES.items():
             df_fred.columns = [name]
             # 过滤无效值（FRED用.表示缺失）
             df_fred = df_fred.replace('.', np.nan).astype(float)
-            # 只取最近5年
-            cutoff = pd.Timestamp.now() - pd.Timedelta(days=5*365)
+            # 只取最近N年(跟随DATA_PERIOD)
+            _period_years = int(''.join(c for c in DATA_PERIOD if c.isdigit()) or '5')
+            cutoff = pd.Timestamp.now() - pd.Timedelta(days=_period_years*365)
             df_fred = df_fred[df_fred.index > cutoff]
             if len(df_fred) > 100:
                 s = df_fred[name]
@@ -438,8 +442,24 @@ for iteration in range(_max_vif_iter):
 
 feature_cols = selected
 _all_feature_cols_len = len(_all_feature_cols)
-print(f"  ✅ 最终特征数: {len(feature_cols)} (原始{len(_all_feature_cols)})")
-print(f"  剔除特征: {set(_all_feature_cols) - set(feature_cols)}")
+
+# V5.3 特征手术: 剔除per-feature IC诊断确认的噪声/反转特征(2026-08-11 diagnose_model.py)
+# 数据依据: 这些特征的60日IC≈0(无预测力)或在牛/震荡市IC符号反转(Regime不稳定)
+FEATURE_BLACKLIST = os.environ.get('V5_FEATURE_BLACKLIST', '1') == '1'
+if FEATURE_BLACKLIST:
+    _noise_features = {
+        # IC≈0 的纯噪声特征(模型在这些特征上浪费分裂能力):
+        '距FOMC天数', '距CPI天数', 'FOMC周', 'CPI周', 'RSI14',
+        # Regime反转特征(牛市IC正/震荡IC负,单一模型无法兼顾):
+        'BTC/黄金', '金/纽蒙特',
+    }
+    _before = len(feature_cols)
+    feature_cols = [f for f in feature_cols if f not in _noise_features]
+    print(f"  ✅ 特征手术(V5.3): 剔除{_before - len(feature_cols)}个噪声/反转特征 → {len(feature_cols)}个")
+    print(f"     剔除: {_noise_features & set(selected)}")
+else:
+    print(f"  ✅ 最终特征数: {len(feature_cols)} (原始{len(_all_feature_cols)})")
+    print(f"  剔除特征: {set(_all_feature_cols) - set(feature_cols)}")
 
 # ═══════════════════════════════════════════════════════════════════
 # 3. 标签构建（多周期）
@@ -447,9 +467,30 @@ print(f"  剔除特征: {set(_all_feature_cols) - set(feature_cols)}")
 
 print("\n[3] 标签构建...")
 PREDICT_DAYS = [5, 10, 20, 60]
+
+# V5.1 标签模式: 'abs'=绝对涨跌(原V5) / 'excess'=超额收益vs滚动均值(消融实验验证)
+# 消融实验(2026-08-08,tests/ablation_labels.py+ablation_thresholds.py)证明:
+#   'excess'模式 Holdout IC从-0.102翻正到+0.162,Holdout年化从-34.7%改善到-9.0%,
+#   去掉了牛市样本导致的标签偏斜(60日牛市正样本74%→50%)。
+# 仓位阈值(0.65/0.55/0.48)不调——第4轮实验证明搜索阈值会过拟合,旧阈值在新标签下更稳。
+LABEL_MODE = os.environ.get('V5_LABEL_MODE', 'abs')  # 默认abs(原V5标签);excess=超额收益(主管道实测更差,保留待研究)
+_gold_daily_ret = factors['金价'].pct_change()
+
 for n in PREDICT_DAYS:
     factors[f'未来{n}日收益'] = factors['金价'].pct_change(n).shift(-n)
+    # 原绝对涨跌标签(始终保留,供分析/回退)
     factors[f'未来{n}日涨跌'] = (factors[f'未来{n}日收益'] > 0).astype(int)
+    # 超额收益标签: 未来N日收益 > 滚动250日日均收益×N
+    _rolling_mean_n = _gold_daily_ret.rolling(250).mean() * n
+    factors[f'未来{n}日超额'] = (factors[f'未来{n}日收益'] > _rolling_mean_n.shift(-n)).astype(int)
+
+# 训练用哪个标签列(由LABEL_MODE决定)
+_label_suffix = '涨跌' if LABEL_MODE == 'abs' else '超额'
+print(f"  标签模式: LABEL_MODE={LABEL_MODE} (训练用'未来{{N}}日{_label_suffix}')")
+if LABEL_MODE == 'excess':
+    for n in PREDICT_DAYS:
+        _pos_ratio = factors[f'未来{n}日超额'].mean()
+        print(f"  {n}日超额标签正样本占比: {_pos_ratio:.1%}")
 
 # ═══════════════════════════════════════════════════════════════════
 # 4. Regime识别（核心创新1）
@@ -531,16 +572,23 @@ TRAIN_WINDOW = 500
 TEST_WINDOW = 60
 STEP = 30
 # V5.0 P1-2: Purged gap——train和test之间的间隔，消除标签泄漏
-GAP = 10  # 10天gap（20日标签会重叠到test期，gap=10消除此泄漏）
+# 泄漏机理: 训练样本t的"N日标签"用到 t+1..t+N 的金价; 末尾训练样本在 start_idx-GAP-1,
+# 其标签窥探到 start_idx-GAP .. start_idx-GAP+N-1。要完全不落入test集(start_idx起)，
+# 需 GAP >= N。GAP=10 仅够 10日标签, 对 60日标签有 50 天泄漏。
+# V5.3 GAP 消融实验: GAP=10(历史值)对60日标签有50天泄漏, 实测60日IC虚高57%
+#   (+0.290→+0.123)。生产默认改60(无泄漏); 仅影响回测验证, 不影响实盘预测。
+GAP = int(os.environ.get('V5_PURGE_GAP', '60'))
 # V5.0 P1-1: 自适应训练窗口
 ADAPTIVE_WINDOW_HIGH_VOL = 250  # 高波动期窗口缩短
 ADAPTIVE_WINDOW_LOW_VOL = 500   # 低波动期窗口保持
 
 # V5.0 P2-2: Regime-conditional训练开关
 REGIME_CONDITIONAL = True  # True=只用同Regime历史样本训练
+# V5.2 样本增强: 熊市样本不足(30-100)时复制补齐,不退回全量(消融实验验证)
+SAMPLE_AUGMENT = os.environ.get('V5_SAMPLE_AUGMENT', '0') == '1'
 
 for pred_days in PREDICT_DAYS:
-    target_col = f'未来{pred_days}日涨跌'
+    target_col = f'未来{pred_days}日{_label_suffix}'  # V5.1: abs→涨跌 / excess→超额
     ret_col = f'未来{pred_days}日收益'
 
     X = factors[feature_cols].copy()
@@ -598,10 +646,19 @@ for pred_days in PREDICT_DAYS:
                 target_regime = test_regimes.mode().iloc[0] if len(test_regimes.mode()) > 0 else '震荡'
                 train_regimes = regime_series.reindex(X_train.index)
                 regime_mask = (train_regimes == target_regime)
-                # 如果regime-filtered样本太少，退回全量训练
-                if regime_mask.sum() >= 100:
+                regime_count = regime_mask.sum()
+                if SAMPLE_AUGMENT and target_regime == '熊市' and 30 <= regime_count < 100:
+                    # V5.2: 熊市样本不足时不退回全量(含牛市),改为复制熊市样本补到100+
+                    X_regime = X_train[regime_mask]
+                    y_regime = y_train[regime_mask]
+                    dup_times = int(np.ceil(100 / regime_count))
+                    X_train = pd.concat([X_regime] * dup_times, ignore_index=True)
+                    y_train = pd.concat([y_regime] * dup_times, ignore_index=True)
+                elif regime_count >= 100:
+                    # 样本足够,正常过滤
                     X_train = X_train[regime_mask]
                     y_train = y_train[regime_mask]
+                # regime_count < 30 或非熊市不足时仍退回全量(augment=off 的旧行为)
 
         # 只保留有标签的行
         valid_train = y_train.notna()
@@ -984,7 +1041,7 @@ _pred20_kelly = pd.DataFrame({
     'date': pred20['dates'],           # 已去重
 }).set_index('date').sort_index()
 # actuals从factors重新对齐（避免长度不一致）
-_pred20_kelly['actual'] = factors['未来20日涨跌'].reindex(_pred20_kelly.index)
+_pred20_kelly['actual'] = factors[f'未来20日{_label_suffix}'].reindex(_pred20_kelly.index)
 _pred20_kelly = _pred20_kelly.dropna(subset=['actual'])
 _pred20_kelly['pred'] = (_pred20_kelly['prob'] > 0.5).astype(int)
 _pred20_kelly['correct'] = (_pred20_kelly['pred'] == _pred20_kelly['actual'].astype(int)).astype(int)
@@ -1071,16 +1128,22 @@ v3e_pos[range_ & (pm >= 0.40) & (pm <= 0.60)] = 0.0
 
 # V5.0 P2-1: 用回归预测的幅度微调仓位（在分类方向的基准上，按预期收益幅度缩放）
 # 只有当回归方向与分类方向一致时才增强，否则减弱
-_cls_direction = np.sign(v3e_pos)
-_adjust_factor = pd.Series(1.0, index=v3e_pos.index)
-_both_nonzero = (_cls_direction != 0) & (reg_direction != 0)
-_agree = (_cls_direction == reg_direction) & _both_nonzero
-_disagree = (_cls_direction != reg_direction) & _both_nonzero
-# 方向一致时：按回归幅度增强（但不超过1.5x原始仓位）
-_adjust_factor[_agree] = (0.5 + 0.5 * reg_magnitude[_agree]).clip(0.8, 1.5)
-# 方向不一致时：减弱仓位（回归模型不认可分类信号）
-_adjust_factor[_disagree] = 0.5  # 减半
-v3e_pos = v3e_pos * _adjust_factor
+# V5.3: 回归分支R²全负(-0.09~-0.41),预测比随机还差,默认关闭回归仓位调整
+REGRESSION_ADJUST = os.environ.get('V5_REGRESSION_ADJUST', '0') == '1'
+if REGRESSION_ADJUST:
+    _cls_direction = np.sign(v3e_pos)
+    _adjust_factor = pd.Series(1.0, index=v3e_pos.index)
+    _both_nonzero = (_cls_direction != 0) & (reg_direction != 0)
+    _agree = (_cls_direction == reg_direction) & _both_nonzero
+    _disagree = (_cls_direction != reg_direction) & _both_nonzero
+    # 方向一致时：按回归幅度增强（但不超过1.5x原始仓位）
+    _adjust_factor[_agree] = (0.5 + 0.5 * reg_magnitude[_agree]).clip(0.8, 1.5)
+    # 方向不一致时：减弱仓位（回归模型不认可分类信号）
+    _adjust_factor[_disagree] = 0.5  # 减半
+    v3e_pos = v3e_pos * _adjust_factor
+    print(f"  P2-1 回归仓位调整: 开启(R²负,可能有害)")
+else:
+    print(f"  P2-1 回归仓位调整: 关闭(R²全负,默认不用回归预测调仓位)")
 
 # + vol targeting
 v3e_pos = v3e_pos * vol_scalar.clip(0, 2)
@@ -1205,7 +1268,7 @@ print("\n[7] 当前预测...")
 
 # 训练最终模型（20日预测）——V4.0用中位数填充
 X_final = factors[feature_cols].copy()
-y_final = factors['未来20日涨跌'].reindex(X_final.index)
+y_final = factors[f'未来20日{_label_suffix}'].reindex(X_final.index)
 valid_final = y_final.notna()
 X_final = X_final[valid_final]
 y_final = y_final[valid_final]
@@ -1232,7 +1295,7 @@ final_lgb.fit(X_final, y_final)
 # 多周期模型
 final_models = {}
 for pred_days in PREDICT_DAYS:
-    target = f'未来{pred_days}日涨跌'
+    target = f'未来{pred_days}日{_label_suffix}'  # V5.1: abs→涨跌 / excess→超额
     y_t = factors[target].reindex(X_final.index)
     valid_t = y_t.notna()
     X_t = X_final[valid_t]
