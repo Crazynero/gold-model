@@ -569,7 +569,7 @@ if 'feature_cols' not in dir() or not feature_cols:
 
 # 为每个预测周期训练模型
 ml_results = {}
-TRAIN_WINDOW = 500
+TRAIN_WINDOW = int(os.environ.get('V5_TRAIN_WINDOW', '500'))
 TEST_WINDOW = 60
 STEP = 30
 # V5.0 P1-2: Purged gap——train和test之间的间隔，消除标签泄漏
@@ -2255,6 +2255,7 @@ overview['5日看多概率'] = f"{multi_probs[5]:.1%}"
 overview['10日看多概率'] = f"{multi_probs[10]:.1%}"
 overview['20日看多概率'] = f"{multi_probs[20]:.1%}"
 overview['60日看多概率'] = f"{multi_probs[60]:.1%}"
+overview['命中率20日'] = f"{ml_results[20]['accuracy']:.1%}"  # 供 db.pos_factor 计算(此前该字段缺失→pos_factor恒None)
 overview['加权集成概率'] = f"{prob_multi_current:.1%}"
 overview['建议操作'] = action
 

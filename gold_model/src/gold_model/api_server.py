@@ -143,11 +143,13 @@ async def get_history(
 
 @app.get("/api/drift")
 async def get_drift():
-    """模型漂移快照"""
+    """模型漂移快照（DRIFT_HISTORY 顶层是 list，非 {snapshots:...} 结构）"""
     drift = _safe(_load_json(DRIFT_SNAPSHOT))
+    if not isinstance(drift, list):
+        drift = []
     return {
-        "snapshots": drift.get('snapshots', []),
-        "count": len(drift.get('snapshots', [])),
+        "snapshots": drift,
+        "count": len(drift),
         "fetched_at": datetime.now().isoformat()
     }
 
@@ -485,12 +487,8 @@ async def _notify_webhooks(alert: Dict):
 from pydantic import BaseModel
 
 class V5TuningParams(BaseModel):
-    train_window: int = 500          # 训练窗口（日）
-    horizon: int = 20                # 标签 horizon（日）
-    purge_gap: int = 10              # Purged K-fold gap
-    feature_threshold: float = 0.7   # VIF 共线性阈值
-    vif_max: float = 10.0            # VIF 最大值
-    regime_window: str = 'auto'     # Regime-aware 窗口（auto/250/500）
+    train_window: int = 500          # 训练窗口（日）——主管道 V5_TRAIN_WINDOW 支持
+    purge_gap: int = 60              # Purged K-fold gap——主管道 V5_PURGE_GAP 支持(默认60无泄漏)
 
 @app.post("/api/v5/run")
 async def run_v5_with_params(params: V5TuningParams):
@@ -499,15 +497,11 @@ async def run_v5_with_params(params: V5TuningParams):
     返回运行日志 + 关键指标。"""
     try:
         import subprocess
-        # V5 脚本目前不支持命令行参数，通过环境变量传入
+        # 只传主管道真正读取的环境变量(修复:原6个参数仅V5_PURGE_GAP生效,其余5个主管道硬编码)
         env = {
             **os.environ,
             'V5_TRAIN_WINDOW': str(params.train_window),
-            'V5_HORIZON': str(params.horizon),
             'V5_PURGE_GAP': str(params.purge_gap),
-            'V5_FEATURE_THRESHOLD': str(params.feature_threshold),
-            'V5_VIF_MAX': str(params.vif_max),
-            'V5_REGIME_WINDOW': params.regime_window
         }
         result = subprocess.run(
             [sys.executable, '-m', 'gold_model.gold_factor_v5'],
