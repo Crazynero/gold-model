@@ -129,8 +129,8 @@ async def get_history(
     if not raw:
         return {"data": [], "total": 0, "filter": {"days": days, "regime": regime}}
     
-    # 取最近N天（raw_data 已按日期倒序，最近在前）
-    rows = raw[:days]
+    # 取最近N天（raw_data 为升序，最近的在末尾）
+    rows = raw[-days:][::-1]
     if regime:
         rows = [r for r in rows if r.get('Regime') == regime]
     
@@ -169,7 +169,7 @@ async def get_recent_signals(limit: int = Query(10, ge=1, le=100)):
     raw = _dashboard_cache.get('raw_data', [])
     signals = []
     prev_pos = None
-    for r in raw:
+    for r in reversed(raw):  # 从最新往回，取最近N次仓位变化
         pos = r.get('仓位')
         if pos != prev_pos and pos:
             signals.append({

@@ -40,7 +40,7 @@ def test_execution_json_contract():
     for key in ('current', 'scenarios', 'execution_rules', 'position_history'):
         assert key in d, f"execution_data.json 缺字段: {key}"
     cur = d['current']
-    assert 0 <= cur['position'] <= 1.5, f"仓位异常: {cur['position']}"
+    assert -1.5 <= cur['position'] <= 1.5, f"仓位异常: {cur['position']}"  # 熊市做空为合法输出(v3e clip ±1.5)
     assert 0 <= cur['probability'] <= 1, f"概率异常: {cur['probability']}"
 
 

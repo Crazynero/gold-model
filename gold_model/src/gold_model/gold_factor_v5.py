@@ -481,8 +481,9 @@ for n in PREDICT_DAYS:
     # 原绝对涨跌标签(始终保留,供分析/回退)
     factors[f'未来{n}日涨跌'] = (factors[f'未来{n}日收益'] > 0).astype(int)
     # 超额收益标签: 未来N日收益 > 滚动250日日均收益×N
+    # P2修复(前视偏差): 基准用当前已知的250日均值,不用shift(-n)搬未来均值
     _rolling_mean_n = _gold_daily_ret.rolling(250).mean() * n
-    factors[f'未来{n}日超额'] = (factors[f'未来{n}日收益'] > _rolling_mean_n.shift(-n)).astype(int)
+    factors[f'未来{n}日超额'] = (factors[f'未来{n}日收益'] > _rolling_mean_n).astype(int)
 
 # 训练用哪个标签列(由LABEL_MODE决定)
 _label_suffix = '涨跌' if LABEL_MODE == 'abs' else '超额'
@@ -701,7 +702,8 @@ for pred_days in PREDICT_DAYS:
         model_xgb.fit(X_train_s, y_train)
 
         # LightGBM (V4.3: class_weight平衡)
-        cw = {0: spw, 1: 1.0}
+        # P1修复: class_weight与scale_pos_weight语义对齐——正类(1)放大,非负类
+        cw = {0: 1.0, 1: spw}
         model_lgb = lgb.LGBMClassifier(
             n_estimators=80, max_depth=3, learning_rate=0.05,
             subsample=0.8, colsample_bytree=0.7,
@@ -933,10 +935,14 @@ wf_baseline_acc = wf20['accuracy']
 
 # V4.3: 构建滚动命中率时序——用于策略层信号质量熔断
 wf_actuals_series = pd.Series(wf_actuals, index=wf_dates)
-# 滚动20日命中率（每个时点用过去20次WF预测的命中率）
-rolling_hit = wf_actuals_series.rolling(20, min_periods=10).mean()
+# P0修复(前视偏差): 预测日p的20日actual要到p+20交易日才结算。
+#   将actual按"结算日"(预测日+20交易日)平移对齐后再滚动,任何时点只用已结算命中率。
+_settled_actuals = wf_actuals_series.copy()
+_settled_actuals.index = wf_actuals_series.index + pd.tseries.offsets.BDay(20)
+# 结算日对齐交易日历后ffill,再滚动20日命中率
+rolling_hit = _settled_actuals.reindex(factors.index).ffill().rolling(20, min_periods=10).mean()
 # 转为0-1之间的信号质量因子（命中率<40%时大幅降仓位，>60%时正常）
-signal_quality = rolling_hit.reindex(factors.index).ffill().fillna(0.5)
+signal_quality = rolling_hit.fillna(0.5)
 # 熔断逻辑：命中率<30% → 仓位×0.2；<40% → 仓位×0.5；<50% → 仓位×0.8
 signal_scalar = pd.Series(1.0, index=factors.index)
 signal_scalar[signal_quality < 0.50] = 0.8
@@ -1047,8 +1053,11 @@ _pred20_kelly['pred'] = (_pred20_kelly['prob'] > 0.5).astype(int)
 _pred20_kelly['correct'] = (_pred20_kelly['pred'] == _pred20_kelly['actual'].astype(int)).astype(int)
 
 # 滚动命中率（窗口60个预测，最少20个）
-win_prob = _pred20_kelly['correct'].rolling(60, min_periods=20).mean()
-win_prob = win_prob.reindex(prob_series.index).ffill().fillna(0.55)
+# P0修复(前视偏差): correct的index是预测日,结算日=预测日+20交易日,先平移再用
+_correct_settled = _pred20_kelly['correct'].copy()
+_correct_settled.index = _pred20_kelly.index + pd.tseries.offsets.BDay(20)
+win_prob = _correct_settled.reindex(prob_series.index).ffill().rolling(60, min_periods=20).mean()
+win_prob = win_prob.fillna(0.55)
 
 # Kelly: f* = 2p - 1（b=1:1赔率），用半Kelly避免过度下注
 kelly_scalar = ((2 * win_prob - 1) * 0.5).clip(0, 1)  # 半Kelly
@@ -1266,87 +1275,85 @@ else:
 
 print("\n[7] 当前预测...")
 
-# 训练最终模型（20日预测）——V4.0用中位数填充
-X_final = factors[feature_cols].copy()
-y_final = factors[f'未来20日{_label_suffix}'].reindex(X_final.index)
-valid_final = y_final.notna()
-X_final = X_final[valid_final]
-y_final = y_final[valid_final]
-final_medians = X_final.median()
-X_final = X_final.fillna(final_medians)
-
-final_xgb = xgb.XGBClassifier(
-    n_estimators=80, max_depth=3, learning_rate=0.05,
-    subsample=0.8, colsample_bytree=0.7,
-    reg_alpha=0.15, reg_lambda=1.5,
-    random_state=42, use_label_encoder=False,
-    eval_metric='logloss', verbosity=0,
-)
-final_xgb.fit(X_final, y_final)
-
-final_lgb = lgb.LGBMClassifier(
-    n_estimators=80, max_depth=3, learning_rate=0.05,
-    subsample=0.8, colsample_bytree=0.7,
-    reg_alpha=0.15, reg_lambda=1.5,
-    random_state=42, verbose=-1,
-)
-final_lgb.fit(X_final, y_final)
-
-# 多周期模型
-final_models = {}
-for pred_days in PREDICT_DAYS:
-    target = f'未来{pred_days}日{_label_suffix}'  # V5.1: abs→涨跌 / excess→超额
-    y_t = factors[target].reindex(X_final.index)
-    valid_t = y_t.notna()
-    X_t = X_final[valid_t]
-    y_t = y_t[valid_t]
-
-    m_xgb = xgb.XGBClassifier(
-        n_estimators=80, max_depth=3, learning_rate=0.05,
-        subsample=0.8, colsample_bytree=0.7,
-        reg_alpha=0.15, reg_lambda=1.5,
-        random_state=42, use_label_encoder=False,
-        eval_metric='logloss', verbosity=0,
-    )
-    m_xgb.fit(X_t, y_t)
-
-    m_lgb = lgb.LGBMClassifier(
-        n_estimators=80, max_depth=3, learning_rate=0.05,
-        subsample=0.8, colsample_bytree=0.7,
-        reg_alpha=0.15, reg_lambda=1.5,
-        random_state=42, verbose=-1,
-    )
-    m_lgb.fit(X_t, y_t)
-
-    final_models[pred_days] = (m_xgb, m_lgb)
-
-# 找最新有效行——用factors的最后一行，填充后预测
+# 先确定最新交易日与当前Regime（实盘预测基准，也用于Regime-conditional训练）
 latest_raw = factors[feature_cols].iloc[-1:]
 latest_idx = latest_raw.index[0]
+current_regime = str(regime.loc[latest_idx])
 
-# P0修复: 数据时效校验——最新数据不应超过3天前（考虑周末/节假日）
+# P0修复: 数据时效校验——最新数据不应超过4天前（考虑周末/节假日）
 max_staleness = pd.Timestamp.now() - pd.Timedelta(days=4)
 if latest_idx < max_staleness:
     print(f"  ⚠️ 警告: 最新数据日期 {latest_idx.date()} 超过4天，可能数据源异常！")
     print(f"     (当前时间: {pd.Timestamp.now().strftime('%Y-%m-%d')})")
 
-latest_valid = latest_raw.fillna(final_medians)
-latest_scaler = StandardScaler().fit(X_final)
-latest_X_s = latest_scaler.transform(latest_valid)
+
+def _regime_filter_final(X, y, target_regime):
+    """与WF回测一致的Regime-conditional：同Regime样本>=100才过滤，否则退回全量"""
+    _reg = regime.reindex(X.index)
+    if target_regime in ('牛市', '熊市', '震荡'):
+        _rm = (_reg == target_regime)
+        if _rm.sum() >= 100:
+            return X[_rm], y[_rm]
+    return X, y
+
+
+def _train_ensemble_final(X_tr, y_tr):
+    """训练XGB+LGB集成，返回(xgb, lgb, scaler, medians)。
+    P1修复: 与WF回测对齐——scale_pos_weight/class_weight平衡。
+    注: 不做Isotonic校准——in-sample校准在单点实盘预测上退化(把raw≈0.22clip到0.0)，改用原始概率。"""
+    _pos = int(y_tr.sum())
+    _neg = int(len(y_tr) - _pos)
+    _spw = min(_neg / _pos, 2.0) if _pos > 0 else 1.0
+    _med = X_tr.median()
+    _X = X_tr.fillna(_med)
+    _sc = StandardScaler()
+    _Xs = _sc.fit_transform(_X)
+    _xgb = xgb.XGBClassifier(
+        n_estimators=80, max_depth=3, learning_rate=0.05,
+        subsample=0.8, colsample_bytree=0.7,
+        reg_alpha=0.15, reg_lambda=1.5,
+        scale_pos_weight=_spw, random_state=42, use_label_encoder=False,
+        eval_metric='logloss', verbosity=0,
+    )
+    _xgb.fit(_Xs, y_tr)
+    _lgb = lgb.LGBMClassifier(
+        n_estimators=80, max_depth=3, learning_rate=0.05,
+        subsample=0.8, colsample_bytree=0.7,
+        reg_alpha=0.15, reg_lambda=1.5,
+        class_weight={0: 1.0, 1: _spw}, random_state=42, verbose=-1,
+    )
+    _lgb.fit(_Xs, y_tr)
+    return _xgb, _lgb, _sc, _med
+
+
+# 训练多周期最终模型（每个horizon独立准备数据，与WF回测对齐）
+final_models = {}
+for pred_days in PREDICT_DAYS:
+    target = f'未来{pred_days}日{_label_suffix}'  # V5.1: abs→涨跌 / excess→超额
+    X_h = factors[feature_cols].copy()
+    y_h = factors[target].reindex(X_h.index)
+    valid_h = y_h.notna()
+    X_h = X_h[valid_h].copy()
+    y_h = y_h[valid_h]
+    X_h, y_h = _regime_filter_final(X_h, y_h, current_regime)
+    final_models[pred_days] = _train_ensemble_final(X_h, y_h)
+
+# final_xgb/final_lgb 供[8]特征重要性使用（取20日模型）
+final_xgb, final_lgb = final_models[20][0], final_models[20][1]
 
 current_price = float(factors['金价'].loc[latest_idx])
 ma200_current = float(ma200.loc[latest_idx]) if pd.notna(ma200.loc[latest_idx]) else current_price
 ma50_current = float(ma50.loc[latest_idx]) if pd.notna(ma50.loc[latest_idx]) else current_price
-current_regime = str(regime.loc[latest_idx])
 current_vol = float(vol_60.loc[latest_idx]) if pd.notna(vol_60.loc[latest_idx]) else 0.15
 
-# 多周期概率
+# 多周期概率（原始集成概率，不做Isotonic校准——见_train_ensemble_final注释）
 multi_probs = {}
 for pred_days in PREDICT_DAYS:
-    m_xgb, m_lgb = final_models[pred_days]
-    p_xgb = float(m_xgb.predict_proba(latest_X_s)[0, 1])
-    p_lgb = float(m_lgb.predict_proba(latest_X_s)[0, 1])
-    multi_probs[pred_days] = (p_xgb + p_lgb) / 2
+    _xgb, _lgb, _sc, _med = final_models[pred_days]
+    _latest_X = latest_raw.fillna(_med)
+    _latest_s = _sc.transform(_latest_X)
+    multi_probs[pred_days] = float((_xgb.predict_proba(_latest_s)[0, 1] +
+                                    _lgb.predict_proba(_latest_s)[0, 1]) / 2)
 
 # P1修复: 当前预测也用IC自适应权重（与回测一致）
 prob_multi_current = (_w5 * multi_probs[5] + _w10 * multi_probs[10] +

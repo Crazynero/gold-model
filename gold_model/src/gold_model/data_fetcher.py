@@ -16,6 +16,12 @@ import requests
 import yfinance as yf
 from datetime import datetime, timedelta
 
+
+def _period_years(period='5y'):
+    """从period字符串(如'5y'/'10y')解析年数，异常时回退5"""
+    digits = ''.join(c for c in (period or '') if c.isdigit())
+    return int(digits) if digits else 5
+
 try:
     from curl_cffi import requests as _curl_requests  # 东财按TLS指纹封Python请求，需Chrome指纹
 except ImportError:
@@ -171,7 +177,7 @@ def _fetch_from_sina(ticker, period='5y'):
             index=pd.to_datetime([x['d'] for x in data]),
             name=ticker,
         )
-        cutoff = pd.Timestamp.now() - pd.Timedelta(days=5 * 365)
+        cutoff = pd.Timestamp.now() - pd.Timedelta(days=_period_years(period) * 365)
         s = s[s.index > cutoff]
         return s if len(s) > 100 else None
     except Exception:
@@ -217,7 +223,7 @@ def _fetch_from_fred(series_id, period='5y', retries=2):
         return None
     df = pd.read_csv(io.StringIO(r.text), index_col=0, parse_dates=True)
     df = df.replace('.', np.nan).astype(float)
-    cutoff = pd.Timestamp.now() - pd.Timedelta(days=5 * 365)
+    cutoff = pd.Timestamp.now() - pd.Timedelta(days=_period_years(period) * 365)
     df = df[df.index > cutoff]
     if len(df) < 50:
         return None
