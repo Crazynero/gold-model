@@ -231,10 +231,10 @@ for i in range(len(ics_A)):
         weights_A[i] = 0.15
 weights_A = weights_A / weights_A.sum()
 
-prob20_A = pd.Series(v5.ml_results[20]['probabilities']).reindex(base_idx).ffill()
-prob5_A = pd.Series(v5.ml_results[5]['probabilities']).reindex(base_idx).ffill()
-prob10_A = pd.Series(v5.ml_results[10]['probabilities']).reindex(base_idx).ffill()
-prob60_A = pd.Series(v5.ml_results[60]['probabilities']).reindex(base_idx).ffill()
+prob20_A = pd.Series(v5.ml_results[20]['probabilities'], index=v5.ml_results[20]['dates']).reindex(base_idx).ffill()
+prob5_A = pd.Series(v5.ml_results[5]['probabilities'], index=v5.ml_results[5]['dates']).reindex(base_idx).ffill()
+prob10_A = pd.Series(v5.ml_results[10]['probabilities'], index=v5.ml_results[10]['dates']).reindex(base_idx).ffill()
+prob60_A = pd.Series(v5.ml_results[60]['probabilities'], index=v5.ml_results[60]['dates']).reindex(base_idx).ffill()
 prob_multi_A = sum(weights_A[i] * [prob5_A, prob10_A, prob20_A, prob60_A][i]
                    for i in range(4))
 

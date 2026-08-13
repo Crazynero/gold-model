@@ -484,6 +484,10 @@ for n in PREDICT_DAYS:
     # P2修复(前视偏差): 基准用当前已知的250日均值,不用shift(-n)搬未来均值
     _rolling_mean_n = _gold_daily_ret.rolling(250).mean() * n
     factors[f'未来{n}日超额'] = (factors[f'未来{n}日收益'] > _rolling_mean_n).astype(int)
+    # D3修复: 未来收益NaN的行(末N天未结算)标签也置NaN,避免astype把NaN误标成"跌"(0)
+    _unsettled = factors[f'未来{n}日收益'].isna()
+    factors.loc[_unsettled, f'未来{n}日涨跌'] = np.nan
+    factors.loc[_unsettled, f'未来{n}日超额'] = np.nan
 
 # 训练用哪个标签列(由LABEL_MODE决定)
 _label_suffix = '涨跌' if LABEL_MODE == 'abs' else '超额'
@@ -639,27 +643,28 @@ for pred_days in PREDICT_DAYS:
         X_train = X.iloc[train_mask].copy()
         y_train = y.reindex(X_train.index)
 
-        # V5.0 P2-2: Regime-conditional训练——只用与test期同Regime的历史样本
+        # V5.0 P2-2: Regime-conditional训练——只用与当前Regime一致的历史样本
         if REGIME_CONDITIONAL and regime_series is not None:
-            # test期的Regime（取多数）
-            test_regimes = regime_series.iloc[start_idx:end_idx].dropna()
-            if len(test_regimes) > 0:
-                target_regime = test_regimes.mode().iloc[0] if len(test_regimes.mode()) > 0 else '震荡'
-                train_regimes = regime_series.reindex(X_train.index)
-                regime_mask = (train_regimes == target_regime)
-                regime_count = regime_mask.sum()
-                if SAMPLE_AUGMENT and target_regime == '熊市' and 30 <= regime_count < 100:
-                    # V5.2: 熊市样本不足时不退回全量(含牛市),改为复制熊市样本补到100+
-                    X_regime = X_train[regime_mask]
-                    y_regime = y_train[regime_mask]
-                    dup_times = int(np.ceil(100 / regime_count))
-                    X_train = pd.concat([X_regime] * dup_times, ignore_index=True)
-                    y_train = pd.concat([y_regime] * dup_times, ignore_index=True)
-                elif regime_count >= 100:
-                    # 样本足够,正常过滤
-                    X_train = X_train[regime_mask]
-                    y_train = y_train[regime_mask]
-                # regime_count < 30 或非熊市不足时仍退回全量(augment=off 的旧行为)
+            # ⑤修复(前视): 用训练期最后一天的Regime(因果已知)代替test期多数Regime(偷看未来)
+            target_regime = '震荡'
+            if train_end > 0:
+                _last_reg = regime_series.iloc[train_end - 1]
+                target_regime = str(_last_reg) if pd.notna(_last_reg) else '震荡'
+            train_regimes = regime_series.reindex(X_train.index)
+            regime_mask = (train_regimes == target_regime)
+            regime_count = regime_mask.sum()
+            if SAMPLE_AUGMENT and target_regime == '熊市' and 30 <= regime_count < 100:
+                # V5.2: 熊市样本不足时不退回全量(含牛市),改为复制熊市样本补到100+
+                X_regime = X_train[regime_mask]
+                y_regime = y_train[regime_mask]
+                dup_times = int(np.ceil(100 / regime_count))
+                X_train = pd.concat([X_regime] * dup_times, ignore_index=True)
+                y_train = pd.concat([y_regime] * dup_times, ignore_index=True)
+            elif regime_count >= 100:
+                # 样本足够,正常过滤
+                X_train = X_train[regime_mask]
+                y_train = y_train[regime_mask]
+            # regime_count < 30 或非熊市不足时仍退回全量(augment=off 的旧行为)
 
         # 只保留有标签的行
         valid_train = y_train.notna()
@@ -814,14 +819,16 @@ for pred_days in PREDICT_DAYS:
 
         # Regime-conditional
         if REGIME_CONDITIONAL and regime_series is not None:
-            test_regimes = regime_series.iloc[start_idx:end_idx].dropna()
-            if len(test_regimes) > 0:
-                target_regime = test_regimes.mode().iloc[0] if len(test_regimes.mode()) > 0 else '震荡'
-                train_regimes = regime_series.reindex(X_train.index)
-                regime_mask = (train_regimes == target_regime)
-                if regime_mask.sum() >= 100:
-                    X_train = X_train[regime_mask]
-                    y_train = y_train[regime_mask]
+            # ⑤修复(前视): 用训练期最后一天的Regime(因果已知)代替test期多数Regime
+            target_regime = '震荡'
+            if train_end > 0:
+                _last_reg = regime_series.iloc[train_end - 1]
+                target_regime = str(_last_reg) if pd.notna(_last_reg) else '震荡'
+            train_regimes = regime_series.reindex(X_train.index)
+            regime_mask = (train_regimes == target_regime)
+            if regime_mask.sum() >= 100:
+                X_train = X_train[regime_mask]
+                y_train = y_train[regime_mask]
 
         valid_train = y_train.notna()
         X_train = X_train[valid_train]
@@ -1266,7 +1273,12 @@ full_m = strategies[best_key]
 holdout_m = holdout_results.get(best_key, {'sharpe': 0, 'ann_ret': 0, 'max_dd': 0})
 print(f"    Full-period:  夏普={full_m['sharpe']:.2f}, 年化={full_m['ann_ret']:+.1%}, 回撤={full_m['max_dd']:+.1%}")
 print(f"    Holdout(6m):  夏普={holdout_m['sharpe']:.2f}, 年化={holdout_m['ann_ret']:+.1%}, 回撤={holdout_m['max_dd']:+.1%}")
-sharpe_decay = (1 - holdout_m['sharpe'] / full_m['sharpe']) if full_m['sharpe'] > 0 else 0
+# D1修复: 负OOS夏普时"衰减"公式会得>100%(如-2.94/0.64→559%),封顶为100%
+if full_m['sharpe'] > 0:
+    _oos = holdout_m['sharpe']
+    sharpe_decay = 1.0 if _oos <= 0 else min((1 - _oos / full_m['sharpe']), 1.0)
+else:
+    sharpe_decay = 0.0
 print(f"    夏普衰减: {sharpe_decay:.1%}")
 if sharpe_decay > 0.5:
     print(f"    ⚠️ 夏普衰减>50%，过拟合风险高！")
@@ -1402,8 +1414,13 @@ else:
         suggested_pos = 0.0
 
 # Vol targeting调整
-vol_adjust = min(2.0, target_vol / current_vol) if current_vol > 0 else 1.0
+# D4修复: 与回测vol_scalar口径一致——回测用20日realized vol,此前实盘误用60日vol(current_vol)
+_realized_vol_live = float(factors['金价'].pct_change().rolling(20).std().iloc[-1] * np.sqrt(250))
+vol_adjust = min(2.0, target_vol / _realized_vol_live) if _realized_vol_live > 0 else 1.0
 suggested_pos = suggested_pos * vol_adjust
+# V4.3: 信号质量熔断——结算命中率低时自动降仓位(与V3.0-E回测口径一致;
+#   此前只作用于回测策略,漏乘到实时建议仓位,导致"仓位将乘以X"提示名不副实)
+suggested_pos = suggested_pos * current_ss
 suggested_pos = max(-1.5, min(1.5, suggested_pos))
 
 if suggested_pos > 0.5:
@@ -2506,6 +2523,14 @@ if os.path.exists(existing_analysis_path):
         execution_data['cost_comparison'] = existing.get('cost_comparison')
     except:
         pass
+
+# C5修复: 注入真实命中率字段(前端执行计划Tab此前fallback到写死的35%/58%/-23%)。
+#   数据来源 [5.5]信号回测基准: recent_hit_rate=近20次已结算命中率, wf_baseline_acc=WF整体命中率。
+if execution_data.get('signal_stats') is None:
+    execution_data['signal_stats'] = {}
+execution_data['signal_stats']['hit_rate_20d'] = f"{recent_hit_rate:.1%}"
+execution_data['signal_stats']['wf_base'] = f"{wf_baseline_acc:.1%}"
+execution_data['signal_stats']['deviation'] = f"{recent_hit_rate - wf_baseline_acc:+.1%}"
 
 exec_json_path = str(EXECUTION_JSON)
 with open(exec_json_path, 'w', encoding='utf-8') as f:

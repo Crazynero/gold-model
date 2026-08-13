@@ -260,7 +260,8 @@ def _format_v5_holdout(dash_data):
                 break
         
         if full_sharpe > 0 and h_sharpe is not None:
-            decay = (1 - h_sharpe / full_sharpe) * 100
+            # D1修复: 负OOS夏普时衰减封顶100%(原公式会得>100%的荒谬值)
+            decay = 100.0 if h_sharpe <= 0 else min((1 - h_sharpe / full_sharpe) * 100, 100)
             lines.append(f"  夏普衰减: {decay:.0f}% (Full {full_sharpe:.2f} → Holdout {h_sharpe:.2f})")
             
             if decay > 50:

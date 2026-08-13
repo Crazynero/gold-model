@@ -102,6 +102,20 @@ def safe(v):
     return s
 
 
+def decay_pct(full, oos):
+    """夏普衰减百分比。D1修复: 负OOS夏普时原公式会得>100%的荒谬值(如-2.94/0.64→559%),封顶100%。"""
+    try:
+        full = float(full)
+        oos = float(oos)
+    except (TypeError, ValueError):
+        return '--'
+    if full <= 0:
+        return '--'
+    if oos <= 0:
+        return '100%'
+    return f"{min((1 - oos / full) * 100, 100):.0f}%"
+
+
 def build_weekly(dash, exec_, drift, styles):
     """构造周报内容"""
     ov = dash.get('overview', {})
@@ -131,7 +145,7 @@ def build_weekly(dash, exec_, drift, styles):
         ['建议操作', safe(ov.get('建议操作'))],
         ['加权集成概率', safe(ov.get('加权集成概率'))],
         ['最优夏普 (V3.0-E)', safe(v3e.get('夏普'))],
-        ['Holdout 衰减', f"{(1 - (v3e_holdout.get('sharpe', 0) / float(v3e.get('夏普') or 1))) * 100:.0f}%" if v3e and v3e_holdout else '--'],
+        ['Holdout 衰减', decay_pct(float(v3e.get('夏普') or 1), v3e_holdout.get('sharpe', 0)) if v3e and v3e_holdout else '--'],
     ]
     t = Table(summary_data, colWidths=[60*mm, 60*mm])
     t.setStyle(TableStyle([
@@ -222,12 +236,7 @@ def build_weekly(dash, exec_, drift, styles):
     h_data = [['策略', 'Full Sharpe', 'OOS Sharpe', '衰减%', 'OOS 回撤']]
     for h in holdout:
         full_s = next((s.get('夏普') for s in strategies if s.get('策略') == h.get('strategy')), '--')
-        try:
-            full = float(full_s)
-            oos = float(h.get('sharpe', 0))
-            decay = f"{(1 - oos / full) * 100:.0f}%" if full > 0 else '--'
-        except:
-            decay = '--'
+        decay = decay_pct(full_s, h.get('sharpe', 0))
         h_data.append([
             safe(h.get('strategy'))[:18],
             safe(full_s),
@@ -252,6 +261,8 @@ def build_weekly(dash, exec_, drift, styles):
 
     # === Page 4: 告警 + 操作建议 ===
     story.append(Paragraph('// 异常告警汇总', styles['h1']))
+    hit = None  # B2修复: 提前初始化,drift<2条时后续"命中率熔断"引用不再NameError
+    wf = None
     if len(drift) >= 2:
         latest = drift[-1]
         prev = drift[-2]

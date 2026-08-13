@@ -232,6 +232,7 @@ ml_results = {}
 TRAIN_WINDOW = 500
 TEST_WINDOW = 60
 STEP = 30
+GAP = 60  # B1修复: purged gap消除标签泄漏(与主管道GAP=60一致;原无gap,60日标签泄漏60天)
 
 for pred_days in PREDICT_DAYS:
     target_col = f'未来{pred_days}日涨跌'
@@ -243,7 +244,8 @@ for pred_days in PREDICT_DAYS:
     start_idx = TRAIN_WINDOW
     while start_idx + TEST_WINDOW <= len(X):
         end_idx = start_idx + TEST_WINDOW
-        train_mask = slice(max(0, start_idx - TRAIN_WINDOW), start_idx)
+        train_end = start_idx - GAP  # B1修复: train/test间留gap,消除标签泄漏
+        train_mask = slice(max(0, train_end - TRAIN_WINDOW), train_end)
         test_mask = slice(start_idx, end_idx)
         X_train = X.iloc[train_mask].copy()
         y_train = y.reindex(X_train.index)
@@ -345,8 +347,8 @@ v3e_pos[range_ & (pm >= 0.40) & (pm <= 0.60)] = 0.0
 # Vol targeting
 target_vol = 0.15
 realized_vol = gold_returns.rolling(20).std() * np.sqrt(250)
-vol_scalar = target_vol / realized_vol
-vol_scalar = vol_scalar.clip(0, 2)
+# C3修复: 前19日rolling std为NaN,fillna(1.0)不缩放,避免v3e_pos前19行为NaN被dropna丢弃→与regime_aligned失同步
+vol_scalar = (target_vol / realized_vol).clip(0, 2).fillna(1.0)
 v3e_pos = v3e_pos * vol_scalar
 v3e_pos = v3e_pos.clip(-1.5, 1.5)
 
@@ -705,8 +707,18 @@ output = {
     },
 }
 
+def _sanitize(o):
+    """递归把NaN/inf转None,保证输出合法JSON(C5修复: 原json.dump会把NaN写成非法字面量)"""
+    if isinstance(o, dict):
+        return {k: _sanitize(v) for k, v in o.items()}
+    if isinstance(o, (list, tuple)):
+        return [_sanitize(v) for v in o]
+    if isinstance(o, float) and (np.isnan(o) or np.isinf(o)):
+        return None
+    return o
+
 with open(str(ANALYSIS_JSON), 'w', encoding='utf-8') as f:
-    json.dump(output, f, ensure_ascii=False, indent=2, default=str)
+    json.dump(_sanitize(output), f, ensure_ascii=False, indent=2, allow_nan=False)
 
 print("  ✅ position_series.csv")
 print("  ✅ analysis.json")

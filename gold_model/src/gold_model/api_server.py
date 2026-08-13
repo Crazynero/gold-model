@@ -323,11 +323,14 @@ async def get_symbol_data(symbol: str, days: int = Query(250, ge=30, le=1000)):
         for i, r in enumerate(raw):
             r['MA50'] = f"{ma50[i]:.4f}" if ma50[i] else ''
             r['MA200'] = f"{ma200[i]:.4f}" if ma200[i] else ''
-            # Regime: 牛市(>MA200 5%+) / 熊市(<MA200 5%+) / 震荡
-            if ma200[i] and prices[i] > ma200[i] * 1.05:
-                r['Regime'] = '牛市'
-            elif ma200[i] and prices[i] < ma200[i] * 0.95:
-                r['Regime'] = '熊市'
+            # ④修复: Regime口径与主管道一致(金价 vs MA200 + MA50/MA200交叉),原为MA200±5%带宽简化版
+            if ma200[i] and ma50[i]:
+                if prices[i] > ma200[i] and ma50[i] > ma200[i]:
+                    r['Regime'] = '牛市'
+                elif prices[i] < ma200[i] and ma50[i] < ma200[i]:
+                    r['Regime'] = '熊市'
+                else:
+                    r['Regime'] = '震荡'
             else:
                 r['Regime'] = '震荡'
             r['20日波动率'] = f"{(prices[max(0,i-20):i+1] and __import__('numpy').std(prices[max(0,i-20):i+1]) / max(1e-9, __import__('numpy').mean(prices[max(0,i-20):i+1])) if i > 0 else 0):.4f}"
@@ -518,7 +521,7 @@ async def run_v5_with_params(params: V5TuningParams):
                 metrics['gold_price'] = line.strip()
             if '加权集成' in line:
                 metrics['weighted_prob'] = line.strip()
-            if 'Regime' in line and '熊' in line or '牛' in line or '震荡' in line:
+            if 'Regime' in line and any(k in line for k in ('熊', '牛', '震荡')):
                 metrics['regime'] = line.strip()
         return {
             "status": "ok" if result.returncode == 0 else "fail",

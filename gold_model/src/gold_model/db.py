@@ -106,7 +106,8 @@ class DBHelper:
         oos_sharpe = holdout.get('sharpe')
         decay = None
         if oos_sharpe is not None and full_sharpe > 0:
-            decay = (1 - oos_sharpe / full_sharpe) * 100
+            # D1修复: 负OOS夏普时衰减封顶100%(原公式会得>100%的荒谬值)
+            decay = 100.0 if oos_sharpe <= 0 else min((1 - oos_sharpe / full_sharpe) * 100, 100)
 
         # pos_factor
         hit_rate = parse_pct(ss.get('hit_rate_20d') or ov.get('命中率20日'))

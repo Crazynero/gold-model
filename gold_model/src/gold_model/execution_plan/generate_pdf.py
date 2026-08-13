@@ -222,15 +222,16 @@ story = []
 story.append(Paragraph('一、核心发现', h1_style))
 
 story.append(Paragraph(
-    '对 V4.0 黄金预测模型在 2022.12~2026.06 期间的 1289 个交易日信号进行深度分析，'
-    '提取了 881 次调仓记录，得出以下关键发现：', body_style))
+    f'对 V4.0 黄金预测模型在 {stats["分析区间"]} 期间的 {stats["总交易日"]} 个交易日信号进行深度分析，'
+    f'提取了 {stats["总调仓次数"]} 次调仓记录，得出以下关键发现：', body_style))
 
-# Stats cards row
+# C2修复: 用stats动态值代替硬编码(原881/1.5/20.5/27.4%)
+_empty_ratio = stats['仓位分布'].get('空仓 (0)', 0) / max(stats['总交易日'], 1)
 cards = [
-    stat_card('881', '总调仓次数', f'{stats["总交易日"]}交易日'),
-    stat_card('1.5', '平均持仓天数', f'中位数{int(stats["持仓天数_中位数"])}天'),
-    stat_card('20.5', '月均调仓', f'最多{stats["调仓最多月"]}次/月'),
-    stat_card('27.4%', '空仓占比', '震荡市为主'),
+    stat_card(str(stats['总调仓次数']), '总调仓次数', f'{stats["总交易日"]}交易日'),
+    stat_card(f'{stats["平均持仓天数"]:.1f}', '平均持仓天数', f'中位数{int(stats["持仓天数_中位数"])}天'),
+    stat_card(f'{stats["月均调仓次数"]:.1f}', '月均调仓', f'最多{stats["调仓最多月"]}次/月'),
+    stat_card(f'{_empty_ratio:.1%}', '空仓占比', '震荡市为主'),
 ]
 card_table = Table([cards], colWidths=[AVAIL_W/4]*4)
 card_table.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP')]))
@@ -247,10 +248,16 @@ story.append(callout_box(
 story.append(Paragraph('二、信号频率分析', h1_style))
 
 story.append(Paragraph('2.1 仓位分布', h2_style))
+# C2修复: 动态取占比最高的Regime代替硬编码"震荡"(避免无震荡日时KeyError+显示过期数字)
+_regime_stats = stats.get('Regime统计', {})
+_dom_name = max(_regime_stats, key=lambda k: _regime_stats[k].get('天数', 0)) if _regime_stats else '震荡'
+_dom = _regime_stats.get(_dom_name, {})
+_dom_days = _dom.get('天数', 0)
+_dom_pct = _dom_days / max(stats['总交易日'], 1)
 story.append(Paragraph(
-    f'分析区间内模型主要处于<b>震荡市</b>状态（1308天/100%），平均仓位 {stats["Regime统计"]["震荡"]["平均仓位"]:.2f}，'
-    f'仓位标准差 {stats["Regime统计"]["震荡"]["仓位标准差"]:.2f}。'
-    f'空仓占比 27.4%，说明模型在震荡市中有约 1/4 的时间选择观望。', body_style))
+    f'分析区间内模型主要处于<b>{_dom_name}</b>状态（{_dom_days}天/{_dom_pct:.0%}），平均仓位 {_dom.get("平均仓位", 0):.2f}，'
+    f'仓位标准差 {_dom.get("仓位标准差", 0):.2f}。'
+    f'空仓占比 {_empty_ratio:.1%}，说明模型有约 {_empty_ratio:.0%} 的时间选择观望。', body_style))
 
 story.append(Image(f'{CHARTS}/position_distribution.png', width=AVAIL_W*0.75, height=AVAIL_W*0.75*0.625))
 story.append(Paragraph('图1：V4模型仓位分布（2022.12~2026.06）', ParagraphStyle(
@@ -284,10 +291,14 @@ story.append(Paragraph('图4：持仓时长分布', ParagraphStyle(
     name='Caption', fontName='NotoSansSC', fontSize=9, textColor=TEXT_MUTED,
     alignment=TA_CENTER, spaceBefore=4, spaceAfter=12)))
 
+# C2修复: 调仓次数动态化(原硬编码881/104/777)
+_major = stats['大调仓(≥50%)']
+_minor = stats['小调仓(<50%)']
+_n_chg = max(stats['总调仓次数'], 1)
 story.append(callout_box(
-    '<b>分层依据：</b>881 次调仓中，大调仓（仓位变化≥50%）仅 104 次（12%），'
-    '小调仓 777 次（88%）。ETF 层只需处理大调仓（月均 1.7 次），期货层处理全部小调仓（月均 14 次），'
-    '可将 ETF 交易频率降低 87%。'
+    f'<b>分层依据：</b>{_n_chg} 次调仓中，大调仓（仓位变化≥50%）仅 {_major} 次（{_major/_n_chg:.0%}），'
+    f'小调仓 {_minor} 次（{_minor/_n_chg:.0%}）。ETF 层只需处理大调仓，期货层处理全部小调仓，'
+    '可将 ETF 交易频率大幅降低。'
 ))
 
 # ─── Section 3: 成本对比 ───

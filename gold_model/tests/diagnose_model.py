@@ -103,7 +103,7 @@ print(f"\n⚠️ IC符号反转的特征: {n_reversed}/{len(regime_df)}个 —�
 print("\n\n[3] 60日预测IC滚动稳定性(每250天窗口)")
 print("    判断:60日IC=+0.17是稳定的还是某段牛市运气?")
 
-prob60 = pd.Series(v5.ml_results[60]['probabilities'])
+prob60 = pd.Series(v5.ml_results[60]['probabilities'], index=v5.ml_results[60]['dates'])
 prob60 = prob60[~prob60.index.duplicated(keep='last')]
 ret60_aligned = ret_60.reindex(prob60.index)
 
@@ -120,6 +120,7 @@ for i in range(rolling_window, len(prob60)):
         rolling_ics.append(ic)
         dates_rolled.append(prob60.index[i])
 
+pos_pct = 0.0  # B3修复: 提前初始化,rolling_ics为空时末段总结不再NameError
 if rolling_ics:
     rolling_s = pd.Series(rolling_ics, index=dates_rolled)
     # 分段:前1/3 中1/3 后1/3
@@ -143,7 +144,7 @@ if rolling_ics:
 print("\n\n[4] 分Regime模型方向准确率(20日+60日,模型到底在哪错)")
 
 for horizon in [20, 60]:
-    probs = pd.Series(v5.ml_results[horizon]['probabilities'])
+    probs = pd.Series(v5.ml_results[horizon]['probabilities'], index=v5.ml_results[horizon]['dates'])
     probs = probs[~probs.index.duplicated(keep='last')]
     actual_dir = (factors[f'未来{horizon}日收益'] > 0).astype(float).reindex(probs.index)
     pred_dir = (probs > 0.5).astype(float)

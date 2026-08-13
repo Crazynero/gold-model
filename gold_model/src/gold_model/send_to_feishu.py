@@ -126,7 +126,7 @@ def build_message():
                         "tag": "button",
                         "text": {"tag": "plain_text", "content": "查看完整 Dashboard"},
                         "type": "primary",
-                        "url": "file:///home/z/my-project/reports/gold_model/dashboard-vue3/dist/index.html"
+                        "url": os.environ.get('DASHBOARD_URL', 'http://127.0.0.1:8000/')
                     }
                 ]
             }
