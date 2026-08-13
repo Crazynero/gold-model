@@ -453,8 +453,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     result = run(dry_run=args.dry_run)
-    if result:
-        # 有告警时退出码=1，cron任务据此推送
-        sys.exit(0)
-    else:
-        sys.exit(0)
+    # 有告警→退出码1(daily_signal_check.sh 据此弹macOS通知); 无告警→0
+    sys.exit(1 if result else 0)

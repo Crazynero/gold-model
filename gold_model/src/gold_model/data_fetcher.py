@@ -106,7 +106,9 @@ _em_last_call = [0.0]
 
 # yfinance限流熔断：连续2次YFRateLimitError后跳过后续yfinance尝试（省2-3分钟无效重试）
 _yf_rate_limit_streak = [0]
+_yf_last_fail_time = [0.0]
 _YF_CIRCUIT_THRESHOLD = 2
+_YF_CIRCUIT_RESET_SECONDS = 300  # 熔断5分钟后自动复位重试(限流常为短暂性)
 
 
 def _em_get(url, headers):
@@ -306,6 +308,11 @@ def fetch_ticker_with_fallback(ticker, name, period='5y', verbose=True):
     逐层fallback获取ticker数据
     返回: pd.Series 或 None
     """
+    # 熔断超时复位：距离上次失败超过阈值秒数则重置计数，避免长时间运行中永久跳过yfinance
+    if (_yf_rate_limit_streak[0] >= _YF_CIRCUIT_THRESHOLD
+            and time.time() - _yf_last_fail_time[0] > _YF_CIRCUIT_RESET_SECONDS):
+        _yf_rate_limit_streak[0] = 0
+
     # Level 1: yfinance主源（限流熔断时跳过）
     if _yf_rate_limit_streak[0] < _YF_CIRCUIT_THRESHOLD:
         try:
@@ -317,10 +324,12 @@ def fetch_ticker_with_fallback(ticker, name, period='5y', verbose=True):
                 s.name = name
                 return s
             _yf_rate_limit_streak[0] += 1  # 空数据同样计入熔断（Yahoo软拦截常返回空DF）
+            _yf_last_fail_time[0] = time.time()
             if _yf_rate_limit_streak[0] == _YF_CIRCUIT_THRESHOLD and verbose:
                 print(f"  ⏩ yfinance连续失败（空数据），后续ticker直接走备用源")
         except Exception as e:
             _yf_rate_limit_streak[0] += 1  # 任何异常都计入熔断（DNS失败/429对全ticker同效）
+            _yf_last_fail_time[0] = time.time()
             if _yf_rate_limit_streak[0] == _YF_CIRCUIT_THRESHOLD and verbose:
                 print(f"  ⏩ yfinance连续失败（{type(e).__name__}），后续ticker直接走备用源")
             if verbose:

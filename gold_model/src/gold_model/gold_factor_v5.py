@@ -718,16 +718,8 @@ for pred_days in PREDICT_DAYS:
         prob_lgb = model_lgb.predict_proba(X_test_s)[:, 1]
         prob_ens = (prob_xgb + prob_lgb) / 2
 
-        # V4.3: Isotonic Regression概率校准
-        # 用训练集的预测概率和实际标签拟合校准器
-        from sklearn.isotonic import IsotonicRegression
-        prob_train_cal = (model_xgb.predict_proba(X_train_s)[:, 1] +
-                         model_lgb.predict_proba(X_train_s)[:, 1]) / 2
-        iso = IsotonicRegression(out_of_bounds='clip')
-        iso.fit(prob_train_cal, y_train.values)
-        prob_ens_calibrated = iso.predict(prob_ens)
-        prob_ens = prob_ens_calibrated
-
+        # P2修复: 去掉in-sample Isotonic校准——fit在训练集自身预测上会退化(实盘单点clip到0/1)。
+        #   回测与实盘统一用原始集成概率，阈值尺度一致(此前回测用校准概率、实盘用raw,不一致)。
         pred_ens = (prob_ens > 0.5).astype(int)
 
         predictions.extend(pred_ens)
@@ -1177,7 +1169,8 @@ def calc_metrics(rets, name):
     rets = rets.dropna()
     if len(rets) == 0:
         return {'name': name, 'ann_ret': 0, 'ann_vol': 0, 'sharpe': 0, 'max_dd': 0, 'win_rate': 0, 'calmar': 0}
-    ann_ret = float(rets.mean() * 250)
+    # P2-4修复: 几何(复利)年化,替代算术年化rets.mean()*250(高波动期虚高)
+    ann_ret = float(np.exp(np.log1p(rets).mean() * 250) - 1)
     ann_vol = float(rets.std() * np.sqrt(250))
     sharpe = float(ann_ret / ann_vol) if ann_vol > 0 else 0
     cumret = (1 + rets).cumprod()
@@ -1212,9 +1205,22 @@ for k, m in strategies.items():
     print(f"  {k:<25s} {m['ann_ret']:>+7.1%} {m['ann_vol']:>7.1%} {m['sharpe']:>6.2f} {m['max_dd']:>+7.1%} {m['win_rate']:>5.1%} {m['calmar']:>+7.2f}")
 
 # 找最优策略
-best_key = max(strategies.keys(), key=lambda k: strategies[k]['sharpe'] if k != '买入持有' else -999)
+# P2-1修复: 在训练期(排除最近125天Holdout)选最优,避免用Holdout数据选最优导致选择偏差。
+#   原实现用含Holdout的全期夏普选最优,再在Holdout上报告"纯净OOS"——选最优一步已窥探Holdout。
+_HOLDOUT_DAYS = 125
+_hstart_date = factors.index[len(factors) - _HOLDOUT_DAYS] if len(factors) > _HOLDOUT_DAYS else factors.index[0]
+_train_rets_map = {
+    'V1.0 线性IC': v1_ret, 'V2.0 ML+趋势': v2_ret, 'V3.0-A Regime+非对称': v3a_ret,
+    'V3.0-B +Vol靶向': v3b_ret, 'V3.0-C +止损': v3c_ret, 'V3.0-D +Kelly': v3d_ret,
+    'V3.0-E 多周期集成': v3e_ret, '买入持有': bh_ret,
+}
+_train_sharpe = {}
+for _k, _r in _train_rets_map.items():
+    _tr = _r[_r.index < _hstart_date].dropna()
+    _train_sharpe[_k] = calc_metrics(_tr, _k)['sharpe'] if len(_tr) > 10 else -999.0
+best_key = max((k for k in _train_sharpe if k != '买入持有'), key=lambda k: _train_sharpe[k])
 best_strategy = strategies[best_key]
-print(f"\n  🏆 最优策略: {best_key} (夏普={best_strategy['sharpe']:.2f})")
+print(f"\n  🏆 最优策略(训练期选择): {best_key} (训练期夏普={_train_sharpe[best_key]:.2f}, 全期夏普={best_strategy['sharpe']:.2f})")
 
 # ═══════════════════════════════════════════════════════════════════
 # 6.5 V5.0 P0-2: Holdout验证（保留最近6月数据做纯净OOS验证）

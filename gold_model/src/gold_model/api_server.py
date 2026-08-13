@@ -164,22 +164,30 @@ async def get_strategies():
 
 @app.get("/api/signals/recent")
 async def get_recent_signals(limit: int = Query(10, ge=1, le=100)):
-    """最近N次信号变化（从 raw_data 找仓位变化的点）"""
+    """最近N次信号变化（从 position_history 找仓位变化的点）
+    修复: raw_data 无仓位/概率字段,原实现恒返回空;改读 execution_data 的 position_history。"""
     _refresh_cache()
-    raw = _dashboard_cache.get('raw_data', [])
+    ph = _execution_cache.get('position_history', {})
+    dates = ph.get('dates', [])
+    positions = ph.get('positions', [])
+    regimes = ph.get('regimes', [])
+    gold_prices = ph.get('gold_prices', [])
+    probs = ph.get('probabilities', [])
+
     signals = []
-    prev_pos = None
-    for r in reversed(raw):  # 从最新往回，取最近N次仓位变化
-        pos = r.get('仓位')
-        if pos != prev_pos and pos:
-            signals.append({
-                "date": r.get('日期'),
-                "position": pos,
-                "regime": r.get('Regime'),
-                "gold_price": r.get('金价'),
-                "prob": r.get('加权概率')
-            })
-            prev_pos = pos
+    # position_history 为升序（早→晚），从最新往回找仓位发生实质变化(≥0.05)的点
+    for i in range(len(dates) - 1, 0, -1):
+        pos = positions[i] if i < len(positions) else None
+        prev = positions[i - 1] if i - 1 < len(positions) else None
+        if pos is None or prev is None or abs(pos - prev) < 0.05:
+            continue
+        signals.append({
+            "date": dates[i],
+            "position": pos,
+            "regime": regimes[i] if i < len(regimes) else '',
+            "gold_price": gold_prices[i] if i < len(gold_prices) else None,
+            "prob": probs[i] if i < len(probs) else None,
+        })
         if len(signals) >= limit:
             break
     return {"signals": signals, "count": len(signals)}
