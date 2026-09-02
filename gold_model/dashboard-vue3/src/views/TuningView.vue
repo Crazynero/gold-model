@@ -5,36 +5,12 @@
         <div class="p-item">
           <div class="p-label">训练窗口 (日)</div>
           <a-input-number v-model="params.train_window" :min="100" :max="2000" :step="50" :style="{ width: '100%' }" />
-          <div class="p-hint">默认 500，建议 250-1000</div>
-        </div>
-        <div class="p-item">
-          <div class="p-label">标签 horizon (日)</div>
-          <a-input-number v-model="params.horizon" :min="1" :max="60" :step="1" :style="{ width: '100%' }" />
-          <div class="p-hint">预测天数，默认 20</div>
+          <div class="p-hint">默认 500，建议 250-1000（映射 V5_TRAIN_WINDOW）</div>
         </div>
         <div class="p-item">
           <div class="p-label">Purge gap (日)</div>
-          <a-input-number v-model="params.purge_gap" :min="0" :max="30" :step="1" :style="{ width: '100%' }" />
-          <div class="p-hint">train/test 间隔，防标签泄漏</div>
-        </div>
-        <div class="p-item">
-          <div class="p-label">VIF 共线性阈值</div>
-          <a-input-number v-model="params.feature_threshold" :min="0.3" :max="0.95" :step="0.05" :style="{ width: '100%' }" />
-          <div class="p-hint">层次聚类阈值</div>
-        </div>
-        <div class="p-item">
-          <div class="p-label">VIF 最大值</div>
-          <a-input-number v-model="params.vif_max" :min="3" :max="30" :step="1" :style="{ width: '100%' }" />
-          <div class="p-hint">VIF > 此值则剔除</div>
-        </div>
-        <div class="p-item">
-          <div class="p-label">Regime 窗口</div>
-          <a-select v-model="params.regime_window" :style="{ width: '100%' }">
-            <a-option value="auto">auto（自适应）</a-option>
-            <a-option value="250">250 日</a-option>
-            <a-option value="500">500 日</a-option>
-          </a-select>
-          <div class="p-hint">高波动期自动缩短</div>
+          <a-input-number v-model="params.purge_gap" :min="0" :max="120" :step="5" :style="{ width: '100%' }" />
+          <div class="p-hint">train/test 间隔，防标签泄漏；默认 60（映射 V5_PURGE_GAP）</div>
         </div>
       </div>
       <div class="actions">
@@ -42,6 +18,9 @@
           {{ running ? 'V5 运行中...（3-5 分钟）' : 'RUN V5' }}
         </a-button>
         <a-button long @click="resetParams">{{ $t('common.reset') }}</a-button>
+      </div>
+      <div class="p-hint" style="padding: 4px 0;">
+        ℹ 修复假交互：此前展示 6 个参数但主管道只认 2 个（其余收下即弃）。现仅暴露实际生效的参数；标签horizon/VIF阈值等需改 gold_factor_v5.py 硬编码。
       </div>
       <div v-if="!apiBase" class="hint-warn">
         ⚠ file:// 协议下不可用。需启动后端：python3 -m uvicorn api_server:app --port 8000
@@ -94,11 +73,7 @@ import { Message } from '@arco-design/web-vue'
 
 const params = ref({
   train_window: 500,
-  horizon: 20,
-  purge_gap: 10,
-  feature_threshold: 0.7,
-  vif_max: 10.0,
-  regime_window: 'auto'
+  purge_gap: 60
 })
 
 const running = ref(false)
@@ -131,10 +106,7 @@ async function runV5() {
 }
 
 function resetParams() {
-  params.value = {
-    train_window: 500, horizon: 20, purge_gap: 10,
-    feature_threshold: 0.7, vif_max: 10.0, regime_window: 'auto'
-  }
+  params.value = { train_window: 500, purge_gap: 60 }
   result.value = null
   Message.info('参数已重置')
 }

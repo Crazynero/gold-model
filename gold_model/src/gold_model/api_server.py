@@ -490,8 +490,9 @@ async def _notify_webhooks(alert: Dict):
 from pydantic import BaseModel
 
 class V5TuningParams(BaseModel):
+    """只暴露主管道真正读取的参数（修复:旧版6参数中4个后端收下但不传给管道,UI假交互）"""
     train_window: int = 500          # 训练窗口（日）——主管道 V5_TRAIN_WINDOW 支持
-    purge_gap: int = 60              # Purged K-fold gap——主管道 V5_PURGE_GAP 支持(默认60无泄漏)
+    purge_gap: int = 60              # Purged K-fold gap——主管道 V5_PURGE_GAP 支持(默认60无泄漏;需≥标签horizon)
 
 @app.post("/api/v5/run")
 async def run_v5_with_params(params: V5TuningParams):

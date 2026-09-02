@@ -136,10 +136,11 @@ const vol60d = computed(() => {
   return v ? parseFloat(v.replace('%', '')) / 100 : 0.27
 })
 const vol20d = computed(() => {
-  // 从 raw_data 最近一条取 20日波动率
+  // 从 raw_data 最新一条取 20日波动率。
+  // 修复: raw_data为时间升序,此前取raw[0]拿到的是最老一行(扩到250日后≈一年前的旧值)
   const raw = dashboardData.value.raw_data || []
   if (raw.length === 0) return 0.21
-  const v = raw[0]['20日波动率']
+  const v = raw[raw.length - 1]['20日波动率']
   return v ? parseFloat(v) : 0.21
 })
 const vol20dStr = computed(() => (vol20d.value * 100).toFixed(1) + '%')
