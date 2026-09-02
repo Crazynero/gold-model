@@ -72,6 +72,32 @@ def load_current_data():
         return None, None
 
 
+def _freshness_alerts(dash_overview):
+    """
+    数据新鲜度检查（R4修复）: '数据截至'超过3天未更新 → 告警。
+    主管道连续失败时(如8/26-28采集全挂)JSON停更，此前signal_alert对着旧状态
+    对比得"无异常"静默通过，造成多日无信号的空窗无人知晓。
+    """
+    alerts = []
+    if not dash_overview:
+        return alerts
+    raw = dash_overview.get('数据截至') or dash_overview.get('预测基准日')
+    if not raw:
+        return alerts
+    try:
+        asof = datetime.strptime(str(raw)[:10], '%Y-%m-%d')
+        age = (datetime.now() - asof).days
+        if age >= 3:
+            alerts.append({
+                'severity': '🟠 中高',
+                'title': f'数据未更新{age}天(截至{str(raw)[:10]})',
+                'detail': '主管道可能连续失败(数据源异常/崩溃)，当前信号基于陈旧数据，请检查日志并手动重跑',
+            })
+    except ValueError:
+        pass
+    return alerts
+
+
 def load_prev_state():
     """加载上次状态"""
     try:
@@ -190,6 +216,9 @@ def format_message(alerts, current, dash_overview, dash_data=None):
     lines.append(f"  仓位: {current.get('position', 0):.0%}")
     lines.append(f"  加权概率: {current.get('probability', 0):.1%}")
     lines.append(f"  金价: ${current.get('gold_price', 0):.0f}")
+    # R2: 数据状态透出（缓存回退时用户能一眼看到数据不可信）
+    if dash_overview.get('数据状态') and dash_overview.get('数据状态') != '正常':
+        lines.append(f"  ⚠️ 数据状态: {dash_overview.get('数据状态')} (截至{dash_overview.get('数据截至', '?')})")
     
     # 多周期概率
     if dash_overview:
@@ -413,7 +442,7 @@ def run(dry_run=False):
         if os.environ.get('ALERT_DEBUG'):
             print(f"[SIGNAL-BT] 信号回测检测失败: {e}")
     
-    all_alerts = alerts + drift_alerts + signal_alerts
+    all_alerts = alerts + drift_alerts + signal_alerts + _freshness_alerts(dash_overview)
     
     if all_alerts:
         msg = format_message(all_alerts, current, dash_overview, dash_data)

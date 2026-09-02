@@ -31,6 +31,7 @@
 
     <HudCard :title="$t('card.currentState')" meta="V5">
       <div class="ov-row"><span>预测基准日</span><b>{{ baseDate }}</b></div>
+      <div class="ov-row"><span>数据截至/状态</span><b :class="dataState === '正常' ? '' : 'text-neg'">{{ dataAsOf }} · {{ dataState }}</b></div>
       <div class="ov-row"><span>当前金价</span><b class="text-gold">{{ goldPrice }}</b></div>
       <div class="ov-row"><span>MA50</span><b>{{ ma50 }}</b></div>
       <div class="ov-row"><span>MA200</span><b>{{ ma200 }}</b></div>
@@ -100,6 +101,8 @@ const C = {
 }
 
 const baseDate = computed(() => extractValue(dashboardData.value.overview, '预测基准日') || '--')
+const dataAsOf = computed(() => extractValue(dashboardData.value.overview, '数据截至') || baseDate.value)
+const dataState = computed(() => extractValue(dashboardData.value.overview, '数据状态') || '正常')
 const goldPrice = computed(() => extractValue(dashboardData.value.overview, '当前金价') || '$----')
 const ma50 = computed(() => extractValue(dashboardData.value.overview, 'MA50') || '--')
 const ma200 = computed(() => extractValue(dashboardData.value.overview, 'MA200') || '--')

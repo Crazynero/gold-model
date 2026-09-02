@@ -19,7 +19,13 @@ export PYTHONPATH="$PROJECT_DIR/src"
   echo "===== $(date '+%F %T') 开始 (python: $PY) ====="
 
   "$PY" -m gold_model.gold_factor_v5
-  echo "主管道退出码: $?"
+  MAIN_RC=$?
+  echo "主管道退出码: $MAIN_RC"
+
+  # R4修复: 主管道失败立即通知（此前崩溃晚只写日志，用户3天不知信号已停更）
+  if [ "$MAIN_RC" -ne 0 ]; then
+    /usr/bin/osascript -e "display notification \"主管道失败(退出码$MAIN_RC)，今晚信号未更新，请查看日志\" with title \"黄金V5⚠️管道异常\" sound name \"Basso\"" || true
+  fi
 
   "$PY" dashboard-vue3/inject_data.py --refresh   # 单文件成品内联数据刷新为最新
   echo "inject_refresh退出码: $?"

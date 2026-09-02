@@ -52,7 +52,7 @@ plt.rcParams['axes.unicode_minus'] = False
 from gold_model.paths import (
     CHARTS_V5_DIR, DASHBOARD_JSON, EXECUTION_JSON, DRIFT_HISTORY,
     REPORT_V5_XLSX, EXECUTION_LATEST_JSON, ANALYSIS_JSON, ensure_dirs,
-    VUE3_PUBLIC_DIR,
+    VUE3_PUBLIC_DIR, PRICE_CACHE,
 )
 ensure_dirs()
 
@@ -115,8 +115,11 @@ for ticker, name in TICKERS.items():
     s = fetch_ticker_with_fallback(ticker, name, period=DATA_PERIOD)
     if s is not None:
         raw[name] = s
+# R5修复: 记录真实采集成功率(此前前端数据源状态卡写死"25/25 ✅",崩溃晚也显示全绿)
+_src_total, _src_ok = len(TICKERS), len(raw)
 
 print("\n[1b] FRED宏观数据采集...")
+_fred_ok = 0
 for sid, name in FRED_SERIES.items():
     try:
         url = f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}'
@@ -134,12 +137,59 @@ for sid, name in FRED_SERIES.items():
                 s = df_fred[name]
                 s.name = name
                 raw[name] = s
+                _fred_ok += 1
                 print(f"  ✅ {name}({sid}) {len(df_fred)}行")
     except Exception as e:
         print(f"  ❌ {name}({sid}) {str(e)[:40]}")
 
 df = pd.DataFrame(raw).dropna(how='all')
 print(f"  合并: {df.shape[0]} rows, {df.shape[1]} cols")
+
+# R3修复(口径一致): 剔除未收盘K线。模型在"已收盘日频K线"上训练，实盘若混入盘中半根K线，
+#   动量/均线/波动率都会被盘中价扰动（如22:30 CST运行时GC=F当日bar仅为盘中值，
+#   9/1实测盘中4419.8 vs 收盘4375.7，差1%足以在MA200附近翻转Regime）。
+#   US收盘17:00 ET之后的当日bar视为已收盘。
+try:
+    from zoneinfo import ZoneInfo
+    _now_et = datetime.now(ZoneInfo('US/Eastern'))
+    if len(df) > 0 and df.index[-1].date() == _now_et.date() and _now_et.hour < 17:
+        df = df.iloc[:-1]
+        print(f"  ⏭️ 剔除未收盘K线({_now_et.date()}盘中)，信号基准用最近已收盘日")
+except Exception:
+    pass
+
+# R1修复(健壮性): 采集全挂时回退本地缓存，不再崩溃(8/26-28三天事故根因)。
+#   成功运行时把合并后的源数据存PRICE_CACHE；某列全部缺失时用缓存列补齐并标注数据陈旧。
+DATA_STALE = False      # 任一关键列来自缓存
+DATA_TOO_OLD = False    # 金价基准过旧(>4个自然日) → 强制暂停交易建议
+_data_asof = None
+if '黄金期货' not in df.columns or df['黄金期货'].notna().sum() < 300:
+    if PRICE_CACHE.exists():
+        try:
+            df_cache = pd.read_csv(PRICE_CACHE, index_col=0, parse_dates=True)
+            for c in df_cache.columns:
+                if c not in df.columns or df[c].notna().sum() < 100:
+                    df[c] = df_cache[c]
+            DATA_STALE = True
+            print(f"  ⚠️ 数据源异常: 部分列回退本地缓存(缓存截至{df_cache.index[-1].date()})")
+        except Exception as e:
+            print(f"  ⚠️ 缓存读取失败: {type(e).__name__}")
+if '黄金期货' not in df.columns or df['黄金期货'].notna().sum() < 300:
+    print("  ❌ 致命: 黄金期货数据不可得且无有效缓存，无法产出信号（请检查网络后重跑）")
+    sys.exit(2)
+
+# 采集正常 → 保存/刷新源数据缓存（只留最近约800行，控制体积）
+if not DATA_STALE:
+    try:
+        df.dropna(how='all').tail(800).to_csv(PRICE_CACHE)
+    except Exception:
+        pass
+
+_data_asof = df['黄金期货'].dropna().index[-1]
+_age_days = (pd.Timestamp.now() - _data_asof).days
+DATA_TOO_OLD = _age_days > 4
+if DATA_TOO_OLD:
+    print(f"  ⚠️ 金价基准过旧({_data_asof.date()}, {_age_days}天前)——产出信号仅供观察，交易建议将强制暂停")
 
 # ═══════════════════════════════════════════════════════════════════
 # 2. 因子构建
@@ -148,22 +198,28 @@ print(f"  合并: {df.shape[0]} rows, {df.shape[1]} cols")
 print("\n[2] 因子构建...")
 gold = df['黄金期货'].dropna()
 
+# R1修复: 列守卫——个别数据源失败导致列缺失时不再KeyError崩溃，退化为NaN列(后续特征清洗会剔除)
+def _col(name):
+    return df[name] if name in df.columns else pd.Series(np.nan, index=df.index)
+
 # 基础因子
-f_real_rate    = df['TIPS(实际利率替代)']
-f_dxy          = df['美元指数']
-f_nominal_rate = df['7-10年国债(名义利率替代)']
-f_inflation    = df['TIPS(实际利率替代)'] / df['7-10年国债(名义利率替代)']
-f_vix          = df['VIX恐慌']
-f_gdx_gold     = df['金矿股'] / df['黄金期货']
-f_silver_gold  = df['白银'] / df['黄金期货']
-f_gvz          = df['黄金VIX']
+f_real_rate    = _col('TIPS(实际利率替代)')
+f_dxy          = _col('美元指数')
+f_nominal_rate = _col('7-10年国债(名义利率替代)')
+f_inflation    = f_real_rate / f_nominal_rate
+f_vix          = _col('VIX恐慌')
+f_gdx_gold     = _col('金矿股') / gold
+f_silver_gold  = _col('白银') / gold
+f_gvz          = _col('黄金VIX')
 
 # V2.0因子
-etp_holdings = df['GLD基金'] + df['IAU基金'] + df['SGOL基金']
+# 注: "央行购金代理(ETP)"实为GLD+IAU+SGOL三只ETF*价格*之和（yfinance拿不到历史份额），
+#   数值上≈黄金价×常数，与60日动量高度共线，由VIF聚类处理；命名沿用于前端，勿当真实持仓解读。
+etp_holdings = _col('GLD基金') + _col('IAU基金') + _col('SGOL基金')
 f_cb_proxy = etp_holdings.pct_change(60)
-f_miner_ratio = df['金矿股'] / df['白银矿企']
-f_usd_jpy = df['美元/日元']
-f_gold_nem = df['黄金期货'] / df['纽蒙特矿业']
+f_miner_ratio = _col('金矿股') / _col('白银矿企')
+f_usd_jpy = _col('美元/日元')
+f_gold_nem = gold / _col('纽蒙特矿业')
 
 # 技术因子
 f_ma200_dev = gold / gold.rolling(200).mean() - 1
@@ -265,6 +321,22 @@ f_copper_x_vix = f_copper_gold * f_vix if f_copper_gold.notna().sum() > 0 else p
 # ── 收益率曲线×美元（美元周期+利率周期叠加）──
 f_curve_x_dxy = f_2s10s * f_dxy if f_2s10s.notna().sum() > 0 else pd.Series(np.nan, index=df.index)
 
+# ── V5.4新增: CFTC持仓（投机仓位拥挤度，补齐数据面最大盲区）──
+# 非商业净多头52周Z分值: 极端正Z=多头拥挤(回调风险), 极端负Z=空头拥挤(逼空风险)
+# 周频数据按发布日(+3交易日)对齐后ffill到日频；抓取失败→NaN列→特征清洗自动剔除
+from gold_model.data_fetcher import fetch_cot_net_positions
+f_cot_z = pd.Series(np.nan, index=gold.index)
+try:
+    _cot_net = fetch_cot_net_positions(period=DATA_PERIOD)
+    if _cot_net is not None and len(_cot_net) > 60:
+        _cot_mean = _cot_net.rolling(52, min_periods=26).mean()
+        _cot_std = _cot_net.rolling(52, min_periods=26).std()
+        _cot_weekly_z = (_cot_net - _cot_mean) / _cot_std.replace(0, np.nan)
+        f_cot_z = _cot_weekly_z.reindex(gold.index).ffill()
+except Exception as e:
+    print(f"  ⚠️ COT特征构建失败(忽略): {type(e).__name__}")
+_cot_ok = bool(f_cot_z.notna().sum() > 60)
+
 # 组装
 factors = pd.DataFrame({
     '金价':              gold,
@@ -316,6 +388,8 @@ factors = pd.DataFrame({
     '实际利率×Fed利率':   f_real_x_fed,
     '铜金比×VIX':         f_copper_x_vix,
     '曲线×美元':          f_curve_x_dxy,
+    # V5.4新增——CFTC持仓
+    'COT净多Z':           f_cot_z,
 })
 
 factors = factors.dropna(how='all')
@@ -325,7 +399,8 @@ factors['MA交叉信号'] = factors['MA交叉信号'].fillna(0)
 
 # V4.0: 对FRED宏观数据做前向填充（FRED日频数据可能有缺失日）
 fred_cols = ['10年实际利率', '5年实际利率', '联邦基金利率', '10年通胀预期',
-             '2s10s利差', '5s30s利差', '曲线倒挂信号', '铜金比', 'BTC/黄金', 'VIX期限结构']
+             '2s10s利差', '5s30s利差', '曲线倒挂信号', '铜金比', 'BTC/黄金', 'VIX期限结构',
+             'COT净多Z']
 for col in fred_cols:
     if col in factors.columns:
         factors[col] = factors[col].ffill()
@@ -1434,6 +1509,12 @@ elif suggested_pos < 0:
 else:
     action = "空仓观望"
 
+# R2修复(工业级风控): 数据基准过旧(>4个自然日)时不在陈旧数据上给方向建议——
+#   强制仓位归零,避免用户按过期信号交易(8/26-28空窗事故的持仓管理教训)
+if DATA_TOO_OLD:
+    suggested_pos = 0.0
+    action = f"⚠️ 数据陈旧(基准{_data_asof.date()})·暂停交易"
+
 print(f"\n  📌 V3.0-E建议:  {action}")
 print(f"     (Regime={current_regime}, 概率={prob_multi_current:.1%}, Vol调整={vol_adjust:.2f})")
 
@@ -2263,6 +2344,11 @@ overview['牛市'] = int(regime_counts.get('牛市', 0))
 overview['熊市'] = int(regime_counts.get('熊市', 0))
 overview['震荡'] = int(regime_counts.get('震荡', 0))
 overview['预测基准日'] = str(latest_idx.date())
+overview['数据截至'] = str(_data_asof.date()) if _data_asof is not None else str(latest_idx.date())
+overview['数据状态'] = '缓存回退' if DATA_STALE else '正常'
+overview['数据源状态'] = f"{_src_ok}/{_src_total}"
+overview['FRED状态'] = f"{_fred_ok}/{len(FRED_SERIES)}"
+overview['COT状态'] = '正常' if _cot_ok else '失败'
 overview['当前金价'] = f"${current_price:.2f}"
 overview['MA50'] = f"${ma50_current:.2f}"
 overview['MA200'] = f"${ma200_current:.2f}"
@@ -2334,12 +2420,12 @@ for f in feature_cols:
         'signal': sig,
     })
 
-# --- raw_data (最近60天) ---
+# --- raw_data (最近250天; 前端DataView标注"最近250日",此前只写60天标签与数据不符) ---
 raw_data_list = []
 data_cols_raw = ['金价', '10年实际利率', '联邦基金利率', '2s10s利差', '10年通胀预期',
                  '美元指数', 'VIX恐慌', '金矿/黄金', '央行购金代理(ETP)', '铜金比', 'BTC/黄金',
-                 'VIX期限结构', '距FOMC天数', '距CPI天数', 'MA200偏离', '20日波动率', 'Regime']
-for date, r in factors.iloc[-60:].iterrows():
+                 'VIX期限结构', 'COT净多Z', '距FOMC天数', '距CPI天数', 'MA200偏离', '20日波动率', 'Regime']
+for date, r in factors.iloc[-250:].iterrows():
     row_data = {'日期': date.strftime('%Y-%m-%d')}
     for col in data_cols_raw:
         v = r.get(col, np.nan)

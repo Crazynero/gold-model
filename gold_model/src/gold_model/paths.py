@@ -19,6 +19,8 @@ VUE3_PUBLIC_DIR = PROJECT_ROOT / 'dashboard-vue3' / 'public'  # vite dev/build �
 # 常用文件
 FOMC_CACHE = DATA_DIR / 'fomc_cache.json'
 CPI_CACHE = DATA_DIR / 'cpi_cache.json'
+PRICE_CACHE = DATA_DIR / 'price_cache.csv'   # 合并后因子源数据缓存（采集全挂时回退用）
+COT_CACHE_DIR = DATA_DIR / 'cot_cache'       # CFTC COT 年度压缩包解压缓存（按年）
 DRIFT_HISTORY = DATA_DIR / 'drift_history.json'
 SIGNAL_ALERT_STATE = DATA_DIR / 'signal_alert_state.json'
 GOLD_SIGNALS_DB = DATA_DIR / 'gold_signals.db'
@@ -33,5 +35,5 @@ ASSETS_DIR = PACKAGE_DIR / 'execution_plan' / 'assets'
 
 def ensure_dirs():
     for d in (DATA_DIR, WEB_DIR, CHARTS_DIR, CHARTS_V5_DIR, WEEKLY_REPORTS_DIR,
-              EXECUTION_PLAN_DIR, REPORTS_DIR):
+              EXECUTION_PLAN_DIR, REPORTS_DIR, COT_CACHE_DIR):
         d.mkdir(parents=True, exist_ok=True)

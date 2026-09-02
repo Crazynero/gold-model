@@ -44,6 +44,12 @@
           <a-table-column title="CPI" :width="70">
             <template #cell="{ record }"><span class="mono text-muted">{{ fmtNum(record['距CPI天数']) }}</span></template>
           </a-table-column>
+          <a-table-column title="COT-Z" :width="70">
+            <template #cell="{ record }">
+              <span v-if="record['COT净多Z'] !== '' && record['COT净多Z'] !== undefined" :class="parseFloat(record['COT净多Z']) > 0 ? 'mono text-pos' : 'mono text-neg'">{{ parseFloat(record['COT净多Z']).toFixed(2) }}</span>
+              <span v-else class="mono text-muted">--</span>
+            </template>
+          </a-table-column>
           <a-table-column title="VOL20" :width="70">
             <template #cell="{ record }"><span class="mono">{{ (parseFloat(record['20日波动率']) * 100).toFixed(1) }}%</span></template>
           </a-table-column>
@@ -55,10 +61,12 @@
     </HudCard>
 
     <HudCard :title="$t('card.dataSourceStatus')">
-      <div class="src-row"><span>yfinance</span><b class="text-pos">25/25 ✅</b></div>
-      <div class="src-row"><span>FRED (8序列)</span><b class="text-pos">8/8 ✅</b></div>
-      <div class="src-row"><span>Stooq</span><b class="text-warn">备用</b></div>
-      <div class="src-row"><span>Alpha Vantage</span><b class="text-warn">备用</b></div>
+      <!-- 修复: 此前写死"25/25 ✅",采集崩溃时页面仍显示全绿;现从主管道回传的真实成功率渲染 -->
+      <div class="src-row"><span>市场数据源(八层降级)</span><b :class="srcRatio >= 0.8 ? 'text-pos' : 'text-warn'">{{ mainSources }}</b></div>
+      <div class="src-row"><span>FRED 宏观序列</span><b :class="fredRatio >= 0.8 ? 'text-pos' : 'text-warn'">{{ fredSources }}</b></div>
+      <div class="src-row"><span>CFTC COT 持仓</span><b :class="cotStatus === '正常' ? 'text-pos' : 'text-neg'">{{ cotStatus }}</b></div>
+      <div class="src-row"><span>数据状态</span><b :class="dataState === '正常' ? 'text-pos' : 'text-neg'">{{ dataState }}</b></div>
+      <div class="src-row"><span>数据截至</span><b>{{ dataAsOf }}</b></div>
       <div class="src-row"><span>最后更新</span><b>{{ lastUpdate }}</b></div>
       <div class="src-row"><span>样本数</span><b>{{ totalRows }}</b></div>
     </HudCard>
@@ -80,6 +88,19 @@ const filter = ref('all')
 
 const lastUpdate = computed(() => extractValue(dashboardData.value.overview, '预测基准日') || '--')
 const totalRows = computed(() => (dashboardData.value.raw_data || []).length)
+const dataAsOf = computed(() => extractValue(dashboardData.value.overview, '数据截至') || lastUpdate.value)
+const dataState = computed(() => extractValue(dashboardData.value.overview, '数据状态') || '--')
+const mainSources = computed(() => extractValue(dashboardData.value.overview, '数据源状态') || '--')
+const fredSources = computed(() => extractValue(dashboardData.value.overview, 'FRED状态') || '--')
+const cotStatus = computed(() => extractValue(dashboardData.value.overview, 'COT状态') || '--')
+const srcRatio = computed(() => {
+  const [a, b] = String(mainSources.value).split('/').map(Number)
+  return b ? a / b : 1
+})
+const fredRatio = computed(() => {
+  const [a, b] = String(fredSources.value).split('/').map(Number)
+  return b ? a / b : 1
+})
 
 const filteredRows = computed(() => {
   const all = dashboardData.value.raw_data || []

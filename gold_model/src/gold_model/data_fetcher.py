@@ -10,11 +10,19 @@ yfinance → 新浪美股 → 东方财富 → 新浪期货 → 腾讯外汇 →
 import io
 import json
 import time
+import csv
+import zipfile
 import numpy as np
 import pandas as pd
 import requests
 import yfinance as yf
 from datetime import datetime, timedelta
+from pathlib import Path
+
+try:
+    from gold_model.paths import COT_CACHE_DIR
+except ImportError:  # 单独调试本模块时兜底
+    COT_CACHE_DIR = Path(__file__).resolve().parent.parent.parent / 'data' / 'cot_cache'
 
 
 def _period_years(period='5y'):
@@ -424,6 +432,71 @@ def fetch_ticker_with_fallback(ticker, name, period='5y', verbose=True):
     if verbose:
         print(f"  ❌ {name}({ticker}) 所有数据源失败")
     return None
+
+
+def fetch_cot_net_positions(period='10y', verbose=True):
+    """
+    CFTC持仓报告(COT)：COMEX黄金(GOLD - COMMODITY EXCHANGE INC., 合约码088691)
+    非商业净多头持仓序列——市场投机仓位拥挤度（经典黄金情绪/反转指标）。
+
+    数据源: www.cftc.gov年度压缩包 deacot{YEAR}.zip（publicreporting.cftc.gov Socrata API
+    对部分地区403，主站文件可直连）。按年缓存到 data/cot_cache/，当年文件每6天刷新。
+
+    因果性: 报告"as of"周二收盘仓位，周五约15:30 ET发布 → 发布日期=as_of+3个交易日，
+    用发布日期做索引避免前视（周二当日仓位在周三/周四模型上还不可见）。
+
+    返回: pd.Series(索引=发布日, 值=非商业净多头手数)，失败返回None
+    """
+    this_year = datetime.now().year
+    years = list(range(this_year - _period_years(period) + 1, this_year + 1))
+    rows = []  # (as_of_date, net_long)
+    for y in years:
+        cache_file = COT_CACHE_DIR / f'deacot{y}.txt'
+        need_refresh = (not cache_file.exists()) or (
+            y == this_year
+            and time.time() - cache_file.stat().st_mtime > 6 * 86400)
+        if need_refresh:
+            try:
+                url = f'https://www.cftc.gov/files/dea/history/deacot{y}.zip'
+                r = requests.get(url, timeout=60,
+                                 headers={'User-Agent': 'Mozilla/5.0'})
+                if r.status_code != 200 or len(r.content) < 10000:
+                    if verbose:
+                        print(f"  ⚠️ COT({y}) 下载失败: HTTP {r.status_code}")
+                    continue
+                zf = zipfile.ZipFile(io.BytesIO(r.content))
+                text = zf.read(zf.namelist()[0]).decode('latin-1')
+                COT_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+                cache_file.write_text(text, encoding='latin-1')
+            except Exception as e:
+                if verbose:
+                    print(f"  ⚠️ COT({y}) 下载异常: {type(e).__name__}")
+                continue
+        try:
+            with open(cache_file, encoding='latin-1') as f:
+                for row in csv.DictReader(f):
+                    if (row.get('CFTC Contract Market Code', '').strip() == '088691'):
+                        try:
+                            as_of = pd.Timestamp(row['As of Date in Form YYYY-MM-DD'])
+                            longs = float(row['Noncommercial Positions-Long (All)'])
+                            shorts = float(row['Noncommercial Positions-Short (All)'])
+                            rows.append((as_of, longs - shorts))
+                        except (KeyError, ValueError, TypeError):
+                            continue
+        except Exception as e:
+            if verbose:
+                print(f"  ⚠️ COT({y}) 缓存解析失败: {type(e).__name__}")
+    if len(rows) < 60:
+        if verbose:
+            print(f"  ❌ COT非商业净多头: 有效数据不足({len(rows)}条)")
+        return None
+    s = (pd.Series(dict(rows)).sort_index())
+    # 因果对齐: as_of(周二) → 发布(周五)=+3交易日
+    s.index = s.index + pd.tseries.offsets.BDay(3)
+    s = s[~s.index.duplicated(keep='last')]
+    if verbose:
+        print(f"  ✅ COT非商业净多头 {len(s)}周 ({s.index[0].date()}~{s.index[-1].date()}) [CFTC]")
+    return s
 
 
 def fetch_all_tickers(tickers_dict, period='5y'):

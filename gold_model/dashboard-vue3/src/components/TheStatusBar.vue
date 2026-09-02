@@ -16,7 +16,7 @@
     <div class="right">
       <span>{{ $t('txt.regimeC') }}<b class="text-acc">{{ regime }}</b></span>
       <span class="sens">{{ $t('txt.positionC') }}<b class="text-acc">{{ position }}</b></span>
-      <span>{{ $t('txt.baseC') }}<b class="text-acc">{{ baseDate }}</b></span>
+      <span>{{ $t('txt.baseC') }}<b class="text-acc">{{ baseDate }}</b><b v-if="dataStale" class="stale-warn"> ⚠{{ dataState }}</b></span>
     </div>
   </div>
 </template>
@@ -72,6 +72,8 @@ const position = computed(() => {
   return extractValue(dashboardData.value.overview, '建议操作') || '空仓观望'
 })
 const baseDate = computed(() => extractValue(dashboardData.value.overview, '预测基准日') || '--')
+const dataState = computed(() => extractValue(dashboardData.value.overview, '数据状态') || '正常')
+const dataStale = computed(() => dataState.value !== '正常')
 
 const lastUpdateStr = computed(() => {
   if (!lastUpdate.value) return '--:--:--'
@@ -96,6 +98,7 @@ const lastUpdateStr = computed(() => {
 }
 .left, .right { display: flex; gap: 16px; align-items: center; }
 b { color: var(--accent); font-weight: 500; }
+.stale-warn { color: var(--neg, #cf6b62); font-weight: 600; }
 .src-tag {
   padding: 0 4px;
   border: 1px solid var(--border);

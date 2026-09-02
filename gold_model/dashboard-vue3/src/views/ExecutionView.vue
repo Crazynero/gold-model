@@ -49,11 +49,12 @@
     </HudCard>
 
     <HudCard :title="$t('card.signalQuality')" :meta="$t('meta.hitRateCost')">
-      <div class="sq-row"><span>20日命中率</span><b :class="hitOk ? 'text-pos' : 'text-neg'">{{ hitRate }}</b></div>
-      <div class="sq-row"><span>WF基准</span><b class="text-muted">{{ baseRate }}</b></div>
+      <div class="sq-row"><span>回测近20次命中率</span><b :class="hitOk ? 'text-pos' : 'text-neg'">{{ hitRate }}</b></div>
+      <div class="sq-row"><span>WF基准命中率</span><b class="text-muted">{{ baseRate }}</b></div>
       <div class="sq-row"><span>偏差</span><b :class="hitOk ? 'text-pos' : 'text-neg'">{{ deviation }}</b></div>
       <div class="sq-row"><span>仓位系数</span><b class="text-acc">{{ posFactor }}</b></div>
       <div class="sq-row"><span>状态</span><b :class="hitOk ? 'text-pos' : 'text-neg'">{{ hitOk ? '正常' : '熔断中' }}</b></div>
+      <div class="sq-hint">回测区间 {{ statsWindow }} · 为回测统计非实盘跟踪</div>
     </HudCard>
 
     <HudCard :title="$t('card.costComparison')" :meta="$t('meta.scenarios3')">
@@ -197,7 +198,16 @@ const futLayer = computed(() => {
 })
 
 const execRows = computed(() => {
-  if (action.value.includes('空仓')) {
+  if (action.value.includes('做空')) {
+    // 修复: 做空信号此前掉进多头建仓模板(方向完全反了)——ETF不能做空,空头腿全部走期货
+    return [
+      { action: '清仓 ETF', target: 'GLD / IAU', amount: '100%', note: '市价卖出' },
+      { action: '开空期货', target: 'GC=F 空头', amount: '100% 仓位', note: '分2日建仓' },
+      { action: '设置止损', target: '+3% / MA200', amount: '-', note: '触发即平' },
+      { action: '回补条件', target: 'P(W)>0.45 或 Regime转多', amount: '-', note: '动态调整' }
+    ]
+  }
+  if (action.value.includes('空仓') || action.value.includes('数据陈旧')) {
     return [
       { action: '清仓 ETF', target: 'GLD / IAU', amount: '100%', note: '市价卖出' },
       { action: '平仓期货', target: 'GC=F 多头', amount: '100%', note: '市价平' },
@@ -213,12 +223,15 @@ const execRows = computed(() => {
   ]
 })
 
-const hitRate = computed(() => executionData.value.signal_stats?.hit_rate_20d || '35%')
-const baseRate = computed(() => executionData.value.signal_stats?.wf_base || '58%')
-const deviation = computed(() => executionData.value.signal_stats?.deviation || '-23%')
+// 修复: fallback写死的'35%/58%/-23%'会被当成真数据展示,字段缺失时显示'--'
+const hitRate = computed(() => executionData.value.signal_stats?.hit_rate_20d || '--')
+const baseRate = computed(() => executionData.value.signal_stats?.wf_base || '--')
+const deviation = computed(() => executionData.value.signal_stats?.deviation || '--')
+const statsWindow = computed(() => executionData.value.signal_stats?.['分析区间'] || '—')
 const hitOk = computed(() => {
   const h = parseFloat(hitRate.value)
   const b = parseFloat(baseRate.value)
+  if (isNaN(h) || isNaN(b)) return true
   return h - b > -10
 })
 const posFactor = computed(() => {
@@ -313,8 +326,15 @@ function posOpt(): EChartsOption {
 .exec-cell { text-align: center; }
 .exec-value { font-family: var(--mono); font-size: 22px; margin-top: 4px; font-weight: 500; }
 .sq-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-soft); font-size: 12px; color: var(--text-2); }
-.sq-row:last-child { border-bottom: none; }
+.sq-row:last-of-type { border-bottom: none; }
 .sq-row b { font-family: var(--mono); }
+.sq-hint {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-3);
+  letter-spacing: 0.05em;
+}
 .capital-select {
   display: flex;
   align-items: center;
