@@ -15,6 +15,21 @@ PY="$PROJECT_DIR/.venv/bin/python3"
 [ -x "$PY" ] || PY="$(command -v python3)"
 export PYTHONPATH="$PROJECT_DIR/src"
 
+# R6: Yahoo中转代理(mihomo白名单模式,仅yahoo域名走美国出口)。
+# 设 YF_PROXY 启用yfinance代理层;代理挂了自动回退八层降级源,管道不中断。
+# 注意: 若代理未运行,置空此变量可完全禁用(与旧行为一致)。
+if [ -z "${YF_PROXY:-}" ]; then
+  # 默认探测本机常驻代理端口,通则启用,不通则直连
+  if curl -x http://127.0.0.1:7890 -m 5 -s -o /dev/null https://fc.yahoo.com; then
+    export YF_PROXY="http://127.0.0.1:7890"
+  fi
+fi
+if [ -n "${YF_PROXY:-}" ]; then
+  echo "Yahoo代理: $YF_PROXY"
+else
+  echo "Yahoo代理: 未启用(直连,将走降级源)"
+fi
+
 {
   echo "===== $(date '+%F %T') 开始 (python: $PY) ====="
 

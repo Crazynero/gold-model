@@ -9,6 +9,7 @@ yfinance → 新浪美股 → 东方财富 → 新浪期货 → 腾讯外汇 →
 """
 import io
 import json
+import os
 import time
 import csv
 import zipfile
@@ -205,7 +206,21 @@ PROXY_FALLBACK = {
 
 
 def _safe_yf_download(ticker, period='5y'):
-    """yfinance下载，处理MultiIndex列"""
+    """yfinance下载，处理MultiIndex列
+
+    R6(代理接入): 设 YF_PROXY 环境变量时，Yahoo流量走本地中转代理(如 http://127.0.0.1:7890)。
+    只影响yfinance库内部的session(经YfConfig.network.proxy注入)，新浪/东财/腾讯/CBOE/FRED/CFTC
+    等备源不受影响保持直连。yfinance 1.5+ 默认curl_cffi chrome指纹(文档铁律2库已内置)，
+    cookie→crumb→chart在同一session完成(铁律1)。代理挂了抛异常→计入熔断→走降级源(铁律3)。
+    """
+    if os.environ.get('YF_PROXY'):
+        try:
+            import yfinance as _yf_mod
+            # YfConfig是ConfigMgr实例; __getattr__('network')返回NestedConfig,
+            # __setattr__把proxy写进其data dict → data.py每次请求前同步到session
+            _yf_mod.config.network.proxy = os.environ['YF_PROXY']
+        except Exception:
+            pass  # 配置失败则退回直连(会403熔断走降级源,与无代理时行为一致)
     d = yf.download(ticker, period=period, progress=False, auto_adjust=False)
     if len(d) == 0:
         return None
