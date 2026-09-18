@@ -27,4 +27,4 @@ PYTHONPATH=src .venv/bin/python3 -m gold_model.gold_factor_v5
 
 ## 许可
 
-代码公开供学习与研究参考；未附开源许可证（保留所有权利），转载或二次使用请注明出处。
+[MIT License](LICENSE) — 代码可自由学习、使用与修改，转载或二次使用请保留署名。
